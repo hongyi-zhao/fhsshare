@@ -1,0 +1,10 @@
+# https://unix.stackexchange.com/questions/348321/purpose-of-the-autostart-scripts-directory
+
+# put in this dir: /etc/xdg/autostart/
+[Desktop Entry]
+Exec=/home/xdg-user-setting.sh
+Icon=system-run
+# NotShowIn=GNOME # Run in all X environments
+Terminal=false
+TerminalOptions=
+Type=Application
