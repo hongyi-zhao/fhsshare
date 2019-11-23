@@ -89,32 +89,104 @@ shopt -s nullglob # Ensure shell expansion with 0 files expands to an empty list
 
 
 if which inxi > /dev/null 2>&1; then 
+
+  # 一些用到的变量：
+  data_dir=/home/data
  
   _user=$( ps -o user= -p $$ | awk '{print $1}' )
 
-  #  root uuid
-  root_uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )
   # system_uuid
   system_uuid=$( sudo dmidecode -s system-uuid )
+  #  root uuid
+  root_uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )
 
-  sysinfo_file=/home/$root_uuid-$system_uuid 
+
+  sysinfo_file=/home/$system_uuid-$root_uuid 
 
 
   #getent passwd "$_user" | cut -d: -f6
-#  _home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
+  __home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
 
   _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
   _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 
-echo "Distro: $_distro" | sudo tee $sysinfo_file > /dev/null 2>&1 
-echo "Desktop: $_desktop" | sudo tee -a $sysinfo_file > /dev/null 2>&1 
-
+  echo "Distro: $_distro" | sudo tee $sysinfo_file > /dev/null 2>&1 
+  echo "Desktop: $_desktop" | sudo tee -a $sysinfo_file > /dev/null 2>&1 
+  
+  _home=/home/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' $sysinfo_file )
  
   if [ ! -d /home/$_distro-$_desktop ]; then
     sudo mkdir /home/$_distro-$_desktop
     sudo chown -hR $_user:$_user /home/$_distro-$_desktop
   fi
+
+
+  if [ $__home != $_home ]; then
+     sudo mount -o rw,rbind $_home $__home
+
+
+	if [ -d $data_dir ]; then
+
+		#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
+
+		# software/anti-gfw/not-used/vpngate-relative/ecmp-vpngate/script/ovpn-traverse.sh
+		# -printf format
+		# %f     File's name with any leading directories removed (only the last element).
+		# %h     Leading directories of file's name (all but the last element).  
+		# If the file name contains  no  slashes
+		#             (since it is in the current directory) the %h specifier expands to `.'.       
+		# %H     Starting-point under which file was found.  
+		# %p     File's name.
+		# %P     File's name with the name of the starting-point under which it was found removed.
+		find $data_dir/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0' |
+		while IFS= read -r line; do
+		  if [ ! -d $HOME/"$line" ]; then
+		    mkdir $HOME/"$line"
+		  fi
+
+		  if ! findmnt -al | grep -qE "^$HOME/$line"; then
+		    sudo mount -o rw,rbind $data_dir/"$line" $HOME/"$line"
+		  fi
+
+		done
+
+
+		# dealing on hidden directories except .local:
+		find $data_dir/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' | awk ' NF > 0 && ! /^[.](local|git)$/' |
+		while IFS= read -r line; do
+		  if [ ! -d $HOME/"$line" ]; then
+		    mkdir $HOME/"$line"
+		  fi
+
+		  if ! findmnt -al | grep -qE "^$HOME/$line"; then
+		    sudo mount -o rw,rbind $data_dir/"$line" $HOME/"$line"
+		  fi
+
+		done
+
+		# dealing on .local:
+		if [ -d $data_dir/.local ]; then
+			find $data_dir/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0' |
+			while IFS= read -r line; do
+			  if [ ! -d $HOME/.local/"$line" ]; then
+			    mkdir $HOME/.local/"$line"
+			  fi
+
+			  if ! findmnt -al | grep -qE "^$HOME/[.]local/$line"; then
+			    sudo mount -o rw,rbind $data_dir/.local/"$line" $HOME/.local/"$line"
+			  fi
+
+			done
+		fi
+	       
+	fi
+
+
+   fi
+
+
+
  
 #    if [ $_home != /home/$_distro-$_desktop ]; then
 #      _home=/home/$_distro-$_desktop
