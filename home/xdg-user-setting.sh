@@ -97,6 +97,8 @@ if which inxi > /dev/null 2>&1; then
   # system_uuid
   system_uuid=$( sudo dmidecode -s system-uuid )
 
+  sysinfo_file=/home/$root_uuid-$system_uuid 
+
 
   #getent passwd "$_user" | cut -d: -f6
 #  _home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
@@ -105,7 +107,8 @@ if which inxi > /dev/null 2>&1; then
   _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
   _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 
-  echo /home/$_distro-$_desktop | sudo tee /home/$root_uuid-$system_uuid > /dev/null 2>&1 
+echo "Distro: $_distro" | sudo tee $sysinfo_file > /dev/null 2>&1 
+echo "Desktop: $_desktop" | sudo tee -a $sysinfo_file > /dev/null 2>&1 
 
  
   if [ ! -d /home/$_distro-$_desktop ]; then
