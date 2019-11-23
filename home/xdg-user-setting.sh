@@ -93,34 +93,37 @@ if which inxi > /dev/null 2>&1; then
   _user=$( ps -o user= -p $$ | awk '{print $1}' )
 
   #  root uuid
-#  _uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )
+  _uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )
 
   #getent passwd "$_user" | cut -d: -f6
-  _home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
+#  _home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
 
   _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
   _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
+
+  echo /home/$_distro-$_desktop | sudo tee /home/$_uuid > /dev/null 2>&1 
+
  
   if [ ! -d /home/$_distro-$_desktop ]; then
     sudo mkdir /home/$_distro-$_desktop
     sudo chown -hR $_user:$_user /home/$_distro-$_desktop
   fi
  
-    if [ $_home != /home/$_distro-$_desktop ]; then
-      _home=/home/$_distro-$_desktop
-  
-  
-      # revise the home via /etc/passwd file:
-      # 某些字段可能为空值，故需要相应的考虑。
-      #  
-      # https://en.wikipedia.org/wiki/Name_Service_Switch
-      # https://www.cyberciti.biz/faq/understanding-etcpasswd-file-format/
-      # 
-      
-      sudo sed -Ei "s|^($_user:([^:]*:){4})[^:]*(:.*)$|\1$_home\3|"  /etc/passwd
-      
-    fi
+#    if [ $_home != /home/$_distro-$_desktop ]; then
+#      _home=/home/$_distro-$_desktop
+#  
+#  
+#      # revise the home via /etc/passwd file:
+#      # 某些字段可能为空值，故需要相应的考虑。
+#      #  
+#      # https://en.wikipedia.org/wiki/Name_Service_Switch
+#      # https://www.cyberciti.biz/faq/understanding-etcpasswd-file-format/
+#      # 
+#      
+#      sudo sed -Ei "s|^($_user:([^:]*:){4})[^:]*(:.*)$|\1$_home\3|"  /etc/passwd
+#      
+#    fi
 
  
 fi
