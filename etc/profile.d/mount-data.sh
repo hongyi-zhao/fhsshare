@@ -163,6 +163,22 @@ if [ -n "$_home" ]; then
 
 
    fi
+
+
+#https://specifications.freedesktop.org/menu-spec/latest/
+
+#https://wiki.archlinux.org/index.php/XDG_Base_Directory
+#    XDG_DATA_DIRS
+#        List of directories seperated by : (analogous to PATH).
+#        Should default to /usr/local/share:/usr/share.
+
+#for desktop files search:
+
+# If the following var is set to this, the desktop envirnment will not be logged in:
+# export XDG_DATA_DIRS=~/.local/share:$XDG_DATA_DIRS
+export XDG_DATA_DIRS=~/.local/share:/usr/local/share:/usr/share:$XDG_DATA_DIRS
+
+
    
 fi
 
