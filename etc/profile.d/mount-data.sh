@@ -118,7 +118,7 @@ if [ -n "$_home" ]; then
 		# %H     Starting-point under which file was found.  
 		# %p     File's name.
 		# %P     File's name with the name of the starting-point under which it was found removed.
-		find $data_dir/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0' |
+		find -L $data_dir/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0' |
 		while IFS= read -r line; do
 		  if [ ! -d $HOME/"$line" ]; then
 		    mkdir $HOME/"$line"
@@ -131,8 +131,9 @@ if [ -n "$_home" ]; then
 		done
 
 
-		# dealing on hidden directories except .local:
-		find $data_dir/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' | awk ' NF > 0 && ! /^[.](local|git)$/' |
+		# dealing on hidden directories except .local, .git and etc:
+                # the .git directory has been deleted, anyway, use the following for safe:
+		find -L $data_dir/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' | awk ' NF > 0 && ! /^[.](local|git)$/' |
 		while IFS= read -r line; do
 		  if [ ! -d $HOME/"$line" ]; then
 		    mkdir $HOME/"$line"
@@ -146,7 +147,7 @@ if [ -n "$_home" ]; then
 
 		# dealing on .local:
 		if [ -d $data_dir/.local ]; then
-			find $data_dir/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0' |
+			find -L $data_dir/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
 			while IFS= read -r line; do
 			  if [ ! -d $HOME/.local/"$line" ]; then
 			    mkdir $HOME/.local/"$line"
@@ -158,6 +159,23 @@ if [ -n "$_home" ]; then
 
 			done
 		fi
+
+		# dealing on .local/share:
+		if [ -d $data_dir/.local/share ]; then
+			find -L $data_dir/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
+			while IFS= read -r line; do
+			  if [ ! -d $HOME/.local/share/"$line" ]; then
+			    mkdir $HOME/.local/share/"$line"
+			  fi
+
+			  if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line"; then
+			    sudo mount -o rw,rbind $data_dir/.local/share/"$line" $HOME/.local/share/"$line"
+			  fi
+
+			done
+		fi
+
+
 	       
 	fi
 
@@ -184,6 +202,42 @@ fi
 
 
 
+
+
+
+# 在 .profile 中运行 inxi 能否检测到 Desktop 的值，
+# 是和distro有关的。故不可靠。
+
+# 采用这里的方法是可以的：
+# https://unix.stackexchange.com/questions/348321/purpose-of-the-autostart-scripts-directory
+#https://specifications.freedesktop.org/autostart-spec/autostart-spec-latest.html
+
+
+
+#https://wiki.archlinux.org/index.php/XDG_Base_Directory
+#https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+
+#     XDG_CONFIG_HOME
+# 
+#         Where user-specific configurations should be written (analogous to /etc).
+# 
+#         Should default to $HOME/.config.
+# 
+# 
+# 
+#     XDG_CACHE_HOME
+# 
+#         Where user-specific non-essential (cached) data should be written (analogous to /var/cache).
+# 
+#         Should default to $HOME/.cache.
+# 
+# 
+# 
+#     XDG_DATA_HOME
+# 
+#         Where user-specific data files should be written (analogous to /usr/share).
+# 
+#         Should default to $HOME/.local/share.
 
 
 

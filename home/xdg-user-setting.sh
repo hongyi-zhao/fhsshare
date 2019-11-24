@@ -159,13 +159,6 @@ fi
 #https://wiki.archlinux.org/index.php/XDG_Base_Directory
 #https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
 
-
-
-
-# 按照这个规范，设定一下相关的变量，就可以同时使用不同的 桌面环境，而保持同样的 home 目录。
-#  
-
-
 #     XDG_CONFIG_HOME
 # 
 #         Where user-specific configurations should be written (analogous to /etc).
