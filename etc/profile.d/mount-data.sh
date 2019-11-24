@@ -194,16 +194,17 @@ if [ -n "$_home" ]; then
 
 	# If the following var is set to this, the desktop envirnment will not be logged in:
 	# export XDG_DATA_DIRS=~/.local/share:$XDG_DATA_DIRS
+        # so, use the following form:
 	if ! grep -Eq "$HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
-	  export XDG_DATA_DIRS=~/.local/share:$XDG_DATA_DIRS
+	  export XDG_DATA_DIRS=$XDG_DATA_DIRS:~/.local/share
 	fi
 
 	if ! grep -Eq '/usr/local/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
-          export XDG_DATA_DIRS=/usr/local/share:$XDG_DATA_DIRS  
+          export XDG_DATA_DIRS=$XDG_DATA_DIRS:/usr/local/share 
 	fi
 
 	if ! grep -Eq '/usr/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
-	  export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
+	  export XDG_DATA_DIRS=$XDG_DATA_DIRS:/usr/share
 	fi
 
    

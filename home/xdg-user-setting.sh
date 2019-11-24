@@ -100,15 +100,20 @@ if which inxi > /dev/null 2>&1; then
   #  root uuid
   root_uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )
 
+  sysinfo_file=/home/$system_uuid-$root_uuid-$_user
+
   #getent passwd "$_user" | cut -d: -f6
   __home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
+
+if [ -f $sysinfo_file ]; then
   _home=/home/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' $sysinfo_file )
+fi
 
   # _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
   _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
   _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 
-  sysinfo_file=/home/$system_uuid-$root_uuid-$_user
+
 
   bash_eternal_history_dir=$data_dir/.bash_eternal_history.d
   bash_eternal_history_file=$bash_eternal_history_dir/$system_uuid-$root_uuid-$_user
