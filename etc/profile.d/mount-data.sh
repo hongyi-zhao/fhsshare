@@ -150,7 +150,7 @@ if [ -n "$_home" ]; then
 			find -L $data_dir/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
 			while IFS= read -r line; do
 			  if [ ! -d $HOME/.local/"$line" ]; then
-			    mkdir $HOME/.local/"$line"
+			    mkdir -p $HOME/.local/"$line"
 			  fi
 
 			  if ! findmnt -al | grep -qE "^$HOME/[.]local/$line"; then
@@ -165,7 +165,7 @@ if [ -n "$_home" ]; then
 			find -L $data_dir/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
 			while IFS= read -r line; do
 			  if [ ! -d $HOME/.local/share/"$line" ]; then
-			    mkdir $HOME/.local/share/"$line"
+			    mkdir -p $HOME/.local/share/"$line"
 			  fi
 
 			  if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line"; then
