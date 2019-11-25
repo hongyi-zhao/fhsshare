@@ -77,7 +77,8 @@ if which inxi > /dev/null 2>&1; then
   
 	# 一些用到的变量：
 	  data_dir=/home/data
-	 
+	  opt_dir=/home/opt 
+       
 	  _user=$( ps -o user= -p $$ | awk '{print $1}' )
 
 	  # system_uuid
@@ -101,6 +102,15 @@ if which inxi > /dev/null 2>&1; then
 	  bash_eternal_history_dir=$data_dir/.bash_eternal_history.d
 	  bash_eternal_history_file=$bash_eternal_history_dir/$system_uuid-$root_uuid-$_user
 
+
+	if [ ! -d $opt_dir ]; then
+	  sudo mkdir $opt_dir
+	  sudo chown -hR $_user:$_user $opt_dir
+	fi
+
+if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
+        sudo mount -o rw,rbind $opt_dir /opt
+fi        
 
 	if [ ! -d $__home ]; then
 	  sudo mkdir $__home
@@ -131,7 +141,7 @@ if which inxi > /dev/null 2>&1; then
 			    mkdir $HOME/"$line"
 			  fi
 
-			  if ! findmnt -al | grep -qE "^$HOME/$line"; then
+			  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
 			    sudo mount -o rw,rbind $data_dir/"$line" $HOME/"$line"
 			  fi
 
@@ -146,7 +156,7 @@ if which inxi > /dev/null 2>&1; then
 			    mkdir $HOME/"$line"
 			  fi
 
-			  if ! findmnt -al | grep -qE "^$HOME/$line"; then
+			  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
 			    sudo mount -o rw,rbind $data_dir/"$line" $HOME/"$line"
 			  fi
 
@@ -160,7 +170,7 @@ if which inxi > /dev/null 2>&1; then
 				    mkdir -p $HOME/.local/"$line"
 				  fi
 
-				  if ! findmnt -al | grep -qE "^$HOME/[.]local/$line"; then
+				  if ! findmnt -al | grep -qE "^$HOME/[.]local/$line[[:blank:]]"; then
 				    sudo mount -o rw,rbind $data_dir/.local/"$line" $HOME/.local/"$line"
 				  fi
 
@@ -175,7 +185,7 @@ if which inxi > /dev/null 2>&1; then
 				    mkdir -p $HOME/.local/share/"$line"
 				  fi
 
-				  if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line"; then
+				  if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line[[:blank:]]"; then
 				    sudo mount -o rw,rbind $data_dir/.local/share/"$line" $HOME/.local/share/"$line"
 				  fi
 
