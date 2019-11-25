@@ -100,6 +100,11 @@ fi
   bash_eternal_history_file=$bash_eternal_history_dir/$system_uuid-$root_uuid-$_user
 
 
+if [ ! -d $__home ]; then
+  sudo mkdir $__home
+  sudo chown -hR $_user:$_user $__home
+fi
+
 if [ -n "$_home" ]; then
    if [ $__home != $_home ] && [ $( id -u ) -ne 0 ]; then
      sudo mount -o rw,rbind $_home $__home
