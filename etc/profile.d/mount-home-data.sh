@@ -197,19 +197,18 @@ if [ -n "$_home" ]; then
 
 	#for desktop files search:
 
-	# If the following var is set to this, the desktop envirnment will not be logged in:
-	# export XDG_DATA_DIRS=~/.local/share:$XDG_DATA_DIRS
-        # so, use the following form:
+	# ref: ubuntu:
+        # /etc/profile.d/xdg_dirs_desktop_session.sh
 	if ! grep -Eq "$HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
-	  export XDG_DATA_DIRS=$XDG_DATA_DIRS:~/.local/share
+	  export XDG_DATA_DIRS=$HOME/.local/share:$XDG_DATA_DIRS
 	fi
 
 	if ! grep -Eq '/usr/local/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
-          export XDG_DATA_DIRS=$XDG_DATA_DIRS:/usr/local/share 
+          export XDG_DATA_DIRS=/usr/local/share:$XDG_DATA_DIRS 
 	fi
 
 	if ! grep -Eq '/usr/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
-	  export XDG_DATA_DIRS=$XDG_DATA_DIRS:/usr/share
+	  export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
 	fi
 
    
