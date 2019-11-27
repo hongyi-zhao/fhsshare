@@ -3,7 +3,10 @@
 #systemd-networkd
 
 #systemctl stop NetworkManager
+#systemctl disable NetworkManager
+
 # use this config file, then
+#systemctl enable systemd-networkd
 #systemctl start systemd-networkd
 
 [Match]
@@ -27,8 +30,12 @@ DNS=127.0.0.1
 #Now create a symlink to the systemd-resolved stub file:
 #sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 
+#
 #Start systemd-resolved with
 # use restart if it already started:
+
+# if not enabled:
+# systemctl enable systemd-resolved  
 
 #systemctl start systemd-resolved  
 
