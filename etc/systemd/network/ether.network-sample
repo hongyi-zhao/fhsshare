@@ -1,3 +1,4 @@
+# https://wiki.archlinux.org/index.php/Systemd-networkd_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)
 # https://forum.manjaro.org/t/howto-getting-rid-of-networkmanager-on-desktop-computers-alternatives/58183
 #systemd-networkd
 
@@ -6,9 +7,9 @@
 #systemctl start systemd-networkd
 
 [Match]
-Name=enp5s0 
+Name=en* 
 # for wired network it's most likely eno1, see output of ip link show to get the name)
-[Network]
+#[Network]
 #DHCP=yes 
 # or choose a specific IP, or ipv4 if you don't want ipv6 DHCP
 
