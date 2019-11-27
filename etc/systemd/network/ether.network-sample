@@ -1,12 +1,10 @@
 # https://wiki.archlinux.org/index.php/Systemd-networkd_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)
+#http://www.linuxfromscratch.org/lfs/view/8.0-systemd/chapter07/network.html
 # https://forum.manjaro.org/t/howto-getting-rid-of-networkmanager-on-desktop-computers-alternatives/58183
 #systemd-networkd
 
 #systemctl stop NetworkManager
-#systemctl disable NetworkManager
-
 # use this config file, then
-#systemctl enable systemd-networkd
 #systemctl start systemd-networkd
 
 [Match]
@@ -19,7 +17,7 @@ Name=en*
 #for static IPs you would probably need something like:
 
 [Network]
-Address=192.168.1.2
+Address=192.168.1.2/24
 Gateway=192.168.1.1
 DNS=127.0.0.1
 
@@ -30,12 +28,8 @@ DNS=127.0.0.1
 #Now create a symlink to the systemd-resolved stub file:
 #sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 
-#
 #Start systemd-resolved with
 # use restart if it already started:
-
-# if not enabled:
-# systemctl enable systemd-resolved  
 
 #systemctl start systemd-resolved  
 
