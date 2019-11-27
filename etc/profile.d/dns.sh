@@ -1,0 +1,1 @@
+/home/werner/software/anti-gfw/dns/dns.bash
