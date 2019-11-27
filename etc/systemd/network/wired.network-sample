@@ -1,0 +1,36 @@
+# https://forum.manjaro.org/t/howto-getting-rid-of-networkmanager-on-desktop-computers-alternatives/58183
+#systemd-networkd
+
+#systemctl stop NetworkManager
+# use this config file, then
+#systemctl start systemd-networkd
+
+[Match]
+Name=enp5s0 
+# for wired network it's most likely eno1, see output of ip link show to get the name)
+[Network]
+#DHCP=yes 
+# or choose a specific IP, or ipv4 if you don't want ipv6 DHCP
+
+#for static IPs you would probably need something like:
+
+[Network]
+Address=192.168.1.2
+Gateway=192.168.1.1
+DNS=127.0.0.1
+
+#systemd-resolved
+
+#First backup the existing /etc/resolv.conf:
+#sudo mv /etc/resolv.conf /etc/resolv.conf.backup
+#Now create a symlink to the systemd-resolved stub file:
+#sudo ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+
+#Start systemd-resolved with
+# use restart if it already started:
+
+#systemctl start systemd-resolved  
+
+#and check its status with
+
+#resolvectl status
