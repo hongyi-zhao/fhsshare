@@ -118,10 +118,14 @@ if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
         sudo mount -o rw,rbind $opt_dir /opt
 fi        
 
-	if [ ! -d $__home ]; then
-	  sudo mkdir $__home
-	  sudo chown -hR $_user:$_user $__home
-	fi
+# prepare a clean $__home for mount:
+	if [ -d $__home ]; then
+            sudo rm -fr $__home
+        fi
+	
+        sudo mkdir $__home
+	sudo chown -hR $_user:$_user $__home
+	
 
 	if [ -n "$_home" ]; then
 	   if [ $__home != $_home ] && [ $( id -u ) -ne 0 ]; then
