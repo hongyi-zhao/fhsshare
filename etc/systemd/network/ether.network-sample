@@ -1,3 +1,29 @@
+
+# 实际测试，这个方法是并不是很稳定。
+# 发现，我的dns脚本执行经常不对。
+# 暂时采用 networkmanager的方法。
+
+# 禁用 systemd-networkd 的方法：
+# sudo systemctl disable systemd-networkd
+# sudo systemctl disable systemd-resolved
+
+
+# 各种方法，关键是 /etc/resolv.conf 的设定。
+# 相关方法都有自动修改/etc/resolv.conf 的能力，
+# 但是，networkmanager/systemd-networkd 却常常会生成 
+# 127.0.0.53 这个的dns。好像不对。
+#  如果要自己设定这个文件，就要避免被他们覆盖。
+# 相关方法ref 我在该文件中的说明。
+
+# git clone 测试：
+# git clone https://github.com/torvalds/linux.git linux.git
+# 速度受制与两方面：
+# 1- /etc/resolv.conf 中的dns
+# 2- git config --global -e 所设定的代理。
+
+
+
+
 # https://wiki.archlinux.org/index.php/Systemd-networkd_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)
 #http://www.linuxfromscratch.org/lfs/view/8.0-systemd/chapter07/network.html
 # https://forum.manjaro.org/t/howto-getting-rid-of-networkmanager-on-desktop-computers-alternatives/58183

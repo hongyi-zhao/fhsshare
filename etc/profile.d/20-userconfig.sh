@@ -69,6 +69,12 @@ pwd -P
 # cd $topdir/$( echo "${BASH_SOURCE[0]}" | sed -E 's/[.][^.]+$//' )
 
 
+
+
+# 这些文件的执行是字典序。
+# 所以要保证相应的文件名之间符合调用的先后顺序。
+
+
 # 首先需要准备一个相对干净的 $data_dir 目录，
 # 其标准是 和 https://github.com/hongyi-zhao/dotfiles.git 的内容不干扰。
 
