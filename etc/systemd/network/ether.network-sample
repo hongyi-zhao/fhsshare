@@ -1,16 +1,18 @@
-# 采用 networkmanager /systemd-networkd 的方法。
+# use resolvconf can add additional dns as follows:
 
-# 禁用systemd-resolved：
-# sudo systemctl disable systemd-resolved
+#sudo apt-get install resolvconf
+#sudo vim /etc/resolvconf/resolv.conf.d/head
+#nameserver 8.8.8.8
+#nameserver 8.8.4.4
+#sudo resolvconf -u
 
-# then, use the self made  /etc/resolv.conf 
 
-# 各种方法，关键是 /etc/resolv.conf 的设定。
-# 相关方法都有自动修改/etc/resolv.conf 的能力，
-# 但是，networkmanager/systemd-networkd 却常常会生成 
-# 127.0.0.53 的dns。好像不对。
-#  如果要自己设定这个文件，就要避免被他们覆盖。
-# 相关方法ref 我在 /etc/resolv.conf 中的说明。
+# 采用 networkmanager | systemd-networkd  + systemd-resolved 的方法。
+
+# if dont want the /etc/resolv.conf be  OVERWRITTEN:
+# but this method is more cubersome and will block the operation of systemd-resolved/resolvconf
+# on updating /etc/resolv.conf, so not use it.
+# sudo chattr +i /etc/resolv.conf 
 
 # git clone 测试：
 # git clone https://github.com/torvalds/linux.git linux.git
@@ -18,8 +20,8 @@
 # 1- /etc/resolv.conf 中的dns
 # 2- git config --global -e 所设定的代理。
 
-
-
+# for more info:
+# man systemd.network
 
 # https://wiki.archlinux.org/index.php/Systemd-networkd_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)
 #http://www.linuxfromscratch.org/lfs/view/8.0-systemd/chapter07/network.html
@@ -33,16 +35,36 @@
 [Match]
 Name=en* 
 # for wired network it's most likely eno1, see output of ip link show to get the name)
-#[Network]
-#DHCP=yes 
-# or choose a specific IP, or ipv4 if you don't want ipv6 DHCP
+[Network]
+# Enables DHCPv4 and/or DHCPv6 client support. Accepts "yes", "no",
+#           "ipv4", or "ipv6". Defaults to "no".
+DHCP=yes 
 
 #for static IPs you would probably need something like:
 
-[Network]
-Address=192.168.1.2/24
-Gateway=192.168.1.1
+#Address=192.168.1.2/24
+#Gateway=192.168.1.1
+
 DNS=127.0.0.1
+
+
+[DHCP]
+#       The "[DHCP]" section configures the DHCPv4 and DHCP6 client, if it is
+#       enabled with the DHCP= setting described above:
+
+#       UseDNS=false
+#           When true (the default), the DNS servers received from the DHCP
+#           server will be used and take precedence over any statically
+#           configured ones.
+
+#           This corresponds to the nameserver option in resolv.conf(5).
+
+
+
+
+
+
+
 
 #systemd-resolved
 
