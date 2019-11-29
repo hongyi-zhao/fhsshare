@@ -85,16 +85,20 @@ DHCP=yes
 
 # So,  resolvconf is not needed while using systemd-resolved
 
-DNS=127.0.0.1
-DNS=172.16.0.1
-DNS=192.168.1.1
+# set this line in /etc/resolvconf/resolv.conf.d/head
+#DNS=127.0.0.1
+
+# let systemd-networkd automatically obtain the follows:
+#DNS=172.16.0.1
+#DNS=192.168.1.1
 
 
+# use the default option for this:
 [DHCP]
 #       The "[DHCP]" section configures the DHCPv4 and DHCP6 client, if it is
 #       enabled with the DHCP= setting described above:
 
-       UseDNS=false
+#       UseDNS=false
 #           When true (the default), the DNS servers received from the DHCP
 #           server will be used and take precedence over any statically
 #           configured ones.
