@@ -33,7 +33,10 @@
 #systemctl start systemd-networkd
 
 [Match]
-Name=en* 
+Name=en*
+# enp5s0
+#MACAddress=0c:c4:7a:6a:f7:f0
+
 # for wired network it's most likely eno1, see output of ip link show to get the name)
 [Network]
 # Enables DHCPv4 and/or DHCPv6 client support. Accepts "yes", "no",
@@ -89,15 +92,15 @@ DHCP=ipv4
 # than only depending on  systemd-resolved for this type of job:
 #etc/resolvconf/resolv.conf.d/head
 
-DNS=127.0.0.1
+#DNS=127.0.0.1
 
 
 
 
 # office
-DNS=172.16.0.1
+#DNS=172.16.0.1
 # home
-DNS=192.168.1.1
+#DNS=192.168.1.1
 
 
 # disable the default option for this:
