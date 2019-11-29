@@ -118,13 +118,17 @@ if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
         sudo mount -o rw,rbind $opt_dir /opt
 fi        
 
+# this method is a serious error of mine, it will 
+# delete all stuff in $__home when logout the desktop and
+# then re-login 
+ 
 # prepare a clean $__home for mount:
-	if [ -d $__home ]; then
-            sudo rm -fr $__home
-        fi
-	
-        sudo mkdir $__home
-	sudo chown -hR $_user:$_user $__home
+#	if [ -d $__home ]; then
+#            sudo rm -fr $__home
+#        fi
+#	
+#        sudo mkdir $__home
+#	sudo chown -hR $_user:$_user $__home
 	
 
 	if [ -n "$_home" ]; then
