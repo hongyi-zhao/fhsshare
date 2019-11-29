@@ -38,7 +38,7 @@ Name=en*
 [Network]
 # Enables DHCPv4 and/or DHCPv6 client support. Accepts "yes", "no",
 #           "ipv4", or "ipv6". Defaults to "no".
-DHCP=yes 
+DHCP=ipv4 
 
 #       Address=
 #           A static IPv4 or IPv6 address and its prefix length, separated by a
@@ -85,20 +85,27 @@ DHCP=yes
 
 # So,  resolvconf is not needed while using systemd-resolved
 
-# set this line in /etc/resolvconf/resolv.conf.d/head
-#DNS=127.0.0.1
+# use the following file to set the stub resolver is ineffective
+# than only depending on  systemd-resolved for this type of job:
+#etc/resolvconf/resolv.conf.d/head
 
-# let systemd-networkd automatically obtain the follows:
-#DNS=172.16.0.1
-#DNS=192.168.1.1
+DNS=127.0.0.1
 
 
-# use the default option for this:
+
+
+# office
+DNS=172.16.0.1
+# home
+DNS=192.168.1.1
+
+
+# disable the default option for this:
 [DHCP]
 #       The "[DHCP]" section configures the DHCPv4 and DHCP6 client, if it is
 #       enabled with the DHCP= setting described above:
 
-#       UseDNS=false
+       UseDNS=false
 #           When true (the default), the DNS servers received from the DHCP
 #           server will be used and take precedence over any statically
 #           configured ones.
