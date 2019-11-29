@@ -2,7 +2,7 @@
 
 # put in this dir: /etc/xdg/autostart/
 [Desktop Entry]
-Exec=/home/xdg-user-setting.sh
+Exec=/etc/xdg/autostart/xdg-user-setting.sh
 Icon=system-run
 # NotShowIn=GNOME # Run in all X environments
 Terminal=false
