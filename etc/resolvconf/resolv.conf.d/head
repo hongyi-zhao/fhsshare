@@ -14,4 +14,4 @@
 # in this case, the systemd-resolve will automatically select
 #  the first one which is live for using and remember it till
 # it is unavailable in the future.
-#nameserver 127.0.0.1
+nameserver 127.0.0.1
