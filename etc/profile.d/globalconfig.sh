@@ -83,7 +83,7 @@ if which inxi > /dev/null 2>&1; then
   
 	# 一些用到的变量：
 	  data_dir=/home/data
-	  opt_dir=/home/opt 
+	  opt_dir=/opt 
        
 	  _user=$( ps -o user= -p $$ | awk '{print $1}' )
 
@@ -109,14 +109,15 @@ if which inxi > /dev/null 2>&1; then
 	  bash_eternal_history_file=$bash_eternal_history_dir/$system_uuid-$root_uuid-$_user
 
 
-	if [ ! -d $opt_dir ]; then
-	  sudo mkdir $opt_dir
-	  sudo chown -hR $_user:$_user $opt_dir
-	fi
+#	if [ ! -d $opt_dir ]; then
+#	  sudo mkdir $opt_dir
+#	  sudo chown -hR $_user:$_user $opt_dir
+#	fi
 
-if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
-        sudo mount -o rw,rbind $opt_dir /opt
-fi        
+#  if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
+#       sudo mount -o rw,rbind $opt_dir /opt
+#  fi        
+
 
 # this method is a serious error of mine, it will 
 # delete all stuff in $__home when logout the desktop and
