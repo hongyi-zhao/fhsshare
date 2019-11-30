@@ -98,10 +98,6 @@ if which inxi > /dev/null 2>&1; then
 	  #getent passwd "$_user" | cut -d: -f6
 	  __home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
-	if [ -f $sysinfo_file ]; then
-	  _home=/home/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' $sysinfo_file )
-	fi
-
 	  # _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
 	  _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
 	  _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
@@ -133,6 +129,8 @@ if [ -d $mnt_dirname/$part/$data_dirname ]; then
   if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
      sudo mount -o rw,rbind $opt_dirname /opt
   fi
+  
+  break
 
 else
   sudo umount $mnt_dirname/$part
@@ -147,18 +145,27 @@ done
 
 
 
-
-# this method is a serious error of mine, it will 
-# delete all stuff in $__home when logout the desktop and
-# then re-login 
- 
 # prepare a clean $__home for mount:
-#	if [ -d $__home ]; then
-#            sudo rm -fr $__home
-#        fi
-#	
-#        sudo mkdir $__home
-#	sudo chown -hR $_user:$_user $__home
+
+# be sure to use the finmnt cond , otherwise the serious error will be occur:
+# all stuff mounted on $__home will be deleted when do a logout and re-login operation: 
+
+
+if ! findmnt -al | grep -qE "^$__home[[:blank:]]"; then
+
+	if [ -d $__home ]; then
+            sudo rm -fr $__home
+        fi
+	
+        sudo mkdir $__home
+	sudo chown -hR $_user:$_user $__home
+
+fi
+
+
+	if [ -f $sysinfo_file ]; then
+	  _home=/home/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' $sysinfo_file )
+	fi
 	
 
 	if [ -n "$_home" ]; then
