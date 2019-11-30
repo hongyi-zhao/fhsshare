@@ -150,18 +150,29 @@ done  < <( lsblk -o uuid,fstype,mountpoint | awk ' $2 == "ext4" && $3 == "" { pr
 # be sure to use the finmnt cond , otherwise the serious error will be occur:
 # all stuff mounted on $__home will be deleted when do a logout and re-login operation: 
 
-# this is safe now, but it seems that it's needless to do so:
+# by using the finmnt cond, this is safe now, but it seems that it's needless to do so:
 
-if ! findmnt -al | grep -qE "^$__home[[:blank:]]"; then
+#if ! findmnt -al | grep -qE "^$__home[[:blank:]]"; then
 
-	if [ -d $__home ]; then
-            sudo rm -fr $__home
-        fi
-	
-       sudo mkdir $__home
-	sudo chown -hR $_user:$_user $__home
+#	if [ -d $__home ]; then
+#            sudo rm -fr $__home
+#        fi
+#	
+#       sudo mkdir $__home
+#       sudo chown -hR $_user:$_user $__home
 
+#fi
+
+
+# using the following code is enough:
+
+if [ ! -d $__home ]; then
+  sudo mkdir $__home
+  sudo chown -hR $_user:$_user $__home
 fi
+	
+
+
 
 
 
