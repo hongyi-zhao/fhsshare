@@ -119,13 +119,10 @@ fi
   bash_eternal_history_file=$bash_eternal_history_dir/$system_uuid-$root_uuid-$_user
 
 
-
-  echo "Distro: $_distro" | sudo tee $sysinfo_file > /dev/null 2>&1 
-  echo "Desktop: $_desktop" | sudo tee -a $sysinfo_file > /dev/null 2>&1 
-  
-
- 
   if [ ! -d /home/$_distro-$_desktop ]; then
+    echo "Distro: $_distro" | sudo tee $sysinfo_file > /dev/null 2>&1 
+    echo "Desktop: $_desktop" | sudo tee -a $sysinfo_file > /dev/null 2>&1 
+  
     sudo mkdir /home/$_distro-$_desktop
     sudo chown -hR $_user:$_user /home/$_distro-$_desktop
   fi
