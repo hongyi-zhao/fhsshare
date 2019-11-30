@@ -91,7 +91,8 @@ shopt -s nullglob # Ensure shell expansion with 0 files expands to an empty list
 if which inxi > /dev/null 2>&1; then 
 
   # 一些用到的变量：
-  data_dir=/home/data
+  mnt_by_uuid=/mnt/dev/disk/by-uuid  
+
  
   _user=$( ps -o user= -p $$ | awk '{print $1}' )
 
@@ -100,37 +101,46 @@ if which inxi > /dev/null 2>&1; then
   #  root uuid
   root_uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )
 
-  sysinfo_file=/home/$system_uuid-$root_uuid-$_user
+
 
   #getent passwd "$_user" | cut -d: -f6
   __home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
-if [ -f $sysinfo_file ]; then
-  _home=/home/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' $sysinfo_file )
-fi
+
 
   # _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
   _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
   _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 
 
+  data_share=$( find $mnt_by_uuid/*/home -maxdepth 1 -type d -regextype posix-extended -regex ".*/home/data$" )
+  home_share=$( dirname "$data_share" )
 
-  bash_eternal_history_dir=$data_dir/.bash_eternal_history.d
+
+
+  sysinfo_file=$home_share/$system_uuid-$root_uuid-$_user
+
+if [ -f $sysinfo_file ]; then
+  _home=$home_share/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' $sysinfo_file )
+fi
+
+
+  bash_eternal_history_dir=$data_share/.bash_eternal_history.d
   bash_eternal_history_file=$bash_eternal_history_dir/$system_uuid-$root_uuid-$_user
 
 
-  if [ ! -d /home/$_distro-$_desktop ]; then
+  if [ ! -d $home_share/$_distro-$_desktop ]; then
     echo "Distro: $_distro" | sudo tee $sysinfo_file > /dev/null 2>&1 
     echo "Desktop: $_desktop" | sudo tee -a $sysinfo_file > /dev/null 2>&1 
   
-    sudo mkdir /home/$_distro-$_desktop
-    sudo chown -hR $_user:$_user /home/$_distro-$_desktop
+    sudo mkdir $home_share/$_distro-$_desktop
+    sudo chown -hR $_user:$_user $home_share/$_distro-$_desktop
   fi
 
 
 
-#    if [ $_home != /home/$_distro-$_desktop ]; then
-#      _home=/home/$_distro-$_desktop
+#    if [ $_home != $home_share/$_distro-$_desktop ]; then
+#      _home=$home_share/$_distro-$_desktop
 #  
 #  
 #      # revise the home via /etc/passwd file:

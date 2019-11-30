@@ -75,15 +75,14 @@ pwd -P
 # 所以要保证相应的文件名之间符合调用的先后顺序。
 
 
-# 首先需要准备一个相对干净的 $data_dirname 目录，
+# 首先需要准备一个相对干净的 $data_share 目录，
 # 其标准是 和 https://github.com/hongyi-zhao/dotfiles.git 的内容不干扰。
 
 
 if which inxi > /dev/null 2>&1; then 
   
 	# 一些用到的变量：
-          data_dirname=/home/data
-          mnt_dirname=/mnt/dev/disk/by-uuid   
+          mnt_by_uuid=/mnt/dev/disk/by-uuid   
        
      
 	  _user=$( ps -o user= -p $$ | awk '{print $1}' )
@@ -93,7 +92,7 @@ if which inxi > /dev/null 2>&1; then
 	  #  root uuid
 	  root_uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )
 
-	  sysinfo_file=/home/$system_uuid-$root_uuid-$_user
+
 
 	  #getent passwd "$_user" | cut -d: -f6
 	  __home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
@@ -102,46 +101,47 @@ if which inxi > /dev/null 2>&1; then
 	  _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
 	  _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 
-	  bash_eternal_history_dir=$data_dirname/.bash_eternal_history.d
-	  bash_eternal_history_file=$bash_eternal_history_dir/$system_uuid-$root_uuid-$_user
 
 
-
-lsblk -o uuid,fstype,mountpoint | awk ' $2 == "ext4" && $3 == "" { print $1 } ' |
 while IFS= read -r part; do
-if [ ! -d $mnt_dirname/$part ]; then
-  sudo mkdir -p $mnt_dirname/$part
-fi
 
-sudo mount -U $part $mnt_dirname/$part
+	if [ ! -d $mnt_by_uuid/$part ]; then
+	  sudo mkdir -p $mnt_by_uuid/$part
+	fi
 
-if [ -d $mnt_dirname/$part/$data_dirname ]; then
-  #echo $part;
-  sudo mount -o rw,rbind $mnt_dirname/$part/home /home
+	sudo mount -U $part $mnt_by_uuid/$part
 
-  opt_dirname=$mnt_dirname/$part/opt
+	if [ -d $mnt_by_uuid/$part/home/data ]; then
+	  #echo $part;
+	#  sudo mount -o rw,rbind $mnt_by_uuid/$part/home /home
+          
+          home_share=$mnt_by_uuid/$part/home
+          data_share=$home_share/data   
+       
+	  opt_share=$mnt_by_uuid/$part/opt
 
-  if [ ! -d $opt_dirname ]; then
-       sudo  mkdir $opt_dirname
-       sudo  chown -hR $_user:$_user $opt_dirname
-  fi
+	  if [ ! -d $opt_share ]; then
+	       sudo  mkdir $opt_share
+	       sudo  chown -hR $_user:$_user $opt_share
+	  fi
 
-  if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
-     sudo mount -o rw,rbind $opt_dirname /opt
-  fi
-  
-  break
+	  if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
+	     sudo mount -o rw,rbind $opt_share /opt
+	  fi
+	  
+	  break
 
-else
-  sudo umount $mnt_dirname/$part
-  sudo rm -fr $mnt_dirname/$part
-fi
+	else
+	  sudo umount $mnt_by_uuid/$part
+	  sudo rm -fr $mnt_by_uuid/$part
+	fi
 
-done
-
-
+done  < <( lsblk -o uuid,fstype,mountpoint | awk ' $2 == "ext4" && $3 == "" { print $1 } ' )
 
 
+
+	  bash_eternal_history_dir=$data_share/.bash_eternal_history.d
+	  bash_eternal_history_file=$bash_eternal_history_dir/$system_uuid-$root_uuid-$_user
 
 
 
@@ -150,6 +150,7 @@ done
 # be sure to use the finmnt cond , otherwise the serious error will be occur:
 # all stuff mounted on $__home will be deleted when do a logout and re-login operation: 
 
+# this is safe now, but it seems that it's needless to do so:
 
 if ! findmnt -al | grep -qE "^$__home[[:blank:]]"; then
 
@@ -157,14 +158,18 @@ if ! findmnt -al | grep -qE "^$__home[[:blank:]]"; then
             sudo rm -fr $__home
         fi
 	
-        sudo mkdir $__home
+       sudo mkdir $__home
 	sudo chown -hR $_user:$_user $__home
 
 fi
 
 
+
+	sysinfo_file=$home_share/$system_uuid-$root_uuid-$_user
+
+
 	if [ -f $sysinfo_file ]; then
-	  _home=/home/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' $sysinfo_file )
+	  _home=$home_share/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' $sysinfo_file )
 	fi
 	
 
@@ -173,7 +178,7 @@ fi
 	     sudo mount -o rw,rbind $_home $__home
 
 
-		if [ -d $data_dirname ]; then
+		if [ -d $data_share ]; then
 
 			#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -186,14 +191,14 @@ fi
 			# %H     Starting-point under which file was found.  
 			# %p     File's name.
 			# %P     File's name with the name of the starting-point under which it was found removed.
-			find -L $data_dirname/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0' |
+			find -L $data_share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0' |
 			while IFS= read -r line; do
 			  if [ ! -d $HOME/"$line" ]; then
 			    mkdir $HOME/"$line"
 			  fi
 
 			  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-			    sudo mount -o rw,rbind $data_dirname/"$line" $HOME/"$line"
+			    sudo mount -o rw,rbind $data_share/"$line" $HOME/"$line"
 			  fi
 
 			done
@@ -201,43 +206,43 @@ fi
 
 			# dealing on hidden directories except .local, .git and etc:
 		        # the .git directory has been deleted, anyway, use the following for safe:
-			find -L $data_dirname/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' | awk ' NF > 0 && ! /^[.](local|git)$/' |
+			find -L $data_share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' | awk ' NF > 0 && ! /^[.](local|git)$/' |
 			while IFS= read -r line; do
 			  if [ ! -d $HOME/"$line" ]; then
 			    mkdir $HOME/"$line"
 			  fi
 
 			  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-			    sudo mount -o rw,rbind $data_dirname/"$line" $HOME/"$line"
+			    sudo mount -o rw,rbind $data_share/"$line" $HOME/"$line"
 			  fi
 
 			done
 
 			# dealing on .local:
-			if [ -d $data_dirname/.local ]; then
-				find -L $data_dirname/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
+			if [ -d $data_share/.local ]; then
+				find -L $data_share/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
 				while IFS= read -r line; do
 				  if [ ! -d $HOME/.local/"$line" ]; then
 				    mkdir -p $HOME/.local/"$line"
 				  fi
 
 				  if ! findmnt -al | grep -qE "^$HOME/[.]local/$line[[:blank:]]"; then
-				    sudo mount -o rw,rbind $data_dirname/.local/"$line" $HOME/.local/"$line"
+				    sudo mount -o rw,rbind $data_share/.local/"$line" $HOME/.local/"$line"
 				  fi
 
 				done
 			fi
 
 			# dealing on .local/share:
-			if [ -d $data_dirname/.local/share ]; then
-				find -L $data_dirname/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
+			if [ -d $data_share/.local/share ]; then
+				find -L $data_share/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
 				while IFS= read -r line; do
 				  if [ ! -d $HOME/.local/share/"$line" ]; then
 				    mkdir -p $HOME/.local/share/"$line"
 				  fi
 
 				  if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line[[:blank:]]"; then
-				    sudo mount -o rw,rbind $data_dirname/.local/share/"$line" $HOME/.local/share/"$line"
+				    sudo mount -o rw,rbind $data_share/.local/share/"$line" $HOME/.local/share/"$line"
 				  fi
 
 				done
