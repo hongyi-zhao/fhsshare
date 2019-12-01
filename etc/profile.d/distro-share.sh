@@ -75,16 +75,13 @@ pwd -P
 # 所以要保证相应的文件名之间符合调用的先后顺序。
 
 
-# 首先需要准备一个相对干净的 $data_share 目录，
+# 首先需要准备一个相对干净的 $DATA_DISTRO_SHARE 目录，
 # 其标准是 和 https://github.com/hongyi-zhao/dotfiles.git 的内容不干扰。
 
 
 if which inxi > /dev/null 2>&1; then 
   
 	# 一些用到的变量：
-          mnt_by_uuid=/mnt/dev/disk/by-uuid   
-       
-     
 	  _user=$( ps -o user= -p $$ | awk '{print $1}' )
 
 	  # system_uuid
@@ -102,94 +99,86 @@ if which inxi > /dev/null 2>&1; then
 	  _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 
 
+	# prepare a clean $__home for mount:
+
+	# be sure to use the finmnt cond , otherwise the serious error will be occur:
+	# all stuff mounted on $__home will be deleted when do a logout and re-login operation: 
+
+	# by using the finmnt cond, this is safe now, but it seems that it's needless to do so:
+
+	#if ! findmnt -al | grep -qE "^$__home[[:blank:]]"; then
+
+	#	if [ -d $__home ]; then
+	#            sudo rm -fr $__home
+	#        fi
+	#	
+	#       sudo mkdir $__home
+	#       sudo chown -hR $_user:$_user $__home
+
+	#fi
+
+
+	# using the following code is enough:
+
+	if [ ! -d $__home ]; then
+	  sudo mkdir $__home
+	  sudo chown -hR $_user:$_user $__home
+	fi
+
+
+
+# export distro_share relative vars:
+mnt_distro_share=/mnt/dev/disk/by-uuid
 
 while IFS= read -r part; do
 
-	if [ ! -d $mnt_by_uuid/$part ]; then
-	  sudo mkdir -p $mnt_by_uuid/$part
+	if [ ! -d $mnt_distro_share/$part ]; then
+	  sudo mkdir -p $mnt_distro_share/$part
 	fi
 
-	sudo mount -U $part $mnt_by_uuid/$part
+	sudo mount -U $part $mnt_distro_share/$part
 
-	if [ -d $mnt_by_uuid/$part/home/data ]; then
+	if [ -d $mnt_distro_share/$part/home/data ]; then
 	  #echo $part;
-	#  sudo mount -o rw,rbind $mnt_by_uuid/$part/home /home
+	#  sudo mount -o rw,rbind $mnt_distro_share/$part/home /home
           
-          home_share=$mnt_by_uuid/$part/home
-          data_share=$home_share/data   
+          PART_DISTRO_SHARE=$mnt_distro_share/$part
+          HOME_DISTRO_SHARE=$PART_DISTRO_SHARE/home
+          DATA_DISTRO_SHARE=$HOME_DISTRO_SHARE/data  
+          INFO_DISTRO_SHARE=$HOME_DISTRO_SHARE/$system_uuid-$root_uuid-$_user 
        
-	  opt_share=$mnt_by_uuid/$part/opt
+	  OPT_DISTRO_SHARE=$PART_DISTRO_SHARE/opt
 
-	  if [ ! -d $opt_share ]; then
-	       sudo  mkdir $opt_share
-	       sudo  chown -hR $_user:$_user $opt_share
+          export PART_DISTRO_SHARE
+           
+	  if [ ! -d $OPT_DISTRO_SHARE ]; then
+	       sudo  mkdir $OPT_DISTRO_SHARE
+	       sudo  chown -hR $_user:$_user $OPT_DISTRO_SHARE
 	  fi
 
 	  if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
-	     sudo mount -o rw,rbind $opt_share /opt
+	     sudo mount -o rw,rbind $OPT_DISTRO_SHARE /opt
 	  fi
 	  
 	  break
 
 	else
-	  sudo umount $mnt_by_uuid/$part
-	  sudo rm -fr $mnt_by_uuid/$part
+	  sudo umount $mnt_distro_share/$part
+	  sudo rm -fr $mnt_distro_share/$part
 	fi
 
 done  < <( lsblk -o uuid,fstype,mountpoint | awk ' $2 == "ext4" && $3 == "" { print $1 } ' )
 
 
-
-	  bash_eternal_history_dir=$data_share/.bash_eternal_history.d
-	  bash_eternal_history_file=$bash_eternal_history_dir/$system_uuid-$root_uuid-$_user
-
-
-
-# prepare a clean $__home for mount:
-
-# be sure to use the finmnt cond , otherwise the serious error will be occur:
-# all stuff mounted on $__home will be deleted when do a logout and re-login operation: 
-
-# by using the finmnt cond, this is safe now, but it seems that it's needless to do so:
-
-#if ! findmnt -al | grep -qE "^$__home[[:blank:]]"; then
-
-#	if [ -d $__home ]; then
-#            sudo rm -fr $__home
-#        fi
-#	
-#       sudo mkdir $__home
-#       sudo chown -hR $_user:$_user $__home
-
-#fi
-
-
-# using the following code is enough:
-
-if [ ! -d $__home ]; then
-  sudo mkdir $__home
-  sudo chown -hR $_user:$_user $__home
-fi
 	
+	if [ -f $INFO_DISTRO_SHARE ]; then
+	  _home=$HOME_DISTRO_SHARE/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' $INFO_DISTRO_SHARE )
 
-
-
-
-
-	sysinfo_file=$home_share/$system_uuid-$root_uuid-$_user
-
-
-	if [ -f $sysinfo_file ]; then
-	  _home=$home_share/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' $sysinfo_file )
-	fi
-	
-
-	if [ -n "$_home" ]; then
 	   if [ $__home != $_home ] && [ $( id -u ) -ne 0 ]; then
 	     sudo mount -o rw,rbind $_home $__home
 
 
-		if [ -d $data_share ]; then
+		if [ -d $DATA_DISTRO_SHARE ]; then
 
 			#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -202,14 +191,14 @@ fi
 			# %H     Starting-point under which file was found.  
 			# %p     File's name.
 			# %P     File's name with the name of the starting-point under which it was found removed.
-			find -L $data_share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0' |
+			find -L $DATA_DISTRO_SHARE/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0' |
 			while IFS= read -r line; do
 			  if [ ! -d $HOME/"$line" ]; then
 			    mkdir $HOME/"$line"
 			  fi
 
 			  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-			    sudo mount -o rw,rbind $data_share/"$line" $HOME/"$line"
+			    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/"$line" $HOME/"$line"
 			  fi
 
 			done
@@ -217,43 +206,43 @@ fi
 
 			# dealing on hidden directories except .local, .git and etc:
 		        # the .git directory has been deleted, anyway, use the following for safe:
-			find -L $data_share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' | awk ' NF > 0 && ! /^[.](local|git)$/' |
+			find -L $DATA_DISTRO_SHARE/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' | awk ' NF > 0 && ! /^[.](local|git)$/' |
 			while IFS= read -r line; do
 			  if [ ! -d $HOME/"$line" ]; then
 			    mkdir $HOME/"$line"
 			  fi
 
 			  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-			    sudo mount -o rw,rbind $data_share/"$line" $HOME/"$line"
+			    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/"$line" $HOME/"$line"
 			  fi
 
 			done
 
 			# dealing on .local:
-			if [ -d $data_share/.local ]; then
-				find -L $data_share/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
+			if [ -d $DATA_DISTRO_SHARE/.local ]; then
+				find -L $DATA_DISTRO_SHARE/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
 				while IFS= read -r line; do
 				  if [ ! -d $HOME/.local/"$line" ]; then
 				    mkdir -p $HOME/.local/"$line"
 				  fi
 
 				  if ! findmnt -al | grep -qE "^$HOME/[.]local/$line[[:blank:]]"; then
-				    sudo mount -o rw,rbind $data_share/.local/"$line" $HOME/.local/"$line"
+				    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/.local/"$line" $HOME/.local/"$line"
 				  fi
 
 				done
 			fi
 
 			# dealing on .local/share:
-			if [ -d $data_share/.local/share ]; then
-				find -L $data_share/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
+			if [ -d $DATA_DISTRO_SHARE/.local/share ]; then
+				find -L $DATA_DISTRO_SHARE/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
 				while IFS= read -r line; do
 				  if [ ! -d $HOME/.local/share/"$line" ]; then
 				    mkdir -p $HOME/.local/share/"$line"
 				  fi
 
 				  if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line[[:blank:]]"; then
-				    sudo mount -o rw,rbind $data_share/.local/share/"$line" $HOME/.local/share/"$line"
+				    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/.local/share/"$line" $HOME/.local/share/"$line"
 				  fi
 
 				done
