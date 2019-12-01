@@ -112,14 +112,14 @@ if command -v inxi > /dev/null 2>&1; then
 
 
 	# distro_share relative vars:
-	# PART_DISTRO_SHARE is exported by /etc/profile.d/distro_share.sh
+	# DISTRO_SHARE is exported by /etc/profile.d/distro_share.sh
 
-	if [ -n "$PART_DISTRO_SHARE"  ]; then
-		  HOME_DISTRO_SHARE=$PART_DISTRO_SHARE/home
+	if [ -n "$DISTRO_SHARE"  ]; then
+		  HOME_DISTRO_SHARE=$DISTRO_SHARE/home
 		  DATA_DISTRO_SHARE=$HOME_DISTRO_SHARE/data  
 		  INFO_DISTRO_SHARE=$HOME_DISTRO_SHARE/$system_uuid-$root_uuid-$_user 
 	       
-		  OPT_DISTRO_SHARE=$PART_DISTRO_SHARE/opt
+		  OPT_DISTRO_SHARE=$DISTRO_SHARE/opt
 
 		if [ -n "$_desktop" ]; then
 		    echo "Distro: $_distro" | sudo tee $INFO_DISTRO_SHARE > /dev/null 2>&1 

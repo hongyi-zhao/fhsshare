@@ -128,31 +128,26 @@ if command -v inxi > /dev/null 2>&1; then
 
 
 # export distro_share relative vars:
-mnt_distro_share=/mnt
+export DISTRO_SHARE=/distro-share
 
 while IFS= read -r part; do
 
-	if [ ! -d "$mnt_distro_share/$part" ]; then
-	  sudo mkdir -p $mnt_distro_share/$part
+	if [ ! -d "$DISTRO_SHARE" ]; then
+	  sudo mkdir -p $DISTRO_SHARE
+          sudo  chown -hR $_user:$_user $DISTRO_SHARE
 	fi
         
-        if ! findmnt -al | grep -qE "^$mnt_distro_share/$part[ ]+"; then 
-           sudo mount -U $part $mnt_distro_share/$part
+        if ! findmnt -al | grep -qE "^$DISTRO_SHARE[ ]+"; then 
+           sudo mount -U $part $DISTRO_SHARE
         fi   
        
  
-	if [ -d "$mnt_distro_share/$part/home/data" ]; then
-	  #echo $part;
-	#  sudo mount -o rw,rbind $mnt_distro_share/$part/home /home
-          
-          PART_DISTRO_SHARE=$mnt_distro_share/$part
-          HOME_DISTRO_SHARE=$PART_DISTRO_SHARE/home
+	if [ -d "$DISTRO_SHARE/home/data" ]; then
+          HOME_DISTRO_SHARE=$DISTRO_SHARE/home
           DATA_DISTRO_SHARE=$HOME_DISTRO_SHARE/data  
           INFO_DISTRO_SHARE=$HOME_DISTRO_SHARE/$system_uuid-$root_uuid-$_user 
        
-	  OPT_DISTRO_SHARE=$PART_DISTRO_SHARE/opt
-
-          export PART_DISTRO_SHARE
+	  OPT_DISTRO_SHARE=$DISTRO_SHARE/opt
            
 	  if [ ! -d "$OPT_DISTRO_SHARE" ]; then
 	       sudo  mkdir $OPT_DISTRO_SHARE
@@ -166,11 +161,10 @@ while IFS= read -r part; do
 	  break
 
 	else
-	  sudo umount $mnt_distro_share/$part
-	  sudo rm -fr $mnt_distro_share/$part
+	  sudo umount $DISTRO_SHARE
 	fi
 
-done  < <( lsblk -o uuid,fstype,mountpoint | awk -v amnt=$mnt_distro_share ' $2 == "ext4" && ( $3 == "" || $3 == amnt"/"$1 ) { print $1 } ' )
+done  < <( lsblk -o uuid,fstype,mountpoint | awk -v amnt=$DISTRO_SHARE ' $2 == "ext4" && ( $3 == "" || $3 == amnt ) { print $1 } ' )
 
 
 	# must use "" for vars, to avoid empty value 's issue:
