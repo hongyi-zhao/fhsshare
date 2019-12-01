@@ -88,7 +88,7 @@ shopt -s nullglob # Ensure shell expansion with 0 files expands to an empty list
 #done
 
 
-if which inxi > /dev/null 2>&1; then 
+if command -v inxi > /dev/null 2>&1; then 
 
   # 一些用到的变量：
   _user=$( ps -o user= -p $$ | awk '{print $1}' )
@@ -122,13 +122,13 @@ if which inxi > /dev/null 2>&1; then
 		  OPT_DISTRO_SHARE=$PART_DISTRO_SHARE/opt
 
 		if [ -n "$_desktop" ]; then
-		  if [ ! -d $HOME_DISTRO_SHARE/$_distro-$_desktop ]; then
 		    echo "Distro: $_distro" | sudo tee $INFO_DISTRO_SHARE > /dev/null 2>&1 
 		    echo "Desktop: $_desktop" | sudo tee -a $INFO_DISTRO_SHARE > /dev/null 2>&1 
-		  
-		    sudo mkdir $HOME_DISTRO_SHARE/$_distro-$_desktop
-		    sudo chown -hR $_user:$_user $HOME_DISTRO_SHARE/$_distro-$_desktop
-		  fi
+
+		    if [ ! -d $HOME_DISTRO_SHARE/$_distro-$_desktop ]; then		  
+		      sudo mkdir $HOME_DISTRO_SHARE/$_distro-$_desktop
+		      sudo chown -hR $_user:$_user $HOME_DISTRO_SHARE/$_distro-$_desktop
+		    fi
 
 		fi
 

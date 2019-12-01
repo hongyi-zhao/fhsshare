@@ -79,7 +79,7 @@ pwd -P
 # 其标准是 和 https://github.com/hongyi-zhao/dotfiles.git 的内容不干扰。
 
 
-if which inxi > /dev/null 2>&1; then 
+if command -v inxi > /dev/null 2>&1; then 
   
 	# 一些用到的变量：
 	  _user=$( ps -o user= -p $$ | awk '{print $1}' )
