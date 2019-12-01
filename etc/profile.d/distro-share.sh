@@ -128,19 +128,22 @@ if command -v inxi > /dev/null 2>&1; then
 
 
 # export distro_share relative vars:
-mnt_distro_share=/mnt/dev/disk/by-uuid
+mnt_distro_share=/mnt
 
 while IFS= read -r part; do
 
-	if [ ! -d $mnt_distro_share/$part ]; then
+	if [ ! -d "$mnt_distro_share/$part" ]; then
 	  sudo mkdir -p $mnt_distro_share/$part
 	fi
-
-	sudo mount -U $part $mnt_distro_share/$part
-
-	if [ -d $mnt_distro_share/$part/home/data ]; then
+        
+        if ! findmnt -al | grep -qE "^$mnt_distro_share/$part[ ]+"; then 
+           sudo mount -U $part $mnt_distro_share/$part
+        fi   
+       
+ 
+	if [ -d "$mnt_distro_share/$part/home/data" ]; then
 	  #echo $part;
-	#  sudo mount -o rw,rbind $mnt_distro_share/$part/home /home
+	#  sudo mount -o rw,bind $mnt_distro_share/$part/home /home
           
           PART_DISTRO_SHARE=$mnt_distro_share/$part
           HOME_DISTRO_SHARE=$PART_DISTRO_SHARE/home
@@ -151,13 +154,13 @@ while IFS= read -r part; do
 
           export PART_DISTRO_SHARE
            
-	  if [ ! -d $OPT_DISTRO_SHARE ]; then
+	  if [ ! -d "$OPT_DISTRO_SHARE" ]; then
 	       sudo  mkdir $OPT_DISTRO_SHARE
 	       sudo  chown -hR $_user:$_user $OPT_DISTRO_SHARE
 	  fi
 
 	  if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
-	     sudo mount -o rw,rbind $OPT_DISTRO_SHARE /opt
+	     sudo mount -o rw,bind $OPT_DISTRO_SHARE /opt
 	  fi
 	  
 	  break
@@ -167,18 +170,18 @@ while IFS= read -r part; do
 	  sudo rm -fr $mnt_distro_share/$part
 	fi
 
-done  < <( lsblk -o uuid,fstype,mountpoint | awk ' $2 == "ext4" && $3 == "" { print $1 } ' )
+done  < <( lsblk -o uuid,fstype,mountpoint | awk -v amnt=$mnt_distro_share ' $2 == "ext4" && ( $3 == "" || $3 == amnt"/"$1 ) { print $1 } ' )
 
 
-	
-	if [ -f $INFO_DISTRO_SHARE ]; then
-	  _home=$HOME_DISTRO_SHARE/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' $INFO_DISTRO_SHARE )
+	# must use "" for vars, to avoid empty value 's issue:
+	if [ -f "$INFO_DISTRO_SHARE" ]; then
+	  _home=$HOME_DISTRO_SHARE/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$INFO_DISTRO_SHARE" )
 
-	   if [ x$__home != x$_home ] && [ $( id -u ) -ne 0 ]; then
-	     sudo mount -o rw,rbind $_home $__home
+	   if [ x$__home != x$_home ] && [ $( id -u ) -ne 0 ] && ! findmnt -al | grep -qE "^$HOME[ ]+"; then
+	     sudo mount -o rw,bind "$_home" "$__home"
 
 
-		if [ -d $DATA_DISTRO_SHARE ]; then
+		if [ -d "$DATA_DISTRO_SHARE" ]; then
 
 			#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -198,7 +201,7 @@ done  < <( lsblk -o uuid,fstype,mountpoint | awk ' $2 == "ext4" && $3 == "" { pr
 			  fi
 
 			  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-			    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/"$line" $HOME/"$line"
+			    sudo mount -o rw,bind $DATA_DISTRO_SHARE/"$line" $HOME/"$line"
 			  fi
 
 			done
@@ -213,7 +216,7 @@ done  < <( lsblk -o uuid,fstype,mountpoint | awk ' $2 == "ext4" && $3 == "" { pr
 			  fi
 
 			  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-			    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/"$line" $HOME/"$line"
+			    sudo mount -o rw,bind $DATA_DISTRO_SHARE/"$line" $HOME/"$line"
 			  fi
 
 			done
@@ -227,7 +230,7 @@ done  < <( lsblk -o uuid,fstype,mountpoint | awk ' $2 == "ext4" && $3 == "" { pr
 				  fi
 
 				  if ! findmnt -al | grep -qE "^$HOME/[.]local/$line[[:blank:]]"; then
-				    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/.local/"$line" $HOME/.local/"$line"
+				    sudo mount -o rw,bind $DATA_DISTRO_SHARE/.local/"$line" $HOME/.local/"$line"
 				  fi
 
 				done
@@ -242,7 +245,7 @@ done  < <( lsblk -o uuid,fstype,mountpoint | awk ' $2 == "ext4" && $3 == "" { pr
 				  fi
 
 				  if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line[[:blank:]]"; then
-				    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/.local/share/"$line" $HOME/.local/share/"$line"
+				    sudo mount -o rw,bind $DATA_DISTRO_SHARE/.local/share/"$line" $HOME/.local/share/"$line"
 				  fi
 
 				done
