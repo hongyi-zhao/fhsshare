@@ -1,1 +1,1 @@
-# systemconfig
+# distro-share
