@@ -174,7 +174,7 @@ done  < <( lsblk -o uuid,fstype,mountpoint | awk ' $2 == "ext4" && $3 == "" { pr
 	if [ -f $INFO_DISTRO_SHARE ]; then
 	  _home=$HOME_DISTRO_SHARE/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' $INFO_DISTRO_SHARE )
 
-	   if [ $__home != $_home ] && [ $( id -u ) -ne 0 ]; then
+	   if [ x$__home != x$_home ] && [ $( id -u ) -ne 0 ]; then
 	     sudo mount -o rw,rbind $_home $__home
 
 
