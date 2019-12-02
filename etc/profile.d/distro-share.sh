@@ -75,210 +75,206 @@ pwd -P
 # 所以要保证相应的文件名之间符合调用的先后顺序。
 
 
-# 首先需要准备一个相对干净的 $DATA_DISTRO_SHARE 目录，
+# 首先需要准备一个 $DISTRO_SHARE 目录， which conform to the Filesystem Hierarchy Standard，FHS:
+# https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard
 # 其标准是 和 https://github.com/hongyi-zhao/dotfiles.git 的内容不干扰。
 
 
 if command -v inxi > /dev/null 2>&1; then 
   
-	# 一些用到的变量：
-	  _user=$( ps -o user= -p $$ | awk '{print $1}' )
+# 一些用到的变量：
+# system_uuid
+system_uuid="$( sudo dmidecode -s system-uuid )"
+# root uuid
+root_uuid="$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )"
+# current user
+_user="$( ps -o user= -p $$ | awk '{print $1}' )"
 
-	  # system_uuid
-	  system_uuid=$( sudo dmidecode -s system-uuid )
-	  #  root uuid
-	  root_uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )
+  
+# default home of the current user
+#getent passwd "$_user" | cut -d: -f6
+__home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
-
-
-	  #getent passwd "$_user" | cut -d: -f6
-	  __home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
-
-	  # _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
-	  _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
-	  _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
-
-
-	# prepare a clean $__home for mount:
-
-	# be sure to use the finmnt cond , otherwise the serious error will be occur:
-	# all stuff mounted on $__home will be deleted when do a logout and re-login operation: 
-
-	# by using the finmnt cond, this is safe now, but it seems that it's needless to do so:
-
-	#if ! findmnt -al | grep -qE "^$__home[[:blank:]]"; then
-
-	#	if [ -d $__home ]; then
-	#            sudo rm -fr $__home
-	#        fi
-	#	
-	#       sudo mkdir $__home
-	#       sudo chown -hR $_user:$_user $__home
-
-	#fi
-
-
-	# using the following code is enough:
-
-	if [ ! -d $__home ]; then
-	  sudo mkdir $__home
-	  sudo chown -hR $_user:$_user $__home
-	fi
-
+# _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
+_distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
+_desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 
 
 # export distro_share relative vars:
 export DISTRO_SHARE=/distro-share
 
-while IFS= read -r part; do
 
-	if [ ! -d "$DISTRO_SHARE" ]; then
-	  sudo mkdir -p $DISTRO_SHARE
-          sudo  chown -hR $_user:$_user $DISTRO_SHARE
-	fi
-        
-        if ! findmnt -al | grep -qE "^$DISTRO_SHARE[ ]+"; then 
-           sudo mount -U $part $DISTRO_SHARE
-        fi   
+# prepare a clean $__home for mount:
+
+# be sure to use the finmnt cond , otherwise the serious error will be occur:
+# all stuff mounted on $__home will be deleted when do a logout and re-login operation: 
+
+# by using the finmnt cond, this is safe now, but it seems that it's needless to do so:
+
+#if ! findmnt -al | grep -qE "^$__home[[:blank:]]"; then
+
+#	if [ -d $__home ]; then
+#            sudo rm -fr $__home
+#        fi
+#	
+#       sudo mkdir $__home
+#       sudo chown -hR $_user:$_user $__home
+
+#fi
+
+
+# using the following code is enough:
+  if [ ! -d $__home ]; then
+    sudo mkdir $__home
+    sudo chown -hR $_user:$_user $__home
+  fi
+
+
+
+
+
+# https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
+# https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
+  while IFS= read -r uuid; do
+    if [ ! -d "$DISTRO_SHARE" ]; then
+      sudo mkdir -p $DISTRO_SHARE
+      sudo chown -hR $_user:$_user $DISTRO_SHARE
+    fi
+	
+    if ! findmnt -al | grep -qE "^$DISTRO_SHARE[ ]+"; then 
+      sudo mount -U $uuid $DISTRO_SHARE
+    fi   
        
- 
-	if [ -d "$DISTRO_SHARE/home/data" ]; then
-          HOME_DISTRO_SHARE=$DISTRO_SHARE/home
-          DATA_DISTRO_SHARE=$HOME_DISTRO_SHARE/data  
-          INFO_DISTRO_SHARE=$HOME_DISTRO_SHARE/$system_uuid-$root_uuid-$_user 
+    if [ -d "$DISTRO_SHARE/distro-share.git" ] && [  -d "$DISTRO_SHARE/home/home-share.git"  ]; then
+      HOME_DISTRO_SHARE=$DISTRO_SHARE/home
+      OPT_DISTRO_SHARE=$DISTRO_SHARE/opt
+
+      DATA_DISTRO_SHARE=$HOME_DISTRO_SHARE/data  
+      INFO_DISTRO_SHARE=$HOME_DISTRO_SHARE/$system_uuid-$root_uuid-$_user 
        
-	  OPT_DISTRO_SHARE=$DISTRO_SHARE/opt
-           
-	  if [ ! -d "$OPT_DISTRO_SHARE" ]; then
-	       sudo  mkdir $OPT_DISTRO_SHARE
-	       sudo  chown -hR $_user:$_user $OPT_DISTRO_SHARE
+      if [ ! -d "$OPT_DISTRO_SHARE" ]; then
+        sudo  mkdir $OPT_DISTRO_SHARE
+        sudo  chown -hR $_user:$_user $OPT_DISTRO_SHARE
+      fi
+
+      if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
+        sudo mount -o rw,rbind $OPT_DISTRO_SHARE /opt
+      fi
+      break
+    else
+      sudo umount $DISTRO_SHARE
+    fi
+
+  done < <( lsblk -o uuid,fstype,mountpoint | awk -v ads=$DISTRO_SHARE ' $2 == "ext4" && ( $3 == "" || $3 == ads ) { print $1 } ' )
+
+
+
+  if [ -f "$INFO_DISTRO_SHARE" ]; then
+    _home="$HOME_DISTRO_SHARE/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$INFO_DISTRO_SHARE" )"
+
+    if [ x"$__home" != x"$_home" ] && [ "$( id -u )" -ne 0 ] && ! findmnt -al | grep -qE "^$HOME[ ]+"; then
+      sudo mount -o rw,rbind "$_home" "$__home"
+
+      #https://specifications.freedesktop.org/menu-spec/latest/
+      #https://wiki.archlinux.org/index.php/XDG_Base_Directory
+      # XDG_DATA_DIRS
+      # List of directories seperated by : (analogous to PATH).
+      # Should default to /usr/local/share:/usr/share.
+
+      #for desktop files search:
+
+      # ref: ubuntu:
+      # /etc/profile.d/xdg_dirs_desktop_session.sh
+      if ! grep -Eq "$HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
+        export XDG_DATA_DIRS=$HOME/.local/share:$XDG_DATA_DIRS
+      fi
+
+      if ! grep -Eq '/usr/local/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
+        export XDG_DATA_DIRS=/usr/local/share:$XDG_DATA_DIRS 
+      fi
+
+      if ! grep -Eq '/usr/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
+        export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
+      fi
+
+
+
+      if [ -d "$DATA_DISTRO_SHARE" ]; then
+
+	#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
+
+	# software/anti-gfw/not-used/vpngate-relative/ecmp-vpngate/script/ovpn-traverse.sh
+	# -printf format
+	# %f     File's name with any leading directories removed (only the last element).
+	# %h     Leading directories of file's name (all but the last element).  
+	# If the file name contains  no  slashes
+	#             (since it is in the current directory) the %h specifier expands to `.'.       
+	# %H     Starting-point under which file was found.  
+	# %p     File's name.
+	# %P     File's name with the name of the starting-point under which it was found removed.
+	find -L "$DATA_DISTRO_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+        awk 'NF > 0' |
+	while IFS= read -r line; do
+	  if [ ! -d $HOME/"$line" ]; then
+	    mkdir $HOME/"$line"
 	  fi
 
-	  if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
-	     sudo mount -o rw,rbind $OPT_DISTRO_SHARE /opt
+	  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
+	    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/"$line" $HOME/"$line"
 	  fi
-	  
-	  break
 
-	else
-	  sudo umount $DISTRO_SHARE
+	done
+
+
+	# dealing on hidden directories except .local, .git and etc:
+        # the .git directory has been deleted, anyway, use the following for safe:
+	find -L "$DATA_DISTRO_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
+        awk ' NF > 0 && ! /^[.](local|git)$/' |
+	while IFS= read -r line; do
+	  if [ ! -d $HOME/"$line" ]; then
+	    mkdir $HOME/"$line"
+	  fi
+
+	  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
+	    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/"$line" $HOME/"$line"
+	  fi
+
+	done
+
+	# dealing on .local:
+	if [ -d "$DATA_DISTRO_SHARE"/.local ]; then
+	  find -L "$DATA_DISTRO_SHARE"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+          awk 'NF > 0 && ! /^share$/ ' |
+	  while IFS= read -r line; do
+	    if [ ! -d $HOME/.local/"$line" ]; then
+	      mkdir -p $HOME/.local/"$line"
+	    fi
+
+	    if ! findmnt -al | grep -qE "^$HOME/[.]local/$line[[:blank:]]"; then
+	      sudo mount -o rw,rbind $DATA_DISTRO_SHARE/.local/"$line" $HOME/.local/"$line"
+	    fi
+
+	  done
 	fi
 
-done  < <( lsblk -o uuid,fstype,mountpoint | awk -v amnt=$DISTRO_SHARE ' $2 == "ext4" && ( $3 == "" || $3 == amnt ) { print $1 } ' )
+	# dealing on .local/share:
+	if [ -d "$DATA_DISTRO_SHARE"/.local/share ]; then
+	  find -L "$DATA_DISTRO_SHARE"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+          awk 'NF > 0 && ! /^share$/ ' |
+	  while IFS= read -r line; do
+	    if [ ! -d $HOME/.local/share/"$line" ]; then
+	      mkdir -p $HOME/.local/share/"$line"
+	    fi
 
+	    if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line[[:blank:]]"; then
+	      sudo mount -o rw,rbind $DATA_DISTRO_SHARE/.local/share/"$line" $HOME/.local/share/"$line"
+	    fi
 
-	# must use "" for vars, to avoid empty value 's issue:
-	if [ -f "$INFO_DISTRO_SHARE" ]; then
-	  _home=$HOME_DISTRO_SHARE/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$INFO_DISTRO_SHARE" )
-
-	   if [ x$__home != x$_home ] && [ $( id -u ) -ne 0 ] && ! findmnt -al | grep -qE "^$HOME[ ]+"; then
-	     sudo mount -o rw,rbind "$_home" "$__home"
-
-
-		if [ -d "$DATA_DISTRO_SHARE" ]; then
-
-			#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
-
-			# software/anti-gfw/not-used/vpngate-relative/ecmp-vpngate/script/ovpn-traverse.sh
-			# -printf format
-			# %f     File's name with any leading directories removed (only the last element).
-			# %h     Leading directories of file's name (all but the last element).  
-			# If the file name contains  no  slashes
-			#             (since it is in the current directory) the %h specifier expands to `.'.       
-			# %H     Starting-point under which file was found.  
-			# %p     File's name.
-			# %P     File's name with the name of the starting-point under which it was found removed.
-			find -L $DATA_DISTRO_SHARE/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0' |
-			while IFS= read -r line; do
-			  if [ ! -d $HOME/"$line" ]; then
-			    mkdir $HOME/"$line"
-			  fi
-
-			  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-			    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/"$line" $HOME/"$line"
-			  fi
-
-			done
-
-
-			# dealing on hidden directories except .local, .git and etc:
-		        # the .git directory has been deleted, anyway, use the following for safe:
-			find -L $DATA_DISTRO_SHARE/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' | awk ' NF > 0 && ! /^[.](local|git)$/' |
-			while IFS= read -r line; do
-			  if [ ! -d $HOME/"$line" ]; then
-			    mkdir $HOME/"$line"
-			  fi
-
-			  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-			    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/"$line" $HOME/"$line"
-			  fi
-
-			done
-
-			# dealing on .local:
-			if [ -d $DATA_DISTRO_SHARE/.local ]; then
-				find -L $DATA_DISTRO_SHARE/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
-				while IFS= read -r line; do
-				  if [ ! -d $HOME/.local/"$line" ]; then
-				    mkdir -p $HOME/.local/"$line"
-				  fi
-
-				  if ! findmnt -al | grep -qE "^$HOME/[.]local/$line[[:blank:]]"; then
-				    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/.local/"$line" $HOME/.local/"$line"
-				  fi
-
-				done
-			fi
-
-			# dealing on .local/share:
-			if [ -d $DATA_DISTRO_SHARE/.local/share ]; then
-				find -L $DATA_DISTRO_SHARE/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' | awk 'NF > 0 && ! /^share$/ ' |
-				while IFS= read -r line; do
-				  if [ ! -d $HOME/.local/share/"$line" ]; then
-				    mkdir -p $HOME/.local/share/"$line"
-				  fi
-
-				  if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line[[:blank:]]"; then
-				    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/.local/share/"$line" $HOME/.local/share/"$line"
-				  fi
-
-				done
-			fi
-
-
-		       
-		fi
-
-
-	   fi
-
-
-		#https://specifications.freedesktop.org/menu-spec/latest/
-
-		#https://wiki.archlinux.org/index.php/XDG_Base_Directory
-		#    XDG_DATA_DIRS
-		#        List of directories seperated by : (analogous to PATH).
-		#        Should default to /usr/local/share:/usr/share.
-
-		#for desktop files search:
-
-		# ref: ubuntu:
-		# /etc/profile.d/xdg_dirs_desktop_session.sh
-		if ! grep -Eq "$HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
-		  export XDG_DATA_DIRS=$HOME/.local/share:$XDG_DATA_DIRS
-		fi
-
-		if ! grep -Eq '/usr/local/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
-		  export XDG_DATA_DIRS=/usr/local/share:$XDG_DATA_DIRS 
-		fi
-
-		if ! grep -Eq '/usr/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
-		  export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
-		fi
-
-	   
+	  done
 	fi
-
+      fi
+    fi
+  fi
 fi
 
 
