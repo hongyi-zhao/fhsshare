@@ -110,7 +110,7 @@ _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
   if [ -n "$DISTRO_SHARE"  ]; then
     HOME_DISTRO_SHARE=$DISTRO_SHARE/home
     OPT_DISTRO_SHARE=$DISTRO_SHARE/opt
-    INFO_DISTRO_SHARE=$DISTRO_SHARE/$system_uuid-$root_uuid-$_user
+    INFO_DISTRO_SHARE=$DISTRO_SHARE/"$system_uuid-$root_uuid-$_user"
 
     DATA_DISTRO_SHARE=$HOME_DISTRO_SHARE/data  
       
@@ -118,7 +118,7 @@ _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
       echo "Distro: $_distro" | sudo tee $INFO_DISTRO_SHARE > /dev/null 2>&1 
       echo "Desktop: $_desktop" | sudo tee -a $INFO_DISTRO_SHARE > /dev/null 2>&1 
 
-      if [ ! -d $HOME_DISTRO_SHARE/$_distro-$_desktop ]; then		  
+      if [ ! -d "$HOME_DISTRO_SHARE/$_distro-$_desktop" ]; then		  
         sudo mkdir $HOME_DISTRO_SHARE/$_distro-$_desktop
         sudo chown -hR $_user:$_user $HOME_DISTRO_SHARE/$_distro-$_desktop
       fi
