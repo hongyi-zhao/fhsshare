@@ -148,9 +148,9 @@ export DISTRO_SHARE=/distro-share
     if [ -d "$DISTRO_SHARE/distro-share.git" ] && [  -d "$DISTRO_SHARE/home/home-share.git"  ]; then
       HOME_DISTRO_SHARE=$DISTRO_SHARE/home
       OPT_DISTRO_SHARE=$DISTRO_SHARE/opt
+      INFO_DISTRO_SHARE=$DISTRO_SHARE/"$system_uuid-$root_uuid-$_user"
 
       DATA_DISTRO_SHARE=$HOME_DISTRO_SHARE/data  
-      INFO_DISTRO_SHARE=$HOME_DISTRO_SHARE/$system_uuid-$root_uuid-$_user 
        
       if [ ! -d "$OPT_DISTRO_SHARE" ]; then
         sudo  mkdir $OPT_DISTRO_SHARE
