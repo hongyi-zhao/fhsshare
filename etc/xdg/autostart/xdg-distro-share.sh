@@ -71,9 +71,7 @@ pwd -P
 
 
 #  this script is invoked by the following:
-
-# /etc/xdg/autostart/xdg-user-setting.desktop
-
+# /etc/xdg/autostart/xdg-distro-share.desktop
 
 
 # https://unix.stackexchange.com/questions/348321/purpose-of-the-autostart-scripts-directory
@@ -90,52 +88,46 @@ shopt -s nullglob # Ensure shell expansion with 0 files expands to an empty list
 
 if command -v inxi > /dev/null 2>&1; then 
 
-  # 一些用到的变量：
-  _user=$( ps -o user= -p $$ | awk '{print $1}' )
+# 一些用到的变量：
+_user=$( ps -o user= -p $$ | awk '{print $1}' )
 
-  # system_uuid
-  system_uuid=$( sudo dmidecode -s system-uuid )
-  #  root uuid
-  root_uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )
+# system_uuid
+system_uuid=$( sudo dmidecode -s system-uuid )
+# root uuid
+root_uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )
 
+#getent passwd "$_user" | cut -d: -f6
+__home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
-
-  #getent passwd "$_user" | cut -d: -f6
-  __home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
-
-
-
-  # _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
-  _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
-  _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
+# _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
+_distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
+_desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 
 
+# distro_share relative vars:
+# DISTRO_SHARE is exported by /etc/profile.d/distro_share.sh
 
-	# distro_share relative vars:
-	# DISTRO_SHARE is exported by /etc/profile.d/distro_share.sh
+  if [ -n "$DISTRO_SHARE"  ]; then
+    HOME_DISTRO_SHARE=$DISTRO_SHARE/home
+    OPT_DISTRO_SHARE=$DISTRO_SHARE/opt
+    INFO_DISTRO_SHARE=$DISTRO_SHARE/$system_uuid-$root_uuid-$_user
 
-	if [ -n "$DISTRO_SHARE"  ]; then
-		  HOME_DISTRO_SHARE=$DISTRO_SHARE/home
-		  DATA_DISTRO_SHARE=$HOME_DISTRO_SHARE/data  
-		  INFO_DISTRO_SHARE=$HOME_DISTRO_SHARE/$system_uuid-$root_uuid-$_user 
-	       
-		  OPT_DISTRO_SHARE=$DISTRO_SHARE/opt
+    DATA_DISTRO_SHARE=$HOME_DISTRO_SHARE/data  
+      
+    if [ -n "$_desktop" ]; then
+      echo "Distro: $_distro" | sudo tee $INFO_DISTRO_SHARE > /dev/null 2>&1 
+      echo "Desktop: $_desktop" | sudo tee -a $INFO_DISTRO_SHARE > /dev/null 2>&1 
 
-		if [ -n "$_desktop" ]; then
-		    echo "Distro: $_distro" | sudo tee $INFO_DISTRO_SHARE > /dev/null 2>&1 
-		    echo "Desktop: $_desktop" | sudo tee -a $INFO_DISTRO_SHARE > /dev/null 2>&1 
-
-		    if [ ! -d $HOME_DISTRO_SHARE/$_distro-$_desktop ]; then		  
-		      sudo mkdir $HOME_DISTRO_SHARE/$_distro-$_desktop
-		      sudo chown -hR $_user:$_user $HOME_DISTRO_SHARE/$_distro-$_desktop
-		    fi
-
-		fi
-
-	fi
+      if [ ! -d $HOME_DISTRO_SHARE/$_distro-$_desktop ]; then		  
+        sudo mkdir $HOME_DISTRO_SHARE/$_distro-$_desktop
+        sudo chown -hR $_user:$_user $HOME_DISTRO_SHARE/$_distro-$_desktop
+      fi
+    fi
+  fi
 
 
 
+# change the use's home path in /etc/passwd is a silly idea, don't use it:
 
 #    if [ $_home != $HOME_DISTRO_SHARE/$_distro-$_desktop ]; then
 #      _home=$HOME_DISTRO_SHARE/$_distro-$_desktop
