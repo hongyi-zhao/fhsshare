@@ -103,33 +103,15 @@ _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 # export distro_share relative vars:
 export DISTRO_SHARE=/distro-share
 
-
-# prepare a clean $__home for mount:
-
-# be sure to use the finmnt cond , otherwise the serious error will be occur:
-# all stuff mounted on $__home will be deleted when do a logout and re-login operation: 
-
-# by using the finmnt cond, this is safe now, but it seems that it's needless to do so:
-
-#if ! findmnt -al | grep -qE "^$__home[[:blank:]]"; then
-
-#	if [ -d $__home ]; then
-#            sudo rm -fr $__home
-#        fi
-#	
-#       sudo mkdir $__home
-#       sudo chown -hR $_user:$_user $__home
-
-#fi
-
-
 # using the following code is enough:
-  if [ ! -d $__home ]; then
-    sudo mkdir $__home
-    sudo chown -hR $_user:$_user $__home
-  fi
+if [ ! -d $__home ]; then
+  sudo mkdir $__home
+fi
 
-
+if [ "$( stat -c "%U %G %a" $__home )" != "$_user $_user 755" ]; then
+  sudo chown -hR $_user:$_user $__home
+  sudo chmod -R 755 $__home 
+fi
 
 
 
