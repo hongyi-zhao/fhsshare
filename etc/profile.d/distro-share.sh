@@ -127,20 +127,21 @@ fi
       sudo mount -U $uuid $DISTRO_SHARE
     fi   
        
-    if [ -d "$DISTRO_SHARE/distro-share.git" ] && [  -d "$DISTRO_SHARE/home/home-share.git"  ]; then
-      HOME_DISTRO_SHARE=$DISTRO_SHARE/home
-      OPT_DISTRO_SHARE=$DISTRO_SHARE/opt
-      INFO_DISTRO_SHARE=$DISTRO_SHARE/"$system_uuid-$root_uuid-$_user"
+    if [ -d "$DISTRO_SHARE/distro-share.git" ]; then
+      HOME_DISTRO=$DISTRO_SHARE/home
+      HOME_SHARE=$HOME_DISTRO/home-share 
+      OPT_SHARE=$DISTRO_SHARE/opt
+      INFO_SHARE=$DISTRO_SHARE/"$system_uuid-$root_uuid-$_user"
 
-      DATA_DISTRO_SHARE=$HOME_DISTRO_SHARE/data  
+ 
        
-      if [ ! -d "$OPT_DISTRO_SHARE" ]; then
-        sudo  mkdir $OPT_DISTRO_SHARE
-        sudo  chown -hR $_user:$_user $OPT_DISTRO_SHARE
+      if [ ! -d "$OPT_SHARE" ]; then
+        sudo  mkdir $OPT_SHARE
+        sudo  chown -hR $_user:$_user $OPT_SHARE
       fi
 
       if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
-        sudo mount -o rw,rbind $OPT_DISTRO_SHARE /opt
+        sudo mount -o rw,rbind $OPT_SHARE /opt
       fi
       break
     else
@@ -151,8 +152,8 @@ fi
 
 
 
-  if [ -f "$INFO_DISTRO_SHARE" ]; then
-    _home="$HOME_DISTRO_SHARE/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$INFO_DISTRO_SHARE" )"
+  if [ -f "$INFO_SHARE" ]; then
+    _home="$HOME_DISTRO/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$INFO_SHARE" )"
 
     if [ x"$__home" != x"$_home" ] && [ "$( id -u )" -ne 0 ] && ! findmnt -al | grep -qE "^$HOME[ ]+"; then
       sudo mount -o rw,rbind "$_home" "$__home"
@@ -181,7 +182,7 @@ fi
 
 
 
-      if [ -d "$DATA_DISTRO_SHARE" ]; then
+      if [ -d "$HOME_SHARE" ]; then
 
 	#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -194,7 +195,7 @@ fi
 	# %H     Starting-point under which file was found.  
 	# %p     File's name.
 	# %P     File's name with the name of the starting-point under which it was found removed.
-	find -L "$DATA_DISTRO_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+	find -L "$HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
         awk 'NF > 0' |
 	while IFS= read -r line; do
 	  if [ ! -d $HOME/"$line" ]; then
@@ -202,7 +203,7 @@ fi
 	  fi
 
 	  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-	    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/"$line" $HOME/"$line"
+	    sudo mount -o rw,rbind $HOME_SHARE/"$line" $HOME/"$line"
 	  fi
 
 	done
@@ -210,7 +211,7 @@ fi
 
 	# dealing on hidden directories except .local, .git and etc:
         # the .git directory has been deleted, anyway, use the following for safe:
-	find -L "$DATA_DISTRO_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
+	find -L "$HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
         awk ' NF > 0 && ! /^[.](local|git)$/' |
 	while IFS= read -r line; do
 	  if [ ! -d $HOME/"$line" ]; then
@@ -218,14 +219,14 @@ fi
 	  fi
 
 	  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-	    sudo mount -o rw,rbind $DATA_DISTRO_SHARE/"$line" $HOME/"$line"
+	    sudo mount -o rw,rbind $HOME_SHARE/"$line" $HOME/"$line"
 	  fi
 
 	done
 
 	# dealing on .local:
-	if [ -d "$DATA_DISTRO_SHARE"/.local ]; then
-	  find -L "$DATA_DISTRO_SHARE"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+	if [ -d "$HOME_SHARE"/.local ]; then
+	  find -L "$HOME_SHARE"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
           awk 'NF > 0 && ! /^share$/ ' |
 	  while IFS= read -r line; do
 	    if [ ! -d $HOME/.local/"$line" ]; then
@@ -233,15 +234,15 @@ fi
 	    fi
 
 	    if ! findmnt -al | grep -qE "^$HOME/[.]local/$line[[:blank:]]"; then
-	      sudo mount -o rw,rbind $DATA_DISTRO_SHARE/.local/"$line" $HOME/.local/"$line"
+	      sudo mount -o rw,rbind $HOME_SHARE/.local/"$line" $HOME/.local/"$line"
 	    fi
 
 	  done
 	fi
 
 	# dealing on .local/share:
-	if [ -d "$DATA_DISTRO_SHARE"/.local/share ]; then
-	  find -L "$DATA_DISTRO_SHARE"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+	if [ -d "$HOME_SHARE"/.local/share ]; then
+	  find -L "$HOME_SHARE"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
           awk 'NF > 0 && ! /^share$/ ' |
 	  while IFS= read -r line; do
 	    if [ ! -d $HOME/.local/share/"$line" ]; then
@@ -249,7 +250,7 @@ fi
 	    fi
 
 	    if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line[[:blank:]]"; then
-	      sudo mount -o rw,rbind $DATA_DISTRO_SHARE/.local/share/"$line" $HOME/.local/share/"$line"
+	      sudo mount -o rw,rbind $HOME_SHARE/.local/share/"$line" $HOME/.local/share/"$line"
 	    fi
 
 	  done
