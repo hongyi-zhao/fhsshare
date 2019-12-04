@@ -209,10 +209,9 @@ fi
 	done
 
 
-	# dealing on hidden directories except .local, .git and etc:
-        # the .git directory has been deleted, anyway, use the following for safe:
+	# dealing on hidden directories except .local:
 	find -L "$HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
-        awk ' NF > 0 && ! /^[.](local|git)$/' |
+        awk ' NF > 0 && ! /^[.]local$/' |
 	while IFS= read -r line; do
 	  if [ ! -d $HOME/"$line" ]; then
 	    mkdir $HOME/"$line"
