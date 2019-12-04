@@ -93,7 +93,7 @@ _user="$( ps -o user= -p $$ | awk '{print $1}' )"
   
 # default home of the current user
 #getent passwd "$_user" | cut -d: -f6
-__HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
+HOME_DEFAULT=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
 # _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
 _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
@@ -104,13 +104,13 @@ _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 export DISTRO_SHARE=/distro-share
 
 # using the following code is enough:
-if [ ! -d $__HOME ]; then
-  sudo mkdir $__HOME
+if [ ! -d $HOME_DEFAULT ]; then
+  sudo mkdir $HOME_DEFAULT
 fi
 
-if [ "$( stat -c "%U %G %a" $__HOME )" != "$_user $_user 755" ]; then
-  sudo chown -hR $_user:$_user $__HOME
-  sudo chmod -R 755 $__HOME 
+if [ "$( stat -c "%U %G %a" $HOME_DEFAULT )" != "$_user $_user 755" ]; then
+  sudo chown -hR $_user:$_user $HOME_DEFAULT
+  sudo chmod -R 755 $HOME_DEFAULT 
 fi
 
 
@@ -128,8 +128,8 @@ fi
     fi   
        
     if [ -d "$DISTRO_SHARE/distro-share.git" ]; then
-      _HOME=$DISTRO_SHARE/home
-      HOME_SHARE=$_HOME/home-share 
+      HOME_DISTRO=$DISTRO_SHARE/home
+      HOME_SHARE=$HOME_DISTRO/home-share 
       OPT_SHARE=$DISTRO_SHARE/opt
       INFO_SHARE=$DISTRO_SHARE/"$system_uuid-$root_uuid-$_user"
 
@@ -162,9 +162,9 @@ fi
 
 
   if [ -f "$INFO_SHARE" ]; then
-    _HOME="$_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$INFO_SHARE" )"
+    HOME_NEW="$HOME_DISTRO/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$INFO_SHARE" )"
 
-    if [ x"$__HOME" != x"$_HOME" ] && [ "$( id -u )" -ne 0 ] && ! findmnt -al | grep -qE "^$__HOME[ ]+"; then
+    if [ x"$HOME_DEFAULT" != x"$HOME_NEW" ] && [ "$( id -u )" -ne 0 ] && ! findmnt -al | grep -qE "^$HOME_DEFAULT[ ]+"; then
 
       #https://specifications.freedesktop.org/menu-spec/latest/
       #https://wiki.archlinux.org/index.php/XDG_Base_Directory
@@ -176,8 +176,8 @@ fi
 
       # ref: ubuntu:
       # /etc/profile.d/xdg_dirs_desktop_session.sh
-      if ! grep -Eq "$__HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
-        export XDG_DATA_DIRS=$__HOME/.local/share:$XDG_DATA_DIRS
+      if ! grep -Eq "$HOME_DEFAULT/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
+        export XDG_DATA_DIRS=$HOME_DEFAULT/.local/share:$XDG_DATA_DIRS
       fi
 
       if ! grep -Eq '/usr/local/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
@@ -188,22 +188,22 @@ fi
         export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
       fi
 
-      # mount "$_HOME"
-      sudo mount -o rw,rbind "$_HOME" "$__HOME"
+      # mount "$HOME_NEW"
+      sudo mount -o rw,rbind "$HOME_NEW" "$HOME_DEFAULT"
       
-      # mount "$_HOME"/home-share.git/.git on $__HOME/.git:
-      if [ -d "$_HOME"/home-share.git ]; then       
-        if [ ! -d $__HOME/.git ]; then
-	  mkdir $__HOME/.git
+      # mount $HOME_DISTRO/home-share.git/.git on $HOME_DEFAULT/.git:
+      if  [  -n "$HOME_DISTRO" ] && [ -d $HOME_DISTRO/home-share.git ]; then       
+        if [ ! -d $HOME_DEFAULT/.git ]; then
+	  mkdir $HOME_DEFAULT/.git
 	fi         
 	
-        if ! findmnt -al | grep -qE "^$__HOME/[.]git[[:blank:]]"; then
-	  sudo mount -o rw,rbind $_HOME/home-share.git/.git $__HOME/.git
+        if ! findmnt -al | grep -qE "^$HOME_DEFAULT/[.]git[[:blank:]]"; then
+	  sudo mount -o rw,rbind $HOME_DISTRO/home-share.git/.git $HOME_DEFAULT/.git
 	fi
       fi
 
 
-      # moun stuff under "$HOME_SHARE"/ to $__HOME/: 
+      # moun stuff under "$HOME_SHARE"/ to $HOME_DEFAULT/: 
       if [ -d "$HOME_SHARE" ]; then
 
 	#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
@@ -220,12 +220,12 @@ fi
 	find -L "$HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
         awk 'NF > 0' |
 	while IFS= read -r line; do
-	  if [ ! -d $__HOME/"$line" ]; then
-	    mkdir $__HOME/"$line"
+	  if [ ! -d $HOME_DEFAULT/"$line" ]; then
+	    mkdir $HOME_DEFAULT/"$line"
 	  fi
 
-	  if ! findmnt -al | grep -qE "^$__HOME/$line[[:blank:]]"; then
-	    sudo mount -o rw,rbind $HOME_SHARE/"$line" $__HOME/"$line"
+	  if ! findmnt -al | grep -qE "^$HOME_DEFAULT/$line[[:blank:]]"; then
+	    sudo mount -o rw,rbind $HOME_SHARE/"$line" $HOME_DEFAULT/"$line"
 	  fi
 
 	done
@@ -235,12 +235,12 @@ fi
 	find -L "$HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
         awk ' NF > 0 && ! /^[.]local$/ ' |
 	while IFS= read -r line; do
-	  if [ ! -d $__HOME/"$line" ]; then
-	    mkdir $__HOME/"$line"
+	  if [ ! -d $HOME_DEFAULT/"$line" ]; then
+	    mkdir $HOME_DEFAULT/"$line"
 	  fi
 
-	  if ! findmnt -al | grep -qE "^$__HOME/$line[[:blank:]]"; then
-	    sudo mount -o rw,rbind $HOME_SHARE/"$line" $__HOME/"$line"
+	  if ! findmnt -al | grep -qE "^$HOME_DEFAULT/$line[[:blank:]]"; then
+	    sudo mount -o rw,rbind $HOME_SHARE/"$line" $HOME_DEFAULT/"$line"
 	  fi
 
 	done
@@ -250,12 +250,12 @@ fi
 	  find -L "$HOME_SHARE"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
           awk 'NF > 0 && ! /^share$/ ' |
 	  while IFS= read -r line; do
-	    if [ ! -d $__HOME/.local/"$line" ]; then
-	      mkdir -p $__HOME/.local/"$line"
+	    if [ ! -d $HOME_DEFAULT/.local/"$line" ]; then
+	      mkdir -p $HOME_DEFAULT/.local/"$line"
 	    fi
 
-	    if ! findmnt -al | grep -qE "^$__HOME/[.]local/$line[[:blank:]]"; then
-	      sudo mount -o rw,rbind $HOME_SHARE/.local/"$line" $__HOME/.local/"$line"
+	    if ! findmnt -al | grep -qE "^$HOME_DEFAULT/[.]local/$line[[:blank:]]"; then
+	      sudo mount -o rw,rbind $HOME_SHARE/.local/"$line" $HOME_DEFAULT/.local/"$line"
 	    fi
 
 	  done
@@ -266,12 +266,12 @@ fi
 	  find -L "$HOME_SHARE"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
           awk 'NF > 0 && ! /^share$/ ' |
 	  while IFS= read -r line; do
-	    if [ ! -d $__HOME/.local/share/"$line" ]; then
-	      mkdir -p $__HOME/.local/share/"$line"
+	    if [ ! -d $HOME_DEFAULT/.local/share/"$line" ]; then
+	      mkdir -p $HOME_DEFAULT/.local/share/"$line"
 	    fi
 
-	    if ! findmnt -al | grep -qE "^$__HOME/[.]local/share/$line[[:blank:]]"; then
-	      sudo mount -o rw,rbind $HOME_SHARE/.local/share/"$line" $__HOME/.local/share/"$line"
+	    if ! findmnt -al | grep -qE "^$HOME_DEFAULT/[.]local/share/$line[[:blank:]]"; then
+	      sudo mount -o rw,rbind $HOME_SHARE/.local/share/"$line" $HOME_DEFAULT/.local/share/"$line"
 	    fi
 
 	  done
@@ -300,7 +300,7 @@ fi
 # 
 #         Where user-specific configurations should be written (analogous to /etc).
 # 
-#         Should default to $__HOME/.config.
+#         Should default to $HOME_DEFAULT/.config.
 # 
 # 
 # 
@@ -308,7 +308,7 @@ fi
 # 
 #         Where user-specific non-essential (cached) data should be written (analogous to /var/cache).
 # 
-#         Should default to $__HOME/.cache.
+#         Should default to $HOME_DEFAULT/.cache.
 # 
 # 
 # 
@@ -316,7 +316,7 @@ fi
 # 
 #         Where user-specific data files should be written (analogous to /usr/share).
 # 
-#         Should default to $__HOME/.local/share.
+#         Should default to $HOME_DEFAULT/.local/share.
 
 
 
