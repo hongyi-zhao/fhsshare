@@ -165,7 +165,6 @@ fi
     _HOME="$_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$INFO_SHARE" )"
 
     if [ x"$__HOME" != x"$_HOME" ] && [ "$( id -u )" -ne 0 ] && ! findmnt -al | grep -qE "^$__HOME[ ]+"; then
-      sudo mount -o rw,rbind "$_HOME" "$__HOME"
 
       #https://specifications.freedesktop.org/menu-spec/latest/
       #https://wiki.archlinux.org/index.php/XDG_Base_Directory
@@ -189,9 +188,23 @@ fi
         export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
       fi
 
+      # mount "$_HOME"
+      sudo mount -o rw,rbind "$_HOME" "$__HOME"
+      
+      # mount "$_HOME"/home-share.git/.git on $__HOME/.git:
+      if [ -d "$_HOME"/home-share.git ]; then       
+        if [ ! -d $__HOME/.git ]; then
+	  mkdir $__HOME/.git
+	fi         
+	
+        if ! findmnt -al | grep -qE "^$__HOME/[.]git[[:blank:]]"; then
+	  sudo mount -o rw,rbind $_HOME/home-share.git/.git $__HOME/.git
+	fi
+      fi
 
 
-      if [ -d "$__HOME_SHARE" ]; then
+      # moun stuff under "$HOME_SHARE"/ to $__HOME/: 
+      if [ -d "$HOME_SHARE" ]; then
 
 	#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -204,7 +217,7 @@ fi
 	# %H     Starting-point under which file was found.  
 	# %p     File's name.
 	# %P     File's name with the name of the starting-point under which it was found removed.
-	find -L "$__HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+	find -L "$HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
         awk 'NF > 0' |
 	while IFS= read -r line; do
 	  if [ ! -d $__HOME/"$line" ]; then
@@ -212,40 +225,29 @@ fi
 	  fi
 
 	  if ! findmnt -al | grep -qE "^$__HOME/$line[[:blank:]]"; then
-	    sudo mount -o rw,rbind $__HOME_SHARE/"$line" $__HOME/"$line"
+	    sudo mount -o rw,rbind $HOME_SHARE/"$line" $__HOME/"$line"
 	  fi
 
 	done
 
-        # dealing on "$_HOME"/home-share.git:
-        if [ -d "$_HOME"/home-share.git ]; then       
-  	  if [ ! -d $__HOME/.git ]; then
-	    mkdir $__HOME/.git
-	  fi         
-	
-          if ! findmnt -al | grep -qE "^$__HOME/[.]git[[:blank:]]"; then
-	    sudo mount -o rw,rbind $_HOME/home-share.git/.git $__HOME/.git
-	  fi
-        fi
 
-
-	# dealing on hidden directories except .local and home-share.git itself:
-	find -L "$__HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
-        awk ' NF > 0 && ! /^[.]local$/ &&  ! /^home-share[.]git$/ ' |
+	# dealing on hidden directories except .local:
+	find -L "$HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
+        awk ' NF > 0 && ! /^[.]local$/ ' |
 	while IFS= read -r line; do
 	  if [ ! -d $__HOME/"$line" ]; then
 	    mkdir $__HOME/"$line"
 	  fi
 
 	  if ! findmnt -al | grep -qE "^$__HOME/$line[[:blank:]]"; then
-	    sudo mount -o rw,rbind $__HOME_SHARE/"$line" $__HOME/"$line"
+	    sudo mount -o rw,rbind $HOME_SHARE/"$line" $__HOME/"$line"
 	  fi
 
 	done
 
 	# dealing on .local:
-	if [ -d "$__HOME_SHARE"/.local ]; then
-	  find -L "$__HOME_SHARE"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+	if [ -d "$HOME_SHARE"/.local ]; then
+	  find -L "$HOME_SHARE"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
           awk 'NF > 0 && ! /^share$/ ' |
 	  while IFS= read -r line; do
 	    if [ ! -d $__HOME/.local/"$line" ]; then
@@ -253,15 +255,15 @@ fi
 	    fi
 
 	    if ! findmnt -al | grep -qE "^$__HOME/[.]local/$line[[:blank:]]"; then
-	      sudo mount -o rw,rbind $__HOME_SHARE/.local/"$line" $__HOME/.local/"$line"
+	      sudo mount -o rw,rbind $HOME_SHARE/.local/"$line" $__HOME/.local/"$line"
 	    fi
 
 	  done
 	fi
 
 	# dealing on .local/share:
-	if [ -d "$__HOME_SHARE"/.local/share ]; then
-	  find -L "$__HOME_SHARE"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+	if [ -d "$HOME_SHARE"/.local/share ]; then
+	  find -L "$HOME_SHARE"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
           awk 'NF > 0 && ! /^share$/ ' |
 	  while IFS= read -r line; do
 	    if [ ! -d $__HOME/.local/share/"$line" ]; then
@@ -269,7 +271,7 @@ fi
 	    fi
 
 	    if ! findmnt -al | grep -qE "^$__HOME/[.]local/share/$line[[:blank:]]"; then
-	      sudo mount -o rw,rbind $__HOME_SHARE/.local/share/"$line" $__HOME/.local/share/"$line"
+	      sudo mount -o rw,rbind $HOME_SHARE/.local/share/"$line" $__HOME/.local/share/"$line"
 	    fi
 
 	  done
