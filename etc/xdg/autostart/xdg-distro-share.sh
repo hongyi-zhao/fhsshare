@@ -104,8 +104,8 @@ _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
 _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 
 
-# distro_share relative vars:
-# DISTRO_SHARE is exported by /etc/profile.d/distro_share.sh
+# distro-share relative vars:
+# DISTRO_SHARE is exported by /etc/profile.d/distro-share.sh
 
   if [ -n "$DISTRO_SHARE"  ]; then
     HOME_DISTRO=$DISTRO_SHARE/home
