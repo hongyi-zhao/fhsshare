@@ -100,7 +100,7 @@ _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
 _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 
 
-# export distro_share relative vars:
+# export distro-share relative vars:
 export DISTRO_SHARE=/distro-share
 
 # using the following code is enough:
@@ -133,6 +133,15 @@ fi
       OPT_SHARE=$DISTRO_SHARE/opt
       INFO_SHARE=$DISTRO_SHARE/"$system_uuid-$root_uuid-$_user"
 
+
+      if [ ! -d "/.git" ]; then
+        sudo  mkdir /.git
+        sudo  chown -hR $_user:$_user /.git
+      fi
+
+      if ! findmnt -al | grep -qE "^/.git[[:blank:]]"; then
+        sudo mount -o rw,rbind $DISTRO_SHARE/distro-share.git/.git /.git
+      fi
  
        
       if [ ! -d "$OPT_SHARE" ]; then
@@ -208,10 +217,21 @@ fi
 
 	done
 
+        # dealing on "$HOME_SHARE"/home-share.git:
+        if [ -d "$HOME_SHARE"/home-share.git ]; then       
+  	  if [ ! -d $HOME/.git ]; then
+	    mkdir $HOME/.git
+	  fi         
+	
+          if ! findmnt -al | grep -qE "^$HOME/[.]git[[:blank:]]"; then
+	    sudo mount -o rw,rbind $HOME_SHARE/home-share.git/.git $HOME/.git
+	  fi
+        fi
 
-	# dealing on hidden directories except .local:
+
+	# dealing on hidden directories except .local and home-share.git itself:
 	find -L "$HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
-        awk ' NF > 0 && ! /^[.]local$/' |
+        awk ' NF > 0 && ! /^[.]local$/ &&  ! /^home-share[.]git$/ ' |
 	while IFS= read -r line; do
 	  if [ ! -d $HOME/"$line" ]; then
 	    mkdir $HOME/"$line"
