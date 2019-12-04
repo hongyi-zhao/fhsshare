@@ -93,7 +93,7 @@ _user="$( ps -o user= -p $$ | awk '{print $1}' )"
   
 # default home of the current user
 #getent passwd "$_user" | cut -d: -f6
-__home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
+__HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
 # _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
 _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
@@ -104,13 +104,13 @@ _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 export DISTRO_SHARE=/distro-share
 
 # using the following code is enough:
-if [ ! -d $__home ]; then
-  sudo mkdir $__home
+if [ ! -d $__HOME ]; then
+  sudo mkdir $__HOME
 fi
 
-if [ "$( stat -c "%U %G %a" $__home )" != "$_user $_user 755" ]; then
-  sudo chown -hR $_user:$_user $__home
-  sudo chmod -R 755 $__home 
+if [ "$( stat -c "%U %G %a" $__HOME )" != "$_user $_user 755" ]; then
+  sudo chown -hR $_user:$_user $__HOME
+  sudo chmod -R 755 $__HOME 
 fi
 
 
@@ -128,8 +128,8 @@ fi
     fi   
        
     if [ -d "$DISTRO_SHARE/distro-share.git" ]; then
-      HOME_DISTRO=$DISTRO_SHARE/home
-      HOME_SHARE=$HOME_DISTRO/home-share 
+      _HOME=$DISTRO_SHARE/home
+      HOME_SHARE=$_HOME/home-share 
       OPT_SHARE=$DISTRO_SHARE/opt
       INFO_SHARE=$DISTRO_SHARE/"$system_uuid-$root_uuid-$_user"
 
@@ -162,10 +162,10 @@ fi
 
 
   if [ -f "$INFO_SHARE" ]; then
-    _home="$HOME_DISTRO/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$INFO_SHARE" )"
+    _HOME="$_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$INFO_SHARE" )"
 
-    if [ x"$__home" != x"$_home" ] && [ "$( id -u )" -ne 0 ] && ! findmnt -al | grep -qE "^$HOME[ ]+"; then
-      sudo mount -o rw,rbind "$_home" "$__home"
+    if [ x"$__HOME" != x"$_HOME" ] && [ "$( id -u )" -ne 0 ] && ! findmnt -al | grep -qE "^$__HOME[ ]+"; then
+      sudo mount -o rw,rbind "$_HOME" "$__HOME"
 
       #https://specifications.freedesktop.org/menu-spec/latest/
       #https://wiki.archlinux.org/index.php/XDG_Base_Directory
@@ -177,8 +177,8 @@ fi
 
       # ref: ubuntu:
       # /etc/profile.d/xdg_dirs_desktop_session.sh
-      if ! grep -Eq "$HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
-        export XDG_DATA_DIRS=$HOME/.local/share:$XDG_DATA_DIRS
+      if ! grep -Eq "$__HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
+        export XDG_DATA_DIRS=$__HOME/.local/share:$XDG_DATA_DIRS
       fi
 
       if ! grep -Eq '/usr/local/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
@@ -191,7 +191,7 @@ fi
 
 
 
-      if [ -d "$HOME_SHARE" ]; then
+      if [ -d "$__HOME_SHARE" ]; then
 
 	#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -204,72 +204,72 @@ fi
 	# %H     Starting-point under which file was found.  
 	# %p     File's name.
 	# %P     File's name with the name of the starting-point under which it was found removed.
-	find -L "$HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+	find -L "$__HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
         awk 'NF > 0' |
 	while IFS= read -r line; do
-	  if [ ! -d $HOME/"$line" ]; then
-	    mkdir $HOME/"$line"
+	  if [ ! -d $__HOME/"$line" ]; then
+	    mkdir $__HOME/"$line"
 	  fi
 
-	  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-	    sudo mount -o rw,rbind $HOME_SHARE/"$line" $HOME/"$line"
+	  if ! findmnt -al | grep -qE "^$__HOME/$line[[:blank:]]"; then
+	    sudo mount -o rw,rbind $__HOME_SHARE/"$line" $__HOME/"$line"
 	  fi
 
 	done
 
-        # dealing on "$HOME_SHARE"/home-share.git:
-        if [ -d "$HOME_SHARE"/home-share.git ]; then       
-  	  if [ ! -d $HOME/.git ]; then
-	    mkdir $HOME/.git
+        # dealing on "$_HOME"/home-share.git:
+        if [ -d "$_HOME"/home-share.git ]; then       
+  	  if [ ! -d $__HOME/.git ]; then
+	    mkdir $__HOME/.git
 	  fi         
 	
-          if ! findmnt -al | grep -qE "^$HOME/[.]git[[:blank:]]"; then
-	    sudo mount -o rw,rbind $HOME_SHARE/home-share.git/.git $HOME/.git
+          if ! findmnt -al | grep -qE "^$__HOME/[.]git[[:blank:]]"; then
+	    sudo mount -o rw,rbind $_HOME/home-share.git/.git $__HOME/.git
 	  fi
         fi
 
 
 	# dealing on hidden directories except .local and home-share.git itself:
-	find -L "$HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
+	find -L "$__HOME_SHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
         awk ' NF > 0 && ! /^[.]local$/ &&  ! /^home-share[.]git$/ ' |
 	while IFS= read -r line; do
-	  if [ ! -d $HOME/"$line" ]; then
-	    mkdir $HOME/"$line"
+	  if [ ! -d $__HOME/"$line" ]; then
+	    mkdir $__HOME/"$line"
 	  fi
 
-	  if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-	    sudo mount -o rw,rbind $HOME_SHARE/"$line" $HOME/"$line"
+	  if ! findmnt -al | grep -qE "^$__HOME/$line[[:blank:]]"; then
+	    sudo mount -o rw,rbind $__HOME_SHARE/"$line" $__HOME/"$line"
 	  fi
 
 	done
 
 	# dealing on .local:
-	if [ -d "$HOME_SHARE"/.local ]; then
-	  find -L "$HOME_SHARE"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+	if [ -d "$__HOME_SHARE"/.local ]; then
+	  find -L "$__HOME_SHARE"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
           awk 'NF > 0 && ! /^share$/ ' |
 	  while IFS= read -r line; do
-	    if [ ! -d $HOME/.local/"$line" ]; then
-	      mkdir -p $HOME/.local/"$line"
+	    if [ ! -d $__HOME/.local/"$line" ]; then
+	      mkdir -p $__HOME/.local/"$line"
 	    fi
 
-	    if ! findmnt -al | grep -qE "^$HOME/[.]local/$line[[:blank:]]"; then
-	      sudo mount -o rw,rbind $HOME_SHARE/.local/"$line" $HOME/.local/"$line"
+	    if ! findmnt -al | grep -qE "^$__HOME/[.]local/$line[[:blank:]]"; then
+	      sudo mount -o rw,rbind $__HOME_SHARE/.local/"$line" $__HOME/.local/"$line"
 	    fi
 
 	  done
 	fi
 
 	# dealing on .local/share:
-	if [ -d "$HOME_SHARE"/.local/share ]; then
-	  find -L "$HOME_SHARE"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+	if [ -d "$__HOME_SHARE"/.local/share ]; then
+	  find -L "$__HOME_SHARE"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
           awk 'NF > 0 && ! /^share$/ ' |
 	  while IFS= read -r line; do
-	    if [ ! -d $HOME/.local/share/"$line" ]; then
-	      mkdir -p $HOME/.local/share/"$line"
+	    if [ ! -d $__HOME/.local/share/"$line" ]; then
+	      mkdir -p $__HOME/.local/share/"$line"
 	    fi
 
-	    if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line[[:blank:]]"; then
-	      sudo mount -o rw,rbind $HOME_SHARE/.local/share/"$line" $HOME/.local/share/"$line"
+	    if ! findmnt -al | grep -qE "^$__HOME/[.]local/share/$line[[:blank:]]"; then
+	      sudo mount -o rw,rbind $__HOME_SHARE/.local/share/"$line" $__HOME/.local/share/"$line"
 	    fi
 
 	  done
@@ -298,7 +298,7 @@ fi
 # 
 #         Where user-specific configurations should be written (analogous to /etc).
 # 
-#         Should default to $HOME/.config.
+#         Should default to $__HOME/.config.
 # 
 # 
 # 
@@ -306,7 +306,7 @@ fi
 # 
 #         Where user-specific non-essential (cached) data should be written (analogous to /var/cache).
 # 
-#         Should default to $HOME/.cache.
+#         Should default to $__HOME/.cache.
 # 
 # 
 # 
@@ -314,7 +314,7 @@ fi
 # 
 #         Where user-specific data files should be written (analogous to /usr/share).
 # 
-#         Should default to $HOME/.local/share.
+#         Should default to $__HOME/.local/share.
 
 
 

@@ -97,7 +97,7 @@ system_uuid=$( sudo dmidecode -s system-uuid )
 root_uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )
 
 #getent passwd "$_user" | cut -d: -f6
-__home=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
+__HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
 # _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
 _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
@@ -108,8 +108,8 @@ _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 # DISTRO_SHARE is exported by /etc/profile.d/distro-share.sh
 
   if [ -n "$DISTRO_SHARE"  ]; then
-    HOME_DISTRO=$DISTRO_SHARE/home
-    HOME_SHARE=$HOME_DISTRO/home-share 
+    _HOME=$DISTRO_SHARE/home
+    HOME_SHARE=$_HOME/home-share 
     OPT_SHARE=$DISTRO_SHARE/opt
     INFO_SHARE=$DISTRO_SHARE/"$system_uuid-$root_uuid-$_user"
 
@@ -118,9 +118,9 @@ _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
       echo "Distro: $_distro" | sudo tee $INFO_SHARE > /dev/null 2>&1 
       echo "Desktop: $_desktop" | sudo tee -a $INFO_SHARE > /dev/null 2>&1 
 
-      if [ ! -d "$HOME_DISTRO/$_distro-$_desktop" ]; then		  
-        sudo mkdir $HOME_DISTRO/$_distro-$_desktop
-        sudo chown -hR $_user:$_user $HOME_DISTRO/$_distro-$_desktop
+      if [ ! -d "$_HOME/$_distro-$_desktop" ]; then		  
+        sudo mkdir $_HOME/$_distro-$_desktop
+        sudo chown -hR $_user:$_user $_HOME/$_distro-$_desktop
       fi
     fi
   fi
@@ -129,8 +129,8 @@ _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 
 # change the use's home path in /etc/passwd is a silly idea, don't use it:
 
-#    if [ $_home != $HOME_DISTRO/$_distro-$_desktop ]; then
-#      _home=$HOME_DISTRO/$_distro-$_desktop
+#    if [ $_home != $_HOME/$_distro-$_desktop ]; then
+#      _home=$_HOME/$_distro-$_desktop
 #  
 #  
 #      # revise the home via /etc/passwd file:
