@@ -142,7 +142,13 @@ fi
 
       if ! findmnt -al | grep -qE "^/.git[[:blank:]]"; then
         sudo mount -o rw,rbind $ROOT_SHARE/root-share.git/.git /.git
-        sudo git --work-tree=/ --git-dir=/.git reset --hard
+        # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
+        if ! sudo git --work-tree=$ROOT_SHARE/root-share.git --git-dir=$ROOT_SHARE/root-share.git/.git diff --quiet; then
+          sudo git --work-tree=$ROOT_SHARE/root-share.git --git-dir=$ROOT_SHARE/root-share.git/.git reset --hard
+        fi       
+        if ! sudo git --work-tree=/ --git-dir=/.git diff --quiet; then
+          sudo git --work-tree=/ --git-dir=/.git reset --hard
+        fi         
       fi
  
        
@@ -208,8 +214,14 @@ fi
 	
         if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]git[[:blank:]]"; then
 	  sudo mount -o rw,rbind $ROOT_SHARE_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
-          git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git reset --hard
-	fi
+          if ! git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git diff --quiet; then
+            git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git reset --hard
+          fi
+          
+          if ! git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git diff --quiet; then
+            git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git reset --hard
+          fi	
+        fi
       fi
 
 
