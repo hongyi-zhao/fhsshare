@@ -216,11 +216,11 @@ fi
           # use sudo to prevent the permission issue:
 	  sudo mount -o rw,rbind $ROOT_SHARE_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
           if ! sudo git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git diff --quiet; then
-            sudo git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git reset --hard
+            sudo git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git reset --recurse-submodules --hard
           fi
           
           if ! sudo git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git diff --quiet; then
-            sudo git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git reset --hard
+            sudo git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git reset --recurse-submodules --hard
           fi	
         fi
       fi
