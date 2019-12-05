@@ -90,19 +90,13 @@ root_uuid="$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $N
 # current user
 _user="$( ps -o user= -p $$ | awk '{print $1}' )"
 
-  
-# default home of the current user
-#getent passwd "$_user" | cut -d: -f6
-DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
-
 # _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
 _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
 _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 
-
-# export root-share relative vars:
-export ROOT_SHARE=/root-share
-
+# default home of the current user
+#getent passwd "$_user" | cut -d: -f6
+DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 # using the following code is enough:
 if [ ! -d $DEFAULT_HOME ]; then
   sudo mkdir $DEFAULT_HOME
@@ -114,197 +108,196 @@ if [ "$( stat -c "%U %G %a" $DEFAULT_HOME )" != "$_user $_user 755" ]; then
 fi
 
 
+# export root-share relative vars:
+export ROOT_SHARE=/root-share
+if [ ! -d "$ROOT_SHARE" ]; then
+  sudo mkdir -p $ROOT_SHARE
+  sudo chown -hR $_user:$_user $ROOT_SHARE
+fi
+
+
+
+
 
 # https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
 # https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
-  while IFS= read -r uuid; do
-    if [ ! -d "$ROOT_SHARE" ]; then
-      sudo mkdir -p $ROOT_SHARE
-      sudo chown -hR $_user:$_user $ROOT_SHARE
-    fi
-	
-    if ! findmnt -al | grep -qE "^$ROOT_SHARE[ ]+"; then 
-      sudo mount -U $uuid $ROOT_SHARE
-    fi   
+while IFS= read -r uuid; do
+  if ! findmnt -al | grep -qE "^$ROOT_SHARE[ ]+"; then 
+    sudo mount -U $uuid $ROOT_SHARE
+  fi   
        
-    if [ -d "$ROOT_SHARE/root-share.git" ]; then
-      ROOT_SHARE_HOME=$ROOT_SHARE/home
-      ROOT_SHARE_OPT=$ROOT_SHARE/opt
-      ROOT_SHARE_INFO=$ROOT_SHARE/"$system_uuid-$root_uuid-$_user"
+  if [ -d "$ROOT_SHARE/root-share.git" ]; then
+    ROOT_SHARE_HOME=$ROOT_SHARE/home
+    ROOT_SHARE_OPT=$ROOT_SHARE/opt
+    ROOT_SHARE_INFO=$ROOT_SHARE/"$system_uuid-$root_uuid-$_user"
 
-      DISTRO_DESKTOP=$ROOT_SHARE_HOME/distro-desktop 
+    DISTRO_DESKTOP=$ROOT_SHARE_HOME/distro-desktop 
 
 
-      if [ ! -d "/.git" ]; then
-        sudo  mkdir /.git
-        sudo  chown -hR $_user:$_user /.git
-      fi
+    if [ ! -d "/.git" ]; then
+      sudo  mkdir /.git
+      sudo  chown -hR $_user:$_user /.git
+    fi
 
-      if ! findmnt -al | grep -qE "^/.git[[:blank:]]"; then
-        sudo mount -o rw,rbind $ROOT_SHARE/root-share.git/.git /.git
-        # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
-        if ! sudo git --work-tree=$ROOT_SHARE/root-share.git --git-dir=$ROOT_SHARE/root-share.git/.git diff --quiet; then
-          sudo git --work-tree=$ROOT_SHARE/root-share.git --git-dir=$ROOT_SHARE/root-share.git/.git reset --hard
-        fi       
-        if ! sudo git --work-tree=/ --git-dir=/.git diff --quiet; then
-          sudo git --work-tree=/ --git-dir=/.git reset --hard
-        fi         
-      fi
+    if ! findmnt -al | grep -qE "^/.git[[:blank:]]"; then
+      sudo mount -o rw,rbind $ROOT_SHARE/root-share.git/.git /.git
+      # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
+      if ! sudo git --work-tree=$ROOT_SHARE/root-share.git --git-dir=$ROOT_SHARE/root-share.git/.git diff --quiet; then
+        sudo git --work-tree=$ROOT_SHARE/root-share.git --git-dir=$ROOT_SHARE/root-share.git/.git reset --recurse-submodules --hard
+      fi       
+      if ! sudo git --work-tree=/ --git-dir=/.git diff --quiet; then
+        sudo git --work-tree=/ --git-dir=/.git reset --recurse-submodules --hard
+      fi         
+    fi
  
        
-      if [ ! -d "$ROOT_SHARE_OPT" ]; then
-        sudo  mkdir $ROOT_SHARE_OPT
-        sudo  chown -hR $_user:$_user $ROOT_SHARE_OPT
-      fi
-
-      if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
-        sudo mount -o rw,rbind $ROOT_SHARE_OPT /opt
-      fi
-      break
-    else
-      sudo umount $ROOT_SHARE
+    if [ ! -d "$ROOT_SHARE_OPT" ]; then
+      sudo  mkdir $ROOT_SHARE_OPT
+      sudo  chown -hR $_user:$_user $ROOT_SHARE_OPT
     fi
 
-  done < <( lsblk -o uuid,fstype,mountpoint | awk -v a=$ROOT_SHARE ' $2 == "ext4" && ( $3 == "" || $3 == a ) { print $1 } ' )
+    if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
+      sudo mount -o rw,rbind $ROOT_SHARE_OPT /opt
+    fi
+    break
+  else
+    sudo umount $ROOT_SHARE
+  fi
+done < <( lsblk -o uuid,fstype,mountpoint | awk -v mountpoint=$ROOT_SHARE ' $2 == "ext4" && ( $3 == "" || $3 == mountpoint ) { print $1 } ' )
 
 
 
-  if [ -f "$ROOT_SHARE_INFO" ]; then
-    NEW_HOME="$ROOT_SHARE_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$ROOT_SHARE_INFO" )"
+if [ -f "$ROOT_SHARE_INFO" ]; then
+  NEW_HOME="$ROOT_SHARE_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$ROOT_SHARE_INFO" )"
+fi
 
-    if [ x"$DEFAULT_HOME" != x"$NEW_HOME" ] && [ "$( id -u )" -ne 0 ] && ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"; then
+  if [ x"$DEFAULT_HOME" != x"$NEW_HOME" ] && [ "$( id -u )" -ne 0 ] && ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"; then
 
-      #https://specifications.freedesktop.org/menu-spec/latest/
-      #https://wiki.archlinux.org/index.php/XDG_Base_Directory
-      # XDG_DATA_DIRS
-      # List of directories seperated by : (analogous to PATH).
-      # Should default to /usr/local/share:/usr/share.
+    #https://specifications.freedesktop.org/menu-spec/latest/
+    #https://wiki.archlinux.org/index.php/XDG_Base_Directory
+    # XDG_DATA_DIRS
+    # List of directories seperated by : (analogous to PATH).
+    # Should default to /usr/local/share:/usr/share.
 
-      #for desktop files search:
+    #for desktop files search:
 
-      # ref: ubuntu:
-      # /etc/profile.d/xdg_dirs_desktop_session.sh
-      if ! grep -Eq "$DEFAULT_HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
-        export XDG_DATA_DIRS=$DEFAULT_HOME/.local/share:$XDG_DATA_DIRS
-      fi
+    # ref: ubuntu:
+    # /etc/profile.d/xdg_dirs_desktop_session.sh
+    if ! grep -Eq "$DEFAULT_HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
+      export XDG_DATA_DIRS=$DEFAULT_HOME/.local/share:$XDG_DATA_DIRS
+    fi
 
-      if ! grep -Eq '/usr/local/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
-        export XDG_DATA_DIRS=/usr/local/share:$XDG_DATA_DIRS 
-      fi
+    if ! grep -Eq '/usr/local/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
+      export XDG_DATA_DIRS=/usr/local/share:$XDG_DATA_DIRS 
+    fi
 
-      if ! grep -Eq '/usr/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
-        export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
-      fi
+    if ! grep -Eq '/usr/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
+      export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
+    fi
 
-      # attach the stuff found on "$NEW_HOME" at $DEFAULT_HOME/: 
-      sudo mount -o rw,rbind "$NEW_HOME" "$DEFAULT_HOME"
+    # attach the stuff found on "$NEW_HOME" at $DEFAULT_HOME/: 
+    sudo mount -o rw,rbind "$NEW_HOME" "$DEFAULT_HOME"
       
-      # attach the stuff found on $ROOT_SHARE_HOME/distro-desktop.git/.git on $DEFAULT_HOME/.git:
-      if  [  -n "$ROOT_SHARE_HOME" ] && [ -d $ROOT_SHARE_HOME/distro-desktop.git ]; then 
-
-        if [ "$( stat -c "%U %G %a" $ROOT_SHARE_HOME/distro-desktop.git )" != "$_user $_user 755" ]; then
-          sudo chown -hR $_user:$_user $ROOT_SHARE_HOME/distro-desktop.git
-          sudo chmod -R 755 $ROOT_SHARE_HOME/distro-desktop.git
-        fi
-
-      
-        if [ ! -d $DEFAULT_HOME/.git ]; then
-	  mkdir $DEFAULT_HOME/.git
-	fi         
+    # attach the stuff found on $ROOT_SHARE_HOME/distro-desktop.git/.git on $DEFAULT_HOME/.git:
+    if  [  -n "$ROOT_SHARE_HOME" ] && [ -d $ROOT_SHARE_HOME/distro-desktop.git ]; then 
+      if [ "$( stat -c "%U %G %a" $ROOT_SHARE_HOME/distro-desktop.git )" != "$_user $_user 755" ]; then
+        sudo chown -hR $_user:$_user $ROOT_SHARE_HOME/distro-desktop.git
+        sudo chmod -R 755 $ROOT_SHARE_HOME/distro-desktop.git
+      fi
+     
+      if [ ! -d $DEFAULT_HOME/.git ]; then
+	mkdir $DEFAULT_HOME/.git
+      fi         
 	
-        if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]git[[:blank:]]"; then
-          # use sudo to prevent the permission issue:
-	  sudo mount -o rw,rbind $ROOT_SHARE_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
-          if ! sudo git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git diff --quiet; then
-            sudo git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git reset --recurse-submodules --hard
-          fi
+      if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]git[[:blank:]]"; then
+        # use sudo to prevent the permission issue:
+	sudo mount -o rw,rbind $ROOT_SHARE_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
+        if ! sudo git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git diff --quiet; then
+          sudo git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git reset --recurse-submodules --hard
+        fi
           
-          if ! sudo git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git diff --quiet; then
-            sudo git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git reset --recurse-submodules --hard
-          fi	
-        fi
+        if ! sudo git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git diff --quiet; then
+          sudo git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git reset --recurse-submodules --hard
+        fi	
+      fi
+    fi
+
+
+    # attach the stuff found on $DISTRO_DESKTOP/ at $DEFAULT_HOME/: 
+    if [ -d "$DISTRO_DESKTOP" ]; then
+
+      #https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
+
+      # software/anti-gfw/not-used/vpngate-relative/ecmp-vpngate/script/ovpn-traverse.sh
+      # -printf format
+      # %f     File's name with any leading directories removed (only the last element).
+      # %h     Leading directories of file's name (all but the last element).  
+      # If the file name contains  no  slashes
+      #             (since it is in the current directory) the %h specifier expands to `.'.       
+      # %H     Starting-point under which file was found.  
+      # %p     File's name.
+      # %P     File's name with the name of the starting-point under which it was found removed.
+	
+      # non-hidden directories:
+      find -L "$DISTRO_DESKTOP"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+      awk 'NF > 0' |
+      while IFS= read -r line; do
+	if [ ! -d $DEFAULT_HOME/"$line" ]; then
+	  mkdir $DEFAULT_HOME/"$line"
+	fi
+
+	if ! findmnt -al | grep -qE "^$DEFAULT_HOME/$line[[:blank:]]"; then
+	  sudo mount -o rw,rbind $DISTRO_DESKTOP/"$line" $DEFAULT_HOME/"$line"
+	fi
+      done
+
+
+      # hidden directories except .local:
+      find -L "$DISTRO_DESKTOP"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
+      awk ' NF > 0 && ! /^[.]local$/ ' |
+      while IFS= read -r line; do
+	if [ ! -d $DEFAULT_HOME/"$line" ]; then
+	  mkdir $DEFAULT_HOME/"$line"
+	fi
+
+	if ! findmnt -al | grep -qE "^$DEFAULT_HOME/$line[[:blank:]]"; then
+	  sudo mount -o rw,rbind $DISTRO_DESKTOP/"$line" $DEFAULT_HOME/"$line"
+	fi
+      done
+
+      # .local except .local/share:
+      if [ -d "$DISTRO_DESKTOP"/.local ]; then
+	find -L "$DISTRO_DESKTOP"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+        awk 'NF > 0 && ! /^share$/ ' |
+	while IFS= read -r line; do
+	  if [ ! -d $DEFAULT_HOME/.local/"$line" ]; then
+	    mkdir -p $DEFAULT_HOME/.local/"$line"
+	  fi
+
+	  if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]local/$line[[:blank:]]"; then
+	    sudo mount -o rw,rbind $DISTRO_DESKTOP/.local/"$line" $DEFAULT_HOME/.local/"$line"
+	  fi
+	done
       fi
 
-
-      # attach the stuff found on $DISTRO_DESKTOP/ at $DEFAULT_HOME/: 
-      if [ -d "$DISTRO_DESKTOP" ]; then
-
-	#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
-
-	# software/anti-gfw/not-used/vpngate-relative/ecmp-vpngate/script/ovpn-traverse.sh
-	# -printf format
-	# %f     File's name with any leading directories removed (only the last element).
-	# %h     Leading directories of file's name (all but the last element).  
-	# If the file name contains  no  slashes
-	#             (since it is in the current directory) the %h specifier expands to `.'.       
-	# %H     Starting-point under which file was found.  
-	# %p     File's name.
-	# %P     File's name with the name of the starting-point under which it was found removed.
-	
-        # non-hidden directories:
-        find -L "$DISTRO_DESKTOP"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
-        awk 'NF > 0' |
+      # .local/share:
+      if [ -d "$DISTRO_DESKTOP"/.local/share ]; then
+	find -L "$DISTRO_DESKTOP"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+        awk 'NF > 0 ' |
 	while IFS= read -r line; do
-	  if [ ! -d $DEFAULT_HOME/"$line" ]; then
-	    mkdir $DEFAULT_HOME/"$line"
+	  if [ ! -d $DEFAULT_HOME/.local/share/"$line" ]; then
+	    mkdir -p $DEFAULT_HOME/.local/share/"$line"
 	  fi
 
-	  if ! findmnt -al | grep -qE "^$DEFAULT_HOME/$line[[:blank:]]"; then
-	    sudo mount -o rw,rbind $DISTRO_DESKTOP/"$line" $DEFAULT_HOME/"$line"
+	  if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]local/share/$line[[:blank:]]"; then
+	    sudo mount -o rw,rbind $DISTRO_DESKTOP/.local/share/"$line" $DEFAULT_HOME/.local/share/"$line"
 	  fi
-
 	done
-
-
-	# hidden directories except .local:
-	find -L "$DISTRO_DESKTOP"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
-        awk ' NF > 0 && ! /^[.]local$/ ' |
-	while IFS= read -r line; do
-	  if [ ! -d $DEFAULT_HOME/"$line" ]; then
-	    mkdir $DEFAULT_HOME/"$line"
-	  fi
-
-	  if ! findmnt -al | grep -qE "^$DEFAULT_HOME/$line[[:blank:]]"; then
-	    sudo mount -o rw,rbind $DISTRO_DESKTOP/"$line" $DEFAULT_HOME/"$line"
-	  fi
-
-	done
-
-	# .local except .local/share:
-	if [ -d "$DISTRO_DESKTOP"/.local ]; then
-	  find -L "$DISTRO_DESKTOP"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
-          awk 'NF > 0 && ! /^share$/ ' |
-	  while IFS= read -r line; do
-	    if [ ! -d $DEFAULT_HOME/.local/"$line" ]; then
-	      mkdir -p $DEFAULT_HOME/.local/"$line"
-	    fi
-
-	    if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]local/$line[[:blank:]]"; then
-	      sudo mount -o rw,rbind $DISTRO_DESKTOP/.local/"$line" $DEFAULT_HOME/.local/"$line"
-	    fi
-
-	  done
-	fi
-
-	# .local/share:
-	if [ -d "$DISTRO_DESKTOP"/.local/share ]; then
-	  find -L "$DISTRO_DESKTOP"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
-          awk 'NF > 0 ' |
-	  while IFS= read -r line; do
-	    if [ ! -d $DEFAULT_HOME/.local/share/"$line" ]; then
-	      mkdir -p $DEFAULT_HOME/.local/share/"$line"
-	    fi
-
-	    if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]local/share/$line[[:blank:]]"; then
-	      sudo mount -o rw,rbind $DISTRO_DESKTOP/.local/share/"$line" $DEFAULT_HOME/.local/share/"$line"
-	    fi
-
-	  done
-	fi
       fi
     fi
   fi
 fi
+
 
 
 
