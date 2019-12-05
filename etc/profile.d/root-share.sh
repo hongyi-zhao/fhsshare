@@ -77,7 +77,10 @@ pwd -P
 
 # 首先需要准备一个 $ROOT_SHARE 目录， which conform to the Filesystem Hierarchy Standard，FHS:
 # https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard
-# 其标准是 和 https://github.com/hongyi-zhao/dotfiles.git 的内容不干扰。
+# Then combine the following two repos to do the job:
+#  
+# https://github.com/hongyi-zhao/root-share.git
+# https://github.com/hongyi-zhao/distro-desktop.git
 
 
 if command -v inxi > /dev/null 2>&1; then 
