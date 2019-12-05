@@ -142,6 +142,7 @@ fi
 
       if ! findmnt -al | grep -qE "^/.git[[:blank:]]"; then
         sudo mount -o rw,rbind $ROOT_SHARE/root-share.git/.git /.git
+        sudo git --work-tree=/ --git-dir=/.git reset --hard
       fi
  
        
@@ -193,13 +194,21 @@ fi
       sudo mount -o rw,rbind "$NEW_HOME" "$DEFAULT_HOME"
       
       # attach the stuff found on $ROOT_SHARE_HOME/distro-desktop.git/.git on $DEFAULT_HOME/.git:
-      if  [  -n "$ROOT_SHARE_HOME" ] && [ -d $ROOT_SHARE_HOME/distro-desktop.git ]; then       
+      if  [  -n "$ROOT_SHARE_HOME" ] && [ -d $ROOT_SHARE_HOME/distro-desktop.git ]; then 
+
+        if [ "$( stat -c "%U %G %a" $ROOT_SHARE_HOME/distro-desktop.git )" != "$_user $_user 755" ]; then
+          sudo chown -hR $_user:$_user $ROOT_SHARE_HOME/distro-desktop.git
+          sudo chmod -R 755 $ROOT_SHARE_HOME/distro-desktop.git
+        fi
+
+      
         if [ ! -d $DEFAULT_HOME/.git ]; then
 	  mkdir $DEFAULT_HOME/.git
 	fi         
 	
         if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]git[[:blank:]]"; then
 	  sudo mount -o rw,rbind $ROOT_SHARE_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
+          git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git reset --hard
 	fi
       fi
 
@@ -218,7 +227,9 @@ fi
 	# %H     Starting-point under which file was found.  
 	# %p     File's name.
 	# %P     File's name with the name of the starting-point under which it was found removed.
-	find -L "$DISTRO_DESKTOP"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+	
+        # non-hidden directories:
+        find -L "$DISTRO_DESKTOP"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
         awk 'NF > 0' |
 	while IFS= read -r line; do
 	  if [ ! -d $DEFAULT_HOME/"$line" ]; then
@@ -232,7 +243,7 @@ fi
 	done
 
 
-	# dealing on hidden directories except .local:
+	# hidden directories except .local:
 	find -L "$DISTRO_DESKTOP"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
         awk ' NF > 0 && ! /^[.]local$/ ' |
 	while IFS= read -r line; do
@@ -246,7 +257,7 @@ fi
 
 	done
 
-	# dealing on .local:
+	# .local except .local/share:
 	if [ -d "$DISTRO_DESKTOP"/.local ]; then
 	  find -L "$DISTRO_DESKTOP"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
           awk 'NF > 0 && ! /^share$/ ' |
@@ -262,10 +273,10 @@ fi
 	  done
 	fi
 
-	# dealing on .local/share:
+	# .local/share:
 	if [ -d "$DISTRO_DESKTOP"/.local/share ]; then
 	  find -L "$DISTRO_DESKTOP"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
-          awk 'NF > 0 && ! /^share$/ ' |
+          awk 'NF > 0 ' |
 	  while IFS= read -r line; do
 	    if [ ! -d $DEFAULT_HOME/.local/share/"$line" ]; then
 	      mkdir -p $DEFAULT_HOME/.local/share/"$line"
@@ -286,7 +297,7 @@ fi
 
 
 # 在 .profile 中运行 inxi 能否检测到 Desktop 的值，
-# 是和distro有关的。故不可靠。
+# 是和distro有关的, 故不可靠。
 
 # 采用这里的方法是可以的：
 # https://unix.stackexchange.com/questions/348321/purpose-of-the-autostart-scripts-directory
