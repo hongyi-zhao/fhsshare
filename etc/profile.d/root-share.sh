@@ -213,13 +213,14 @@ fi
 	fi         
 	
         if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]git[[:blank:]]"; then
+          # use sudo to prevent the permission issue:
 	  sudo mount -o rw,rbind $ROOT_SHARE_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
-          if ! git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git diff --quiet; then
-            git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git reset --hard
+          if ! sudo git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git diff --quiet; then
+            sudo git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git reset --hard
           fi
           
-          if ! git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git diff --quiet; then
-            git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git reset --hard
+          if ! sudo git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git diff --quiet; then
+            sudo git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git reset --hard
           fi	
         fi
       fi
