@@ -145,12 +145,11 @@ while IFS= read -r uuid; do
     if ! findmnt -al | grep -qE "^/.git[[:blank:]]"; then
       sudo mount -o rw,rbind $ROOT_SHARE/root-share.git/.git /.git
       # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
-      if ! sudo git --work-tree=$ROOT_SHARE/root-share.git --git-dir=$ROOT_SHARE/root-share.git/.git diff --quiet; then
-        sudo git --work-tree=$ROOT_SHARE/root-share.git --git-dir=$ROOT_SHARE/root-share.git/.git reset --recurse-submodules --hard
-      fi       
-      if ! sudo git --work-tree=/ --git-dir=/.git diff --quiet; then
-        sudo git --work-tree=/ --git-dir=/.git reset --recurse-submodules --hard
-      fi         
+      for dir in $ROOT_SHARE/root-share.git /; do  
+        if ! sudo git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
+          sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
+        fi
+      done       
     fi
  
        
@@ -215,13 +214,11 @@ fi
       if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]git[[:blank:]]"; then
         # use sudo to prevent the permission issue:
 	sudo mount -o rw,rbind $ROOT_SHARE_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
-        if ! sudo git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git diff --quiet; then
-          sudo git --work-tree=$ROOT_SHARE_HOME/distro-desktop.git --git-dir=$ROOT_SHARE_HOME/distro-desktop.git/.git reset --recurse-submodules --hard
-        fi
-          
-        if ! sudo git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git diff --quiet; then
-          sudo git --work-tree=$DEFAULT_HOME --git-dir=$DEFAULT_HOME/.git reset --recurse-submodules --hard
-        fi	
+        for dir in $ROOT_SHARE_HOME/distro-desktop.git $DEFAULT_HOME; do  
+          if ! sudo git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
+            sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
+          fi
+        done 
       fi
     fi
 
