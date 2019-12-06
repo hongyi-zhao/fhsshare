@@ -294,15 +294,13 @@ if [ "$( id -u )" -ne 0 ] && [ -n "$NEW_HOME" ] && [ "$DEFAULT_HOME" != "$NEW_HO
     fi         
 	
     if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]git[[:blank:]]"; then
-      # use sudo to prevent the permission issue:
       sudo mount -o rw,rbind $ROOT_SHARE_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
-      for dir in $ROOT_SHARE_HOME/distro-desktop.git $DEFAULT_HOME; do  
-        if ! sudo git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
-          # sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
-          # it's not need to use --recurse-submodules, especially when the submodules are mounted
-          # from other devices, say, with mount's rbind method, the --recurse-submodules option will 
-          # failed in this case. 
-          sudo git --work-tree=$dir --git-dir=$dir/.git reset --hard
+      for dir in $ROOT_SHARE_HOME/distro-desktop.git $DEFAULT_HOME; do
+        # it seems not need use sudo for this case:  
+        if ! git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
+          # git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
+          # there is no need to use --recurse-submodules for this case. 
+          git --work-tree=$dir --git-dir=$dir/.git reset --hard
         fi
       done 
     fi
@@ -311,12 +309,6 @@ fi
 
 
 
-
-
-
-# 在 .profile 中运行 inxi 能否检测到 Desktop 的值，
-# 是和distro有关的, 故不可靠。so, only run the inxi in xdg autostart scripts.
-# 
 
 # 采用这里的方法是可以的：
 # https://unix.stackexchange.com/questions/348321/purpose-of-the-autostart-scripts-directory
