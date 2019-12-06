@@ -100,6 +100,8 @@ _user="$( ps -o user= -p $$ | awk '{print $1}' )"
 #getent passwd "$_user" | cut -d: -f6
 DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
+# export root-share relative vars:
+export ROOT_SHARE=/root-share
 
 if [ ! -d $DEFAULT_HOME ]; then
   sudo mkdir $DEFAULT_HOME
@@ -110,17 +112,10 @@ if [ "$( stat -c "%U %G %a" $DEFAULT_HOME )" != "$_user $_user 755" ]; then
   sudo chmod -R 755 $DEFAULT_HOME 
 fi
 
-
-# export root-share relative vars:
-export ROOT_SHARE=/root-share
 if [ ! -d "$ROOT_SHARE" ]; then
   sudo mkdir -p $ROOT_SHARE
   sudo chown -hR $_user:$_user $ROOT_SHARE
 fi
-
-
-
-
 
 # https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
 # https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
@@ -131,10 +126,14 @@ while IFS= read -r uuid; do
        
   if [ -d "$ROOT_SHARE/root-share.git" ]; then
     ROOT_SHARE_HOME=$ROOT_SHARE/home
-    ROOT_SHARE_OPT=$ROOT_SHARE/opt
     ROOT_SHARE_INFO=$ROOT_SHARE/"$system_uuid-$root_uuid-$_user"
+    if [ -f "$ROOT_SHARE_INFO" ]; then
+      NEW_HOME="$ROOT_SHARE_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$ROOT_SHARE_INFO" )"
+    fi
 
-    DISTRO_DESKTOP=$ROOT_SHARE_HOME/distro-desktop 
+    DISTRO_DESKTOP=$ROOT_SHARE_HOME/distro-desktop
+
+    ROOT_SHARE_OPT=$ROOT_SHARE/opt
   
     if [ ! -d "$ROOT_SHARE_OPT" ]; then
       sudo  mkdir $ROOT_SHARE_OPT
@@ -175,13 +174,8 @@ while IFS= read -r uuid; do
 done < <( lsblk -o uuid,fstype,mountpoint | awk -v mountpoint=$ROOT_SHARE ' $2 == "ext4" && ( $3 == "" || $3 == mountpoint ) { print $1 } ' )
 
 
-
-if [ -f "$ROOT_SHARE_INFO" ]; then
-  NEW_HOME="$ROOT_SHARE_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$ROOT_SHARE_INFO" )"
-fi
-
-if [ -n "$NEW_HOME" ] && [ "$DEFAULT_HOME" != "$NEW_HOME" ] && [ -d "$DISTRO_DESKTOP" ] &&  
-   [ "$( id -u )" -ne 0 ] && ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"; then
+if [ "$( id -u )" -ne 0 ] && [ -n "$NEW_HOME" ] && [ "$DEFAULT_HOME" != "$NEW_HOME" ] && [ -d "$DISTRO_DESKTOP" ] &&  
+   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"; then
 
   #https://specifications.freedesktop.org/menu-spec/latest/
   #https://wiki.archlinux.org/index.php/XDG_Base_Directory
@@ -204,6 +198,8 @@ if [ -n "$NEW_HOME" ] && [ "$DEFAULT_HOME" != "$NEW_HOME" ] && [ -d "$DISTRO_DES
   if ! grep -Eq '/usr/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
     export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
   fi
+
+
 
   # attach the stuff found on "$NEW_HOME" at $DEFAULT_HOME/: 
   sudo mount -o rw,rbind "$NEW_HOME" "$DEFAULT_HOME"
@@ -285,6 +281,7 @@ if [ -n "$NEW_HOME" ] && [ "$DEFAULT_HOME" != "$NEW_HOME" ] && [ -d "$DISTRO_DES
   # mount the git repo should be done after all other mount operations.
   # this can prevent the config files comes from the git repo
   # be superseated by other mount operations using the same file tree path.
+
   # attach the stuff found on $ROOT_SHARE_HOME/distro-desktop.git/.git at $DEFAULT_HOME/.git: 
   if [  -n "$ROOT_SHARE_HOME" ] && [ -d $ROOT_SHARE_HOME/distro-desktop.git ]; then 
     if [ "$( stat -c "%U %G %a" $ROOT_SHARE_HOME/distro-desktop.git )" != "$_user $_user 755" ]; then
