@@ -70,18 +70,31 @@ pwd -P
 
 
 
+# The idea 
 
-# 这些文件的执行是字典序。
-# 所以要保证相应的文件名之间符合调用的先后顺序。
-
-
-# 首先需要准备一个 $ROOT_SHARE 目录， which conform to the Filesystem Hierarchy Standard，FHS:
+# Use a seperated local partition/remote filesystem ( say, nfs ), for my case, the directory name is $ROOT_SHARE,
+# to populate the corresponding stuff which its directories conform to the   
+# Filesystem Hierarchy Standard，FHS:
 # https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard
-# Then combine the following two repos to do the job:
-#  
-# https://github.com/hongyi-zhao/root-share.git
-# https://github.com/hongyi-zhao/distro-desktop.git
 
+# Based on the xdg base directory specifications, find out which directories can be completely/partially shared.
+# For the former, put it into the public $DISTRO_DESKTOP/ directory, for the latter, only put the corresponding partially shared
+# subdirectories into the corresponding location in the $DISTRO_DESKTOP/ directory.
+
+# For the corresponding (system|user)-wide settings, restore them by git repos as following:
+# system-wide:
+# https://github.com/hongyi-zhao/root-share.git
+# user-wide:
+# https://github.com/hongyi-zhao/distro-desktop.git
+ 
+
+# Finally, use the xdg autostart script and shell profile to automate the settings. 
+
+
+
+# these scripts are sourced by lexical / dictionary order,
+# when there are two or more scripts to be sourced, make sure use correct filenames to 
+# ensure the execute logic among these scripts.
 
 # 一些用到的变量：
 # system_uuid
@@ -176,8 +189,11 @@ while IFS= read -r uuid; do
 done < <( lsblk -o uuid,fstype,mountpoint | awk -v mountpoint=$ROOT_SHARE ' $2 == "ext4" && ( $3 == "" || $3 == mountpoint ) { print $1 } ' )
 
 
-if [ "$( id -u )" -ne 0 ] && [ -d "$NEW_HOME" ] && [ "$DEFAULT_HOME" != "$NEW_HOME" ] &&  
-   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+" && [ -d "$DISTRO_DESKTOP" ]; then
+if [ "$( id -u )" -ne 0 ] && 
+   [ -d "$NEW_HOME" ] && [[ "$DEFAULT_HOME" != "$NEW_HOME" ]] &&
+   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"  &&   
+   [ -d "$DISTRO_DESKTOP" ]; then 
+
 
   #https://specifications.freedesktop.org/menu-spec/latest/
   #https://wiki.archlinux.org/index.php/XDG_Base_Directory
@@ -310,14 +326,9 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$NEW_HOME" ] && [ "$DEFAULT_HOME" != "$NEW_HO
 fi
 
 
-
-
-# 采用这里的方法是可以的：
+# ref：
 # https://unix.stackexchange.com/questions/348321/purpose-of-the-autostart-scripts-directory
 #https://specifications.freedesktop.org/autostart-spec/autostart-spec-latest.html
-
-
-
 #https://wiki.archlinux.org/index.php/XDG_Base_Directory
 #https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
 
