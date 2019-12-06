@@ -147,7 +147,11 @@ while IFS= read -r uuid; do
       # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
       for dir in $ROOT_SHARE/root-share.git /; do  
         if ! sudo git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
-          sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
+          #sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
+          # it's not need to use --recurse-submodules, especially when the submodules are mounted
+          # from other devices, say, with mount's rbind method, the --recurse-submodules option will 
+          # failed in this case.    
+          sudo git --work-tree=$dir --git-dir=$dir/.git reset --hard
         fi
       done       
     fi
@@ -216,7 +220,11 @@ fi
 	sudo mount -o rw,rbind $ROOT_SHARE_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
         for dir in $ROOT_SHARE_HOME/distro-desktop.git $DEFAULT_HOME; do  
           if ! sudo git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
-            sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
+            #sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
+            # it's not need to use --recurse-submodules, especially when the submodules are mounted
+            # from other devices, say, with mount's rbind method, the --recurse-submodules option will 
+            # failed in this case. 
+            sudo git --work-tree=$dir --git-dir=$dir/.git reset --hard
           fi
         done 
       fi
