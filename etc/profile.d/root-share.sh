@@ -128,11 +128,13 @@ while IFS= read -r uuid; do
     ROOT_SHARE_HOME=$ROOT_SHARE/home
     ROOT_SHARE_INFO=$ROOT_SHARE/"$system_uuid-$root_uuid-$_user"
     if [ -f "$ROOT_SHARE_INFO" ]; then
+      # this directory is created by /etc/xdg/autostart/xdg-root-share.sh
       NEW_HOME="$ROOT_SHARE_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$ROOT_SHARE_INFO" )"
     fi
-
+    
+    # this directory is prepared for hold public data:
     DISTRO_DESKTOP=$ROOT_SHARE_HOME/distro-desktop
-
+       
     ROOT_SHARE_OPT=$ROOT_SHARE/opt
   
     if [ ! -d "$ROOT_SHARE_OPT" ]; then
@@ -174,8 +176,8 @@ while IFS= read -r uuid; do
 done < <( lsblk -o uuid,fstype,mountpoint | awk -v mountpoint=$ROOT_SHARE ' $2 == "ext4" && ( $3 == "" || $3 == mountpoint ) { print $1 } ' )
 
 
-if [ "$( id -u )" -ne 0 ] && [ -n "$NEW_HOME" ] && [ "$DEFAULT_HOME" != "$NEW_HOME" ] && [ -d "$DISTRO_DESKTOP" ] &&  
-   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"; then
+if [ "$( id -u )" -ne 0 ] && [ -d "$NEW_HOME" ] && [ "$DEFAULT_HOME" != "$NEW_HOME" ] &&  
+   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+" && [ -d "$DISTRO_DESKTOP" ]; then
 
   #https://specifications.freedesktop.org/menu-spec/latest/
   #https://wiki.archlinux.org/index.php/XDG_Base_Directory
