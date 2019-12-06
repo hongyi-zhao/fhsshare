@@ -87,6 +87,11 @@ shopt -s nullglob # Ensure shell expansion with 0 files expands to an empty list
 
 
 if command -v inxi > /dev/null 2>&1; then 
+  # _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
+  _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
+  _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
+fi
+
 
 # 一些用到的变量：
 _user=$( ps -o user= -p $$ | awk '{print $1}' )
@@ -99,32 +104,26 @@ root_uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF
 #getent passwd "$_user" | cut -d: -f6
 DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
-# _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
-_distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
-_desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
-
 
 # root-share relative vars:
 # ROOT_SHARE is exported by /etc/profile.d/root-share.sh
 
-  if [ -n "$ROOT_SHARE"  ]; then
-    ROOT_SHARE_HOME=$ROOT_SHARE/home
-    ROOT_SHARE_OPT=$ROOT_SHARE/opt
-    ROOT_SHARE_INFO=$ROOT_SHARE/"$system_uuid-$root_uuid-$_user"
+if [ -n "$ROOT_SHARE"  ] && [ -n "$_desktop" ]; then
+  ROOT_SHARE_HOME=$ROOT_SHARE/home
+  ROOT_SHARE_OPT=$ROOT_SHARE/opt
+  ROOT_SHARE_INFO=$ROOT_SHARE/"$system_uuid-$root_uuid-$_user"
 
-    DISTRO_DESKTOP=$ROOT_SHARE_HOME/distro-desktop 
+  DISTRO_DESKTOP=$ROOT_SHARE_HOME/distro-desktop 
       
-    if [ -n "$_desktop" ]; then
-      echo "Distro: $_distro" | sudo tee $ROOT_SHARE_INFO > /dev/null 2>&1 
-      echo "Desktop: $_desktop" | sudo tee -a $ROOT_SHARE_INFO > /dev/null 2>&1 
+  echo "Distro: $_distro" | sudo tee $ROOT_SHARE_INFO > /dev/null 2>&1 
+  echo "Desktop: $_desktop" | sudo tee -a $ROOT_SHARE_INFO > /dev/null 2>&1 
 
-      if [ ! -d "$ROOT_SHARE_HOME/$_distro-$_desktop" ]; then		  
-        sudo mkdir $ROOT_SHARE_HOME/$_distro-$_desktop
-        sudo chown -hR $_user:$_user $ROOT_SHARE_HOME/$_distro-$_desktop
-      fi
-    fi
+  if [ ! -d "$ROOT_SHARE_HOME/$_distro-$_desktop" ]; then		  
+    sudo mkdir $ROOT_SHARE_HOME/$_distro-$_desktop
+    sudo chown -hR $_user:$_user $ROOT_SHARE_HOME/$_distro-$_desktop
   fi
 fi
+
 
 
 
