@@ -201,7 +201,7 @@ fi
     # attach the stuff found on "$NEW_HOME" at $DEFAULT_HOME/: 
     sudo mount -o rw,rbind "$NEW_HOME" "$DEFAULT_HOME"
       
-    # attach the stuff found on $ROOT_SHARE_HOME/distro-desktop.git/.git on $DEFAULT_HOME/.git:
+    # attach the stuff found on $ROOT_SHARE_HOME/distro-desktop.git/.git at $DEFAULT_HOME/.git:
     if  [  -n "$ROOT_SHARE_HOME" ] && [ -d $ROOT_SHARE_HOME/distro-desktop.git ]; then 
       if [ "$( stat -c "%U %G %a" $ROOT_SHARE_HOME/distro-desktop.git )" != "$_user $_user 755" ]; then
         sudo chown -hR $_user:$_user $ROOT_SHARE_HOME/distro-desktop.git
