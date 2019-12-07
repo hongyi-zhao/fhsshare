@@ -143,6 +143,13 @@ fi
 # Though this is safe, but it seems that this is not a good idea.
 # In the early stage of the login process, many processes may need this directory to be there.
 
+# On the other hand, the /etc/xdg/autostart/xdg-root-share.{desktop,sh} scripts 
+# will only can be run when user doing a the desktop login.
+# In this case, the $DEFAULT_HOME is still needed to exist at the corresponding location.
+
+# So, the most feasiable method should be keep $DEFAULT_HOME as it is.  And only mount the stuff on 
+# $NEW_HOME and $DISTRO_DESKTOP at $DEFAULT_HOME using the specific mounting order described following. 
+
 #if [ -z "$( sudo find "$DEFAULT_HOME" -maxdepth 0 -type d -empty )" ] &&           
 #   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"; then 
 #  sudo rm -fr $DEFAULT_HOME
