@@ -116,9 +116,20 @@ DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passw
 # export root-share relative vars:
 export ROOT_SHARE=/root-share
 
+
+# prepare a clean $DEFAULT_HOME:
+# if there are some error on the execute logic fo the script, there may be the following
+# folder:
 if [ ! -d $DEFAULT_HOME ]; then
   sudo mkdir $DEFAULT_HOME
 fi
+
+if [ -d $DEFAULT_HOME/.git ]; then
+  sudo rm -fr $DEFAULT_HOME
+  sudo mkdir $DEFAULT_HOME
+fi
+
+
 
 if [ "$( stat -c "%U %G %a" $DEFAULT_HOME )" != "$_user $_user 755" ]; then
   sudo chown -hR $_user:$_user $DEFAULT_HOME
