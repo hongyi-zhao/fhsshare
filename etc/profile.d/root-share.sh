@@ -139,11 +139,15 @@ fi
 
 # $DEFAULT_HOME not empty
 # $DEFAULT_HOME not be used as a mountpoint
-if [ -z "$( sudo find "$DEFAULT_HOME" -maxdepth 0 -type d -empty )" ] &&           
-   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"; then 
-  sudo rm -fr $DEFAULT_HOME
-  sudo mkdir $DEFAULT_HOME
-fi
+
+# Though this is safe, but it seems that this is not a good idea.
+# In the early stage of the login process, many processes may need this directory to be there.
+
+#if [ -z "$( sudo find "$DEFAULT_HOME" -maxdepth 0 -type d -empty )" ] &&           
+#   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"; then 
+#  sudo rm -fr $DEFAULT_HOME
+#  sudo mkdir $DEFAULT_HOME
+#fi
 
 
 # fix the owner, group and mode bits
