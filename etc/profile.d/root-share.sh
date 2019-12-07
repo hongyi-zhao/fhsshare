@@ -117,14 +117,17 @@ DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passw
 export ROOT_SHARE=/root-share
 
 
-# The idea of prepare a clean $DEFAULT_HOME is dangerous, don't use at all.
+# The idea of prepare a clean $DEFAULT_HOME is dangerous, don't use this method at all.
 # See the following analysis for more infomation:
 
 # According to the current logic, the $DEFAULT_HOME directory 
-# is just a placeholder as the mountpoint for $NEW_HOME 
+# is used as the mountpoint for $NEW_HOME.  Consider the following case: 
+# when login the system then logout, and re-login,
+# for this case, the $DEFAULT_HOME will have all the stuff mounted there.
 
-# But, consider the following case: when login the system then logout, and re-login,
-# for this case, the $DEFAULT_HOME will have all the stuff mounted there. 
+# If we do the operation ` rm -fr $DEFAULT_HOME ', 
+# all of the stuff mounted there will be deleted, dangerous! 
+
 
 # not exist
 if [ ! -d $DEFAULT_HOME ]; then
