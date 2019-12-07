@@ -117,20 +117,22 @@ DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passw
 export ROOT_SHARE=/root-share
 
 
-# prepare a clean $DEFAULT_HOME:
-# if there are some error on the execute logic fo the script, there may be the following
-# folder:
+# prepare a clean $DEFAULT_HOME
+# According to the current logic, the $DEFAULT_HOME directory can safely deleted:
+# it's just a placeholder as the mountpoint for $NEW_HOME 
+
+# not exist
 if [ ! -d $DEFAULT_HOME ]; then
   sudo mkdir $DEFAULT_HOME
 fi
 
-if [ -d $DEFAULT_HOME/.git ]; then
+# not empty
+if [ -n "$(ls -A -- "$DEFAULT_HOME")" ]; then
   sudo rm -fr $DEFAULT_HOME
   sudo mkdir $DEFAULT_HOME
 fi
 
-
-
+# fix the owner, group and mode bits
 if [ "$( stat -c "%U %G %a" $DEFAULT_HOME )" != "$_user $_user 755" ]; then
   sudo chown -hR $_user:$_user $DEFAULT_HOME
   sudo chmod -R 755 $DEFAULT_HOME 
