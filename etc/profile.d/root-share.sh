@@ -117,18 +117,17 @@ DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passw
 export ROOT_SHARE=/root-share
 
 
-# prepare a clean $DEFAULT_HOME
-# According to the current logic, the $DEFAULT_HOME directory can safely deleted:
-# it's just a placeholder as the mountpoint for $NEW_HOME 
+# The idea of prepare a clean $DEFAULT_HOME is dangerous, don't use at all.
+# See the following analysis for more infomation:
+
+# According to the current logic, the $DEFAULT_HOME directory 
+# is just a placeholder as the mountpoint for $NEW_HOME 
+
+# But, consider the following case: when login the system then logout, and re-login,
+# for this case, the $DEFAULT_HOME will have all the stuff mounted there. 
 
 # not exist
 if [ ! -d $DEFAULT_HOME ]; then
-  sudo mkdir $DEFAULT_HOME
-fi
-
-# not empty
-if [ -n "$(ls -A -- "$DEFAULT_HOME")" ]; then
-  sudo rm -fr $DEFAULT_HOME
   sudo mkdir $DEFAULT_HOME
 fi
 
