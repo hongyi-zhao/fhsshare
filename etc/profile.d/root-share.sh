@@ -70,6 +70,11 @@ pwd -P
 
 
 
+# to-do list:
+
+#Lustre Over ZFS
+
+
 # The idea 
 
 # Use a seperated local partition/remote filesystem ( say, nfs ), for my case, the directory name is $ROOT_SHARE,
