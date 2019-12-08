@@ -150,6 +150,12 @@ fi
 # So, the most feasiable method should be keep $DEFAULT_HOME as it is.  And only mount the stuff on 
 # $NEW_HOME and $DISTRO_DESKTOP at $DEFAULT_HOME using the specific mounting order described following. 
 
+#From: Helmut Waitzmann <nn.throttle@xoxy.net>
+#Newsgroups: comp.unix.shell
+#Subject: Re: The portable way to judge a empty directory.
+#… or just a '-prune', which is POSIX compliant, while '-maxdepth' 
+#is not.
+
 #if [ -z "$( sudo find "$DEFAULT_HOME" -maxdepth 0 -type d -empty )" ] &&           
 #   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"; then 
 #  sudo rm -fr $DEFAULT_HOME
