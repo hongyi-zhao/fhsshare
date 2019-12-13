@@ -224,10 +224,11 @@ while IFS= read -r uuid; do
       sudo mount -o rw,rbind $ROOT_SHARE/root-share.git/.git /.git
       # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
       for dir in $ROOT_SHARE/root-share.git /; do  
-        if ! sudo git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
+        #if ! sudo git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
+        if ! sudo git -C $dir diff --quiet; then
           #sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
           # it's not need to use --recurse-submodules for this case.    
-          sudo git --work-tree=$dir --git-dir=$dir/.git reset --hard
+          sudo git -C $dir reset --hard
         fi
       done       
     fi
@@ -364,10 +365,11 @@ if [ "$( id -u )" -ne 0 ] &&
       sudo mount -o rw,rbind $ROOT_SHARE_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
       for dir in $ROOT_SHARE_HOME/distro-desktop.git $DEFAULT_HOME; do
         # it seems not need use sudo for this case:  
-        if ! git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
+        #if ! git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
+        if ! git -C $dir diff --quiet; then
           # git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
           # there is no need to use --recurse-submodules for this case. 
-          git --work-tree=$dir --git-dir=$dir/.git reset --hard
+          git -C $dir reset --hard
         fi
       done 
     fi
