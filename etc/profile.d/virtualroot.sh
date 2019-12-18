@@ -77,7 +77,7 @@ pwd -P
 
 # The idea 
 
-# Use a seperated local partition/remote filesystem ( say, nfs ), for my case, the directory name is $ROOT_SHARE,
+# Use a seperated local partition/remote filesystem ( say, nfs ), for my case, the directory name is $VIRTUAL_ROOT,
 # to populate the corresponding stuff which its directories conform to the   
 # Filesystem Hierarchy Standard，FHS:
 # https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard
@@ -88,7 +88,7 @@ pwd -P
 
 # For the corresponding (system|user)-wide settings, restore them by git repos as following:
 # system-wide:
-# https://github.com/hongyi-zhao/root-share.git
+# https://github.com/hongyi-zhao/virtualroot.git
 # user-wide:
 # https://github.com/hongyi-zhao/distro-desktop.git
  
@@ -118,8 +118,8 @@ _user="$( ps -o user= -p $$ | awk '{print $1}' )"
 #getent passwd "$_user" | cut -d: -f6
 DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
-# export root-share relative vars:
-export ROOT_SHARE=/root-share
+# export virtualroot relative vars:
+export VIRTUAL_ROOT=/virtualroot
 
 
 # According to the current logic, the $DEFAULT_HOME directory 
@@ -148,7 +148,7 @@ fi
 # Though this is safe, but it seems that this is not a good idea.
 # In the early stage of the login process, many processes may need this directory to be there.
 
-# On the other hand, the /etc/xdg/autostart/xdg-root-share.{desktop,sh} scripts 
+# On the other hand, the /etc/xdg/autostart/xdg-virtualroot.{desktop,sh} scripts 
 # will only can be run when user doing a the desktop login.
 # In this case, the $DEFAULT_HOME is still needed to exist at the corresponding location.
 
@@ -174,38 +174,38 @@ if [ "$( stat -c "%U %G %a" $DEFAULT_HOME )" != "$_user $_user 755" ]; then
   sudo chmod -R 755 $DEFAULT_HOME 
 fi
 
-if [ ! -d "$ROOT_SHARE" ]; then
-  sudo mkdir -p $ROOT_SHARE
-  sudo chown -hR $_user:$_user $ROOT_SHARE
+if [ ! -d "$VIRTUAL_ROOT" ]; then
+  sudo mkdir -p $VIRTUAL_ROOT
+  sudo chown -hR $_user:$_user $VIRTUAL_ROOT
 fi
 
 # https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
 # https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
 while IFS= read -r uuid; do
-  if ! findmnt -al | grep -qE "^$ROOT_SHARE[ ]+"; then 
-    sudo mount -U $uuid $ROOT_SHARE
+  if ! findmnt -al | grep -qE "^$VIRTUAL_ROOT[ ]+"; then 
+    sudo mount -U $uuid $VIRTUAL_ROOT
   fi   
        
-  if [ -d "$ROOT_SHARE/root-share.git" ]; then
-    ROOT_SHARE_HOME=$ROOT_SHARE/home
-    ROOT_SHARE_INFO=$ROOT_SHARE/"$system_uuid-$root_uuid-$_user"
-    if [ -f "$ROOT_SHARE_INFO" ]; then
-      # this directory is created by /etc/xdg/autostart/xdg-root-share.sh
-      NEW_HOME="$ROOT_SHARE_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$ROOT_SHARE_INFO" )"
+  if [ -d "$VIRTUAL_ROOT/virtualroot.git" ]; then
+    VIRTUAL_ROOT_HOME=$VIRTUAL_ROOT/home
+    VIRTUAL_ROOT_INFO=$VIRTUAL_ROOT/"$system_uuid-$root_uuid-$_user"
+    if [ -f "$VIRTUAL_ROOT_INFO" ]; then
+      # this directory is created by /etc/xdg/autostart/xdg-virtualroot.sh
+      NEW_HOME="$VIRTUAL_ROOT_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$VIRTUAL_ROOT_INFO" )"
     fi
     
     # this directory is prepared for hold public data:
-    DISTRO_DESKTOP=$ROOT_SHARE_HOME/distro-desktop
+    DISTRO_DESKTOP=$VIRTUAL_ROOT_HOME/distro-desktop
        
-    ROOT_SHARE_OPT=$ROOT_SHARE/opt
+    VIRTUAL_ROOT_OPT=$VIRTUAL_ROOT/opt
   
-    if [ ! -d "$ROOT_SHARE_OPT" ]; then
-      sudo  mkdir $ROOT_SHARE_OPT
-      sudo  chown -hR $_user:$_user $ROOT_SHARE_OPT
+    if [ ! -d "$VIRTUAL_ROOT_OPT" ]; then
+      sudo  mkdir $VIRTUAL_ROOT_OPT
+      sudo  chown -hR $_user:$_user $VIRTUAL_ROOT_OPT
     fi
 
     if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
-      sudo mount -o rw,rbind $ROOT_SHARE_OPT /opt
+      sudo mount -o rw,rbind $VIRTUAL_ROOT_OPT /opt
     fi
 
     # *** important note: ***
@@ -221,9 +221,9 @@ while IFS= read -r uuid; do
     fi
 
     if ! findmnt -al | grep -qE "^/.git[[:blank:]]"; then
-      sudo mount -o rw,rbind $ROOT_SHARE/root-share.git/.git /.git
+      sudo mount -o rw,rbind $VIRTUAL_ROOT/virtualroot.git/.git /.git
       # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
-      for dir in $ROOT_SHARE/root-share.git /; do  
+      for dir in $VIRTUAL_ROOT/virtualroot.git /; do  
         #if ! sudo git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
         if ! sudo git -C $dir diff --quiet; then
           #sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
@@ -234,9 +234,9 @@ while IFS= read -r uuid; do
     fi
     break
   else
-    sudo umount $ROOT_SHARE
+    sudo umount $VIRTUAL_ROOT
   fi
-done < <( lsblk -o uuid,fstype,mountpoint | awk -v mountpoint=$ROOT_SHARE ' $2 == "ext4" && ( $3 == "" || $3 == mountpoint ) { print $1 } ' )
+done < <( lsblk -o uuid,fstype,mountpoint | awk -v mountpoint=$VIRTUAL_ROOT ' $2 == "ext4" && ( $3 == "" || $3 == mountpoint ) { print $1 } ' )
 
 
 if [ "$( id -u )" -ne 0 ] && 
@@ -350,11 +350,11 @@ if [ "$( id -u )" -ne 0 ] &&
   # this can prevent the config files comes from the git repo
   # be superseated by other mount operations using the same file tree path.
 
-  # attach the stuff found on $ROOT_SHARE_HOME/distro-desktop.git/.git at $DEFAULT_HOME/.git: 
-  if [  -n "$ROOT_SHARE_HOME" ] && [ -d $ROOT_SHARE_HOME/distro-desktop.git ]; then 
-    if [ "$( stat -c "%U %G %a" $ROOT_SHARE_HOME/distro-desktop.git )" != "$_user $_user 755" ]; then
-      sudo chown -hR $_user:$_user $ROOT_SHARE_HOME/distro-desktop.git
-      sudo chmod -R 755 $ROOT_SHARE_HOME/distro-desktop.git
+  # attach the stuff found on $VIRTUAL_ROOT_HOME/distro-desktop.git/.git at $DEFAULT_HOME/.git: 
+  if [  -n "$VIRTUAL_ROOT_HOME" ] && [ -d $VIRTUAL_ROOT_HOME/distro-desktop.git ]; then 
+    if [ "$( stat -c "%U %G %a" $VIRTUAL_ROOT_HOME/distro-desktop.git )" != "$_user $_user 755" ]; then
+      sudo chown -hR $_user:$_user $VIRTUAL_ROOT_HOME/distro-desktop.git
+      sudo chmod -R 755 $VIRTUAL_ROOT_HOME/distro-desktop.git
     fi
      
     if [ ! -d $DEFAULT_HOME/.git ]; then
@@ -362,8 +362,8 @@ if [ "$( id -u )" -ne 0 ] &&
     fi         
 	
     if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]git[[:blank:]]"; then
-      sudo mount -o rw,rbind $ROOT_SHARE_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
-      for dir in $ROOT_SHARE_HOME/distro-desktop.git $DEFAULT_HOME; do
+      sudo mount -o rw,rbind $VIRTUAL_ROOT_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
+      for dir in $VIRTUAL_ROOT_HOME/distro-desktop.git $DEFAULT_HOME; do
         # it seems not need use sudo for this case:  
         #if ! git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
         if ! git -C $dir diff --quiet; then
@@ -373,7 +373,7 @@ if [ "$( id -u )" -ne 0 ] &&
         fi
       done 
     fi
-  fi # $ROOT_SHARE_HOME/distro-desktop.git
+  fi # $VIRTUAL_ROOT_HOME/distro-desktop.git
 fi
 
 

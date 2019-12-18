@@ -71,7 +71,7 @@ pwd -P
 
 
 #  this script is invoked by the following:
-# /etc/xdg/autostart/xdg-root-share.desktop
+# /etc/xdg/autostart/xdg-virtualroot.desktop
 
 
 # https://unix.stackexchange.com/questions/348321/purpose-of-the-autostart-scripts-directory
@@ -105,22 +105,22 @@ root_uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF
 DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
 
-# root-share relative vars:
-# ROOT_SHARE is exported by /etc/profile.d/root-share.sh
+# virtualroot relative vars:
+# VIRTUAL_ROOT is exported by /etc/profile.d/virtualroot.sh
 
-if [ -n "$ROOT_SHARE"  ] && [ -n "$_desktop" ]; then
-  ROOT_SHARE_HOME=$ROOT_SHARE/home
-  ROOT_SHARE_OPT=$ROOT_SHARE/opt
-  ROOT_SHARE_INFO=$ROOT_SHARE/"$system_uuid-$root_uuid-$_user"
+if [ -n "$VIRTUAL_ROOT"  ] && [ -n "$_desktop" ]; then
+  VIRTUAL_ROOT_HOME=$VIRTUAL_ROOT/home
+  VIRTUAL_ROOT_OPT=$VIRTUAL_ROOT/opt
+  VIRTUAL_ROOT_INFO=$VIRTUAL_ROOT/"$system_uuid-$root_uuid-$_user"
 
-  DISTRO_DESKTOP=$ROOT_SHARE_HOME/distro-desktop 
+  DISTRO_DESKTOP=$VIRTUAL_ROOT_HOME/distro-desktop 
       
-  echo "Distro: $_distro" | sudo tee $ROOT_SHARE_INFO > /dev/null 2>&1 
-  echo "Desktop: $_desktop" | sudo tee -a $ROOT_SHARE_INFO > /dev/null 2>&1 
+  echo "Distro: $_distro" | sudo tee $VIRTUAL_ROOT_INFO > /dev/null 2>&1 
+  echo "Desktop: $_desktop" | sudo tee -a $VIRTUAL_ROOT_INFO > /dev/null 2>&1 
 
-  if [ ! -d "$ROOT_SHARE_HOME/$_distro-$_desktop" ]; then		  
-    sudo mkdir $ROOT_SHARE_HOME/$_distro-$_desktop
-    sudo chown -hR $_user:$_user $ROOT_SHARE_HOME/$_distro-$_desktop
+  if [ ! -d "$VIRTUAL_ROOT_HOME/$_distro-$_desktop" ]; then		  
+    sudo mkdir $VIRTUAL_ROOT_HOME/$_distro-$_desktop
+    sudo chown -hR $_user:$_user $VIRTUAL_ROOT_HOME/$_distro-$_desktop
   fi
 fi
 
