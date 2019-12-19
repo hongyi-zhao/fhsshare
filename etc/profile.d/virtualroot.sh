@@ -278,6 +278,7 @@ if [ "$( id -u )" -ne 0 ] &&
   #https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
   # software/anti-gfw/not-used/vpngate-relative/ecmp-vpngate/script/ovpn-traverse.sh
+  # man find:
   # -printf format
   # %f     File's name with any leading directories removed (only the last element).
   # %h     Leading directories of file's name (all but the last element).  
