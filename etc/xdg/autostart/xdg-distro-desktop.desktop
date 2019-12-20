@@ -2,7 +2,7 @@
 
 # put in this dir: /etc/xdg/autostart/
 [Desktop Entry]
-Exec=/etc/xdg/autostart/xdg-virtualroot.sh
+Exec=/etc/xdg/autostart/xdg-distro-desktop.sh
 Icon=system-run
 # NotShowIn=GNOME # Run in all X environments
 Terminal=false

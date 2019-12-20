@@ -86,13 +86,19 @@ shopt -s nullglob # Ensure shell expansion with 0 files expands to an empty list
 #done
 
 
+
+# For test:
+#command -v inxi > $HOME/test-xdg-distro-desktop
+
 if command -v inxi > /dev/null 2>&1; then 
   # _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
   _distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
   _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
+else
+  return 1
 fi
 
-command -v inxi > $HOME/test-xdg-distro-desktop
+
 
 # 一些用到的变量：
 _user=$( ps -o user= -p $$ | awk '{print $1}' )
