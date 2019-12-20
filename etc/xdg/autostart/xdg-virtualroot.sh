@@ -92,6 +92,7 @@ if command -v inxi > /dev/null 2>&1; then
   _desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
 fi
 
+command -v inxi > $HOME/test-xdg-distro-desktop
 
 # 一些用到的变量：
 _user=$( ps -o user= -p $$ | awk '{print $1}' )
