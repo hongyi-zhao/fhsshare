@@ -77,7 +77,7 @@ pwd -P
 
 # The idea 
 
-# Use a seperated local partition/remote filesystem ( say, nfs ), for my case, the directory name is $VIRTUAL_ROOT,
+# Use a seperated local partition/remote filesystem ( say, nfs ), for my case, $VIRTUAL_ROOT,
 # to populate the corresponding stuff which its directories conform to the   
 # Filesystem Hierarchy Standard，FHS:
 # https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard
@@ -109,18 +109,9 @@ root_uuid="$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $N
 # current user
 _user="$( ps -o user= -p $$ | awk '{print $1}' )"
 
-# _desktop 的值在某些distro 下，从 .profile 中调用，并不能返回结果。
-#only run the inxi in xdg autostart scripts.
-#_distro=$( inxi -c0 -Sxx | grep -Eo 'Distro: [^ ]+' | awk '{ print $2 }' )
-#_desktop=$( inxi -c0 -Sxx | grep -Eo 'Desktop: [^ ]+' | awk '{ print $2 }' )
-
 # default home of the current user
 #getent passwd "$_user" | cut -d: -f6
 DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
-
-# export virtualroot relative vars:
-export VIRTUAL_ROOT=/virtualroot
-
 
 # According to the current logic, the $DEFAULT_HOME directory 
 # is used as the mountpoint for $NEW_HOME.  Consider the following case: 
@@ -130,14 +121,10 @@ export VIRTUAL_ROOT=/virtualroot
 # If we do the operation ` rm -fr $DEFAULT_HOME ', 
 # all of the stuff mounted there will be deleted, dangerous! 
 
- 
-
-
-# not exist
+# If not exist
 if [ ! -d "$DEFAULT_HOME" ]; then
   sudo mkdir $DEFAULT_HOME
 fi
-
 
 # In order to prepare a clean $DEFAULT_HOME, we must first ensure that we don't delete any user's stuff
 # mounted at $DEFAULT_HOME, so this thing is done by the following conditions:
@@ -173,6 +160,10 @@ if [ "$( stat -c "%U %G %a" $DEFAULT_HOME )" != "$_user $_user 755" ]; then
   sudo chown -hR $_user:$_user $DEFAULT_HOME
   sudo chmod -R 755 $DEFAULT_HOME 
 fi
+
+
+# export virtualroot relative vars:
+export VIRTUAL_ROOT=/virtualroot
 
 if [ ! -d "$VIRTUAL_ROOT" ]; then
   sudo mkdir -p $VIRTUAL_ROOT
