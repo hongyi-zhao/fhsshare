@@ -101,12 +101,13 @@ fi
 
 
 # 一些用到的变量：
-_user=$( ps -o user= -p $$ | awk '{print $1}' )
-
 # system_uuid
-system_uuid=$( sudo dmidecode -s system-uuid )
+system_uuid="$( sudo dmidecode -s system-uuid )"
 # root uuid
-root_uuid=$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )
+root_uuid="$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )"
+# current user
+_user="$( ps -o user= -p $$ | awk '{print $1}' )"
+
 
 #getent passwd "$_user" | cut -d: -f6
 DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
