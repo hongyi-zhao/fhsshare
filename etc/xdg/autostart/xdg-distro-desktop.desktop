@@ -2,7 +2,39 @@
 
 # put in this dir: /etc/xdg/autostart/
 [Desktop Entry]
-Exec=/etc/xdg/autostart/xdg-distro-desktop.sh
+#From: Hongyi Zhao <hongyi.zhao@gmail.com>
+#Newsgroups: comp.unix.shell
+#Subject: Re: bash -c "a=fd;  echo $a"
+#On Sun, 26 Jan 2020 10:36:01 +0000, Stephane Chazelas wrote:
+
+#> Try
+#> 
+#> (set -o xtrace; bash -c "a=fd;  echo $a")
+#> 
+#> or
+#> 
+#> a=foo; echo -c "a=fd;  echo $a"
+#> 
+#> 
+#> and see if you can figure out what's going on.
+#> 
+#> info bash quoting
+
+#Thanks a lot, based on your notes, I find the following methods:
+
+
+#$ (set -o xtrace; bash -c "a=fd;  echo \$a")
+#+ bash -c 'a=fd;  echo $a'
+#fd
+#$ (set -o xtrace; bash -c 'a=fd;  echo $a')
+#+ bash -c 'a=fd;  echo $a'
+#fd
+
+#Thanks again.
+
+# test it:
+#( set -x ; bash -c 'script_name=$( basename --  "${BASH_SOURCE[0]}" | sed -E 's/[.][^.]*$//' ); /etc/xdg/autostart/$script_name.sh' )
+Exec=bash -c 'script_name=$( basename --  "${BASH_SOURCE[0]}" | sed -E 's/[.][^.]*$//' ); /etc/xdg/autostart/$script_name.sh'
 Icon=system-run
 # NotShowIn=GNOME # Run in all X environments
 Terminal=false
