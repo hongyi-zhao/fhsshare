@@ -32,8 +32,29 @@
 
 #Thanks again.
 
+
+#[...]
+
+#But now, try:
+
+#(set -o xtrace; bash -o xtrace -c 'a="*"; echo $a')
+
+#Or simply:
+
+#(set -o xtrace; a="*"; echo $a)
+
+#Or
+
+#(set -o xtrace; IFS=d; echo $a)
+
+#In bash and other POSIX shells, you need quote quote parameter
+#expansions. So:
+
+#bash -c 'a="*"; echo "$a"'
+
+
 # test it:
-#( set -x ; bash -c 'script_name=$( basename --  "${BASH_SOURCE[0]}" | sed -E 's/[.][^.]*$//' ); /etc/xdg/autostart/$script_name.sh' )
+#( set -x ; bash -c 'script_name="$( basename --  "${BASH_SOURCE[0]}" | sed -E 's/[.][^.]*$//' )"; /etc/xdg/autostart/"$script_name".sh' )
 Exec=bash -c 'script_name=$( basename --  "${BASH_SOURCE[0]}" | sed -E 's/[.][^.]*$//' ); /etc/xdg/autostart/$script_name.sh'
 Icon=system-run
 # NotShowIn=GNOME # Run in all X environments
