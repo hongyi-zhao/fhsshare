@@ -58,21 +58,7 @@ pwd -P
 
 # echo $topdir
 
-# 进一步的考虑：
-# cmake：
-# CMakeLIsts.txt
-# make：
-# Makefile
 
-# 更简单的方法是改变脚本的命名规则，比如：
-
-# cd $topdir/$( echo "${BASH_SOURCE[0]}" | sed -E 's/[.][^.]+$//' )
-
-
-
-# to-do list:
-
-#Lustre Over ZFS
 
 
 # The idea 
