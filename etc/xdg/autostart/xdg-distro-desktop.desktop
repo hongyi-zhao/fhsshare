@@ -1,5 +1,11 @@
 # https://unix.stackexchange.com/questions/348321/purpose-of-the-autostart-scripts-directory
 
+
+# For test:
+# source this script with the following code: 
+#env script="$(realpath -e -- "${BASH_SOURCE[0]}")" bash -c 'printf "%s\n" "${script%.[^.]*}".sh'
+#return
+
 # put in this dir: /etc/xdg/autostart/
 [Desktop Entry]
 #From: Hongyi Zhao <hongyi.zhao@gmail.com>
@@ -52,10 +58,55 @@
 
 #bash -c 'a="*"; echo "$a"'
 
+#2020-01-26 22:43:27 +0000, Hongyi Zhao:
+#[...]
+#> > (set -o xtrace; IFS=d; echo $a)
+#> 
+#> This will give a empty line,
+#> 
+#> $ (set -o xtrace; IFS=d; echo $a)
+#> + IFS=d
+#> + echo
+
+#Sorry, that was meant to be with a=fd as the example as in your
+#original case, where $a would be split on "d" when $IFS contains
+#d.
+
+#[...]
+#> > In bash and other POSIX shells, you need quote quote parameter
+#> > expansions. So:
+#> > 
+#> > bash -c 'a="*"; echo "$a"'
+#[...]
+
+#And of course, there's:
+
+#bash -o xtrace -c 'a="-Ennen"; echo "$a"'
+
+#(assuming a bash not built for POSIX+XSI compliance)
+
+#A few 101 rules in POSIX shell scripting:
+
+#- quote your parameter expansions, command substitutions,
+#  arithmetic expansions.
+
+#  https://unix.stackexchange.com/questions/131766/why-does-my-shell-script-choke-on-whitespace-or-other-special-characters
+
+#- don't use echo for arbitrary data:
+#  
+#  https://unix.stackexchange.com/questions/65803/why-is-printf-better-than-echo
+
+
+#So here:
+
+#bash -o xtrace -c 'a="-Ennen"; printf "%s\n" "$a"'
+
 
 # test it:
 #( set -x ; bash -c 'script_name="$( basename --  "${BASH_SOURCE[0]}" | sed -E 's/[.][^.]*$//' )"; /etc/xdg/autostart/"$script_name".sh' )
-Exec=bash -c 'script_name=$( basename --  "${BASH_SOURCE[0]}" | sed -E 's/[.][^.]*$//' ); /etc/xdg/autostart/$script_name.sh'
+
+# For pass var into it, must use env, as following:
+Exec=env script="$(realpath -e -- "${BASH_SOURCE[0]}")" bash -c '"${script%.[^.]*}".sh'
 Icon=system-run
 # NotShowIn=GNOME # Run in all X environments
 Terminal=false
