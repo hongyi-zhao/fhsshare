@@ -106,7 +106,10 @@
 #( set -x ; bash -c 'script_name="$( basename --  "${BASH_SOURCE[0]}" | sed -E 's/[.][^.]*$//' )"; /etc/xdg/autostart/"$script_name".sh' )
 
 # For pass var into it, must use env, as following:
-Exec=env script="$(realpath -e -- "${BASH_SOURCE[0]}")" bash -c '"${script%.[^.]*}".sh'
+# Failed with the following method:
+#Exec=env script="$(realpath -e -- "${BASH_SOURCE[0]}")" bash -c '"${script%.[^.]*}".sh'
+# The more portable way is revise this line using /etc/profile.d/virtualroot.sh
+Exec=/etc/xdg/autostart/xdg-distro-desktop.sh
 Icon=system-run
 # NotShowIn=GNOME # Run in all X environments
 Terminal=false
