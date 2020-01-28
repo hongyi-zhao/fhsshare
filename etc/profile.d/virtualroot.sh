@@ -99,6 +99,20 @@ _user="$( ps -o user= -p $$ | awk '{print $1}' )"
 #getent passwd "$_user" | cut -d: -f6
 DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
+# If not exist
+if [ ! -d "$DEFAULT_HOME" ]; then
+  sudo mkdir $DEFAULT_HOME
+fi
+
+# fix the owner, group and mode bits
+if [ "$( stat -c "%U %G %a" $DEFAULT_HOME )" != "$_user $_user 755" ]; then
+  sudo chown -hR $_user:$_user $DEFAULT_HOME
+  sudo chmod -R 755 $DEFAULT_HOME 
+fi
+
+
+# Discarded the $NEW_HOME based method, so the following desription is not applied now:
+
 # According to the current logic, the $DEFAULT_HOME directory 
 # is used as the mountpoint for $NEW_HOME.  Consider the following case: 
 # when login the system then logout, and re-login,
@@ -106,11 +120,6 @@ DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passw
 
 # If we do the operation ` rm -fr $DEFAULT_HOME ', 
 # all of the stuff mounted there will be deleted, dangerous! 
-
-# If not exist
-if [ ! -d "$DEFAULT_HOME" ]; then
-  sudo mkdir $DEFAULT_HOME
-fi
 
 # In order to prepare a clean $DEFAULT_HOME, we must first ensure that we don't delete any user's stuff
 # mounted at $DEFAULT_HOME, so this thing is done by the following conditions:
@@ -141,19 +150,13 @@ fi
 #fi
 
 
-# fix the owner, group and mode bits
-if [ "$( stat -c "%U %G %a" $DEFAULT_HOME )" != "$_user $_user 755" ]; then
-  sudo chown -hR $_user:$_user $DEFAULT_HOME
-  sudo chmod -R 755 $DEFAULT_HOME 
-fi
-
-
+# Due to discard the $NEW_HOME based method, there is no need to do the following now:
 # export virtualroot relative vars:
-export VIRTUAL_ROOT=/virtualroot
+#export VIRTUAL_ROOT=/virtualroot
 
 if [ ! -d "$VIRTUAL_ROOT" ]; then
   sudo mkdir -p $VIRTUAL_ROOT
-  sudo chown -hR $_user:$_user $VIRTUAL_ROOT
+  #sudo chown -hR root:root $VIRTUAL_ROOT
 fi
 
 # https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
@@ -164,25 +167,27 @@ while IFS= read -r uuid; do
   fi   
        
   if [ -d "$VIRTUAL_ROOT/virtualroot.git" ]; then
-    VIRTUAL_ROOT_HOME=$VIRTUAL_ROOT/home
-    VIRTUAL_ROOT_INFO=$VIRTUAL_ROOT/"$system_uuid-$root_uuid-$_user"
-    if [ -f "$VIRTUAL_ROOT_INFO" ]; then
-      # this directory is created by /etc/xdg/autostart/xdg-virtualroot.sh
-      NEW_HOME="$VIRTUAL_ROOT_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$VIRTUAL_ROOT_INFO" )"
-    fi
+    VIRTUAL_HOME=$VIRTUAL_ROOT/home
+    # Third party applications, say, intel, are intalled in this directory:
+    VIRTUAL_OPT=$VIRTUAL_ROOT/opt
+    
+    # Disable the following method:
+    #    VIRTUAL_ROOT_INFO=$VIRTUAL_ROOT/"$system_uuid-$root_uuid-$_user"
+    #    if [ -f "$VIRTUAL_ROOT_INFO" ]; then
+    #      # this directory is created by /etc/xdg/autostart/xdg-virtualroot.sh
+    #      NEW_HOME="$VIRTUAL_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$VIRTUAL_ROOT_INFO" )"
+    #    fi
     
     # this directory is prepared for hold public data:
-    DISTRO_DESKTOP=$VIRTUAL_ROOT_HOME/distro-desktop
+    DISTRO_DESKTOP=$VIRTUAL_HOME/distro-desktop
        
-    VIRTUAL_ROOT_OPT=$VIRTUAL_ROOT/opt
-  
-    if [ ! -d "$VIRTUAL_ROOT_OPT" ]; then
-      sudo  mkdir $VIRTUAL_ROOT_OPT
-      sudo  chown -hR $_user:$_user $VIRTUAL_ROOT_OPT
+ 
+    if [ ! -d "$VIRTUAL_OPT" ]; then
+      sudo mkdir $VIRTUAL_OPT
     fi
 
     if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
-      sudo mount -o rw,rbind $VIRTUAL_ROOT_OPT /opt
+      sudo mount -o rw,rbind $VIRTUAL_OPT /opt
     fi
 
     # *** important note: ***
@@ -193,8 +198,7 @@ while IFS= read -r uuid; do
     # this can prevent the config files comes from the git repo
     # be hiddened by other mount operations using the same file tree path. 
     if [ ! -d "/.git" ]; then
-      sudo  mkdir /.git
-      sudo  chown -hR $_user:$_user /.git
+      sudo mkdir /.git
     fi
 
     if ! findmnt -al | grep -qE "^/.git[[:blank:]]"; then
@@ -216,11 +220,15 @@ while IFS= read -r uuid; do
 done < <( lsblk -o uuid,fstype,mountpoint | awk -v mountpoint=$VIRTUAL_ROOT ' $2 == "ext4" && ( $3 == "" || $3 == mountpoint ) { print $1 } ' )
 
 
+
+# Discarded the $NEW_HOME based method, so the following conditions should be changed:
+
 #if [ "$( id -u )" -ne 0 ] && 
 #   [ -d "$NEW_HOME" ] && [[ "$DEFAULT_HOME" != "$NEW_HOME" ]] &&
 #   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"  &&   
 #   [ -d "$DISTRO_DESKTOP" ]; then 
 
+# Use the following conditions now:
 if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then 
 
 
@@ -247,8 +255,8 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then
     export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
   fi
 
-
-
+  
+  # Discarded the following method:
   # attach the stuff found on "$NEW_HOME" at $DEFAULT_HOME/: 
   #sudo mount -o rw,rbind "$NEW_HOME" "$DEFAULT_HOME"
     
@@ -270,7 +278,6 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then
 	
   # non-hidden directories:
   find -L "$DISTRO_DESKTOP"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
-  awk 'NF > 0' |
   while IFS= read -r line; do
     if [ ! -d $DEFAULT_HOME/"$line" ]; then
       mkdir $DEFAULT_HOME/"$line"
@@ -284,7 +291,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then
 
   # hidden directories except .local:
   find -L "$DISTRO_DESKTOP"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
-  awk ' NF > 0 && ! /^[.]local$/ ' |
+  awk '! /^[.]local$/' |
   while IFS= read -r line; do
     if [ ! -d $DEFAULT_HOME/"$line" ]; then
       mkdir $DEFAULT_HOME/"$line"
@@ -298,7 +305,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then
   # .local except .local/share:
   if [ -d "$DISTRO_DESKTOP"/.local ]; then
     find -L "$DISTRO_DESKTOP"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
-    awk 'NF > 0 && ! /^share$/ ' |
+    awk '! /^share$/' |
     while IFS= read -r line; do
       if [ ! -d $DEFAULT_HOME/.local/"$line" ]; then
 	mkdir -p $DEFAULT_HOME/.local/"$line"
@@ -313,7 +320,6 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then
   # .local/share:
   if [ -d "$DISTRO_DESKTOP"/.local/share ]; then
     find -L "$DISTRO_DESKTOP"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
-    awk 'NF > 0 ' |
     while IFS= read -r line; do
       if [ ! -d $DEFAULT_HOME/.local/share/"$line" ]; then
 	mkdir -p $DEFAULT_HOME/.local/share/"$line"
@@ -331,11 +337,11 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then
   # this can prevent the config files comes from the git repo
   # be superseated by other mount operations using the same file tree path.
 
-  # attach the stuff found on $VIRTUAL_ROOT_HOME/distro-desktop.git/.git at $DEFAULT_HOME/.git: 
-  if [  -n "$VIRTUAL_ROOT_HOME" ] && [ -d $VIRTUAL_ROOT_HOME/distro-desktop.git ]; then 
-    if [ "$( stat -c "%U %G %a" $VIRTUAL_ROOT_HOME/distro-desktop.git )" != "$_user $_user 755" ]; then
-      sudo chown -hR $_user:$_user $VIRTUAL_ROOT_HOME/distro-desktop.git
-      sudo chmod -R 755 $VIRTUAL_ROOT_HOME/distro-desktop.git
+  # attach the stuff found on $VIRTUAL_HOME/distro-desktop.git/.git at $DEFAULT_HOME/.git: 
+  if [  -n "$VIRTUAL_HOME" ] && [ -d $VIRTUAL_HOME/distro-desktop.git ]; then 
+    if [ "$( stat -c "%U %G %a" $VIRTUAL_HOME/distro-desktop.git )" != "$_user $_user 755" ]; then
+      sudo chown -hR $_user:$_user $VIRTUAL_HOME/distro-desktop.git
+      sudo chmod -R 755 $VIRTUAL_HOME/distro-desktop.git
     fi
      
     if [ ! -d $DEFAULT_HOME/.git ]; then
@@ -343,8 +349,8 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then
     fi         
 	
     if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]git[[:blank:]]"; then
-      sudo mount -o rw,rbind $VIRTUAL_ROOT_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
-      for dir in $VIRTUAL_ROOT_HOME/distro-desktop.git $DEFAULT_HOME; do
+      sudo mount -o rw,rbind $VIRTUAL_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
+      for dir in $VIRTUAL_HOME/distro-desktop.git $DEFAULT_HOME; do
         # it seems not need use sudo for this case:  
         #if ! git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
         if ! git -C $dir diff --quiet; then
@@ -354,7 +360,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then
         fi
       done 
     fi
-  fi # $VIRTUAL_ROOT_HOME/distro-desktop.git
+  fi # $VIRTUAL_HOME/distro-desktop.git
 fi
 
 
