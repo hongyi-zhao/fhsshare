@@ -63,20 +63,20 @@ pwd -P
 
 # The idea 
 
-# Use a seperated local partition/remote filesystem ( say, nfs ), for my case, $VIRTUAL_ROOT,
+# Use a seperated local partition/remote filesystem ( say, nfs ), for my case, $ROOTSHARE,
 # to populate the corresponding stuff which its directories conform to the   
 # Filesystem Hierarchy Standard，FHS:
 # https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard
 
 # Based on the xdg base directory specifications, find out which directories can be completely/partially shared.
-# For the former, put it into the public $DISTRO_DESKTOP/ directory, for the latter, only put the corresponding partially shared
-# subdirectories into the corresponding location in the $DISTRO_DESKTOP/ directory.
+# For the former, put it into the public $HOMESHARE/ directory, for the latter, only put the corresponding partially shared
+# subdirectories into the corresponding location in the $HOMESHARE/ directory.
 
 # For the corresponding (system|user)-wide settings, restore them by git repos as following:
 # system-wide:
-# https://github.com/hongyi-zhao/virtualroot.git
+# https://github.com/hongyi-zhao/rootshare.git
 # user-wide:
-# https://github.com/hongyi-zhao/distro-desktop.git
+# https://github.com/hongyi-zhao/homeshare.git
  
 
 # Finally, use the xdg autostart script and shell profile to automate the settings. 
@@ -97,45 +97,45 @@ _user="$( ps -o user= -p $$ | awk '{print $1}' )"
 
 # default home of the current user
 #getent passwd "$_user" | cut -d: -f6
-DEFAULT_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
+_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
 # If not exist
-if [ ! -d "$DEFAULT_HOME" ]; then
-  sudo mkdir $DEFAULT_HOME
+if [ ! -d "$_HOME" ]; then
+  sudo mkdir $_HOME
 fi
 
 # fix the owner, group and mode bits
-if [ "$( stat -c "%U %G %a" $DEFAULT_HOME )" != "$_user $_user 755" ]; then
-  sudo chown -hR $_user:$_user $DEFAULT_HOME
-  sudo chmod -R 755 $DEFAULT_HOME 
+if [ "$( stat -c "%U %G %a" $_HOME )" != "$_user $_user 755" ]; then
+  sudo chown -hR $_user:$_user $_HOME
+  sudo chmod -R 755 $_HOME 
 fi
 
 
 # Discarded the $NEW_HOME based method, so the following desription is not applied now:
 
-# According to the current logic, the $DEFAULT_HOME directory 
+# According to the current logic, the $_HOME directory 
 # is used as the mountpoint for $NEW_HOME.  Consider the following case: 
 # when login the system then logout, and re-login,
-# for this case, the $DEFAULT_HOME will have all the stuff mounted there.
+# for this case, the $_HOME will have all the stuff mounted there.
 
-# If we do the operation ` rm -fr $DEFAULT_HOME ', 
+# If we do the operation ` rm -fr $_HOME ', 
 # all of the stuff mounted there will be deleted, dangerous! 
 
-# In order to prepare a clean $DEFAULT_HOME, we must first ensure that we don't delete any user's stuff
-# mounted at $DEFAULT_HOME, so this thing is done by the following conditions:
+# In order to prepare a clean $_HOME, we must first ensure that we don't delete any user's stuff
+# mounted at $_HOME, so this thing is done by the following conditions:
 
-# $DEFAULT_HOME not empty
-# $DEFAULT_HOME not be used as a mountpoint
+# $_HOME not empty
+# $_HOME not be used as a mountpoint
 
 # Though this is safe, but it seems that this is not a good idea.
 # In the early stage of the login process, many processes may need this directory to be there.
 
 # On the other hand, the /etc/xdg/autostart/xdg-virtualroot.{desktop,sh} scripts 
 # will only can be run when user doing a the desktop login.
-# In this case, the $DEFAULT_HOME is still needed to exist at the corresponding location.
+# In this case, the $_HOME is still needed to exist at the corresponding location.
 
-# So, the most feasiable method should be keep $DEFAULT_HOME as it is.  And only mount the stuff on 
-# $NEW_HOME and $DISTRO_DESKTOP at $DEFAULT_HOME using the specific mounting order described following. 
+# So, the most feasiable method should be keep $_HOME as it is.  And only mount the stuff on 
+# $NEW_HOME and $HOMESHARE at $_HOME using the specific mounting order described following. 
 
 #From: Helmut Waitzmann <nn.throttle@xoxy.net>
 #Newsgroups: comp.unix.shell
@@ -143,51 +143,46 @@ fi
 #… or just a '-prune', which is POSIX compliant, while '-maxdepth' 
 #is not.
 
-#if [ -z "$( sudo find "$DEFAULT_HOME" -maxdepth 0 -type d -empty )" ] &&           
-#   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"; then 
-#  sudo rm -fr $DEFAULT_HOME
-#  sudo mkdir $DEFAULT_HOME
+#if [ -z "$( sudo find "$_HOME" -maxdepth 0 -type d -empty )" ] &&           
+#   ! findmnt -al | grep -qE "^$_HOME[ ]+"; then 
+#  sudo rm -fr $_HOME
+#  sudo mkdir $_HOME
 #fi
 
 
-# Due to discard the $NEW_HOME based method, there is no need to do the following now:
+# Due to discard the $NEW_HOME based method, there is no need to export the following now:
 # export virtualroot relative vars:
-#export VIRTUAL_ROOT=/virtualroot
+ROOTSHARE=/rootshare
 
-if [ ! -d "$VIRTUAL_ROOT" ]; then
-  sudo mkdir -p $VIRTUAL_ROOT
-  #sudo chown -hR root:root $VIRTUAL_ROOT
+if [ ! -d "$ROOTSHARE" ]; then
+  sudo mkdir -p $ROOTSHARE
+  #sudo chown -hR root:root $ROOTSHARE
 fi
 
 # https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
 # https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
 while IFS= read -r uuid; do
-  if ! findmnt -al | grep -qE "^$VIRTUAL_ROOT[ ]+"; then 
-    sudo mount -U $uuid $VIRTUAL_ROOT
+  if ! findmnt -al | grep -qE "^$ROOTSHARE[ ]+"; then 
+    sudo mount -U $uuid $ROOTSHARE
   fi   
        
-  if [ -d "$VIRTUAL_ROOT/virtualroot.git" ]; then
-    VIRTUAL_HOME=$VIRTUAL_ROOT/home
-    # Third party applications, say, intel, are intalled in this directory:
-    VIRTUAL_OPT=$VIRTUAL_ROOT/opt
-    
-    # Disable the following method:
-    #    VIRTUAL_ROOT_INFO=$VIRTUAL_ROOT/"$system_uuid-$root_uuid-$_user"
-    #    if [ -f "$VIRTUAL_ROOT_INFO" ]; then
-    #      # this directory is created by /etc/xdg/autostart/xdg-virtualroot.sh
-    #      NEW_HOME="$VIRTUAL_HOME/$( awk '/^Distro:/{ a=$2 }/^Desktop:/{ b=$2 }END{ print a"-"b }' "$VIRTUAL_ROOT_INFO" )"
-    #    fi
-    
-    # this directory is prepared for hold public data:
-    DISTRO_DESKTOP=$VIRTUAL_HOME/distro-desktop
+  if [ -d "$ROOTSHARE/rootshare.git" ]; then
+    ROOTSHARE_GIT=$ROOTSHARE/rootshare.git 
+    HOMESHARE_GIT=$ROOTSHARE/homeshare.git
+ 
+    # This directory is for holding public data:
+    HOMESHARE=$ROOTSHARE/homeshare
+
+    # Third party applications, say, intel's tools, are intalled in this directory for sharing:
+    OPTSHARE=$ROOTSHARE/opt
        
  
-    if [ ! -d "$VIRTUAL_OPT" ]; then
-      sudo mkdir $VIRTUAL_OPT
+    if [ ! -d "$OPTSHARE" ]; then
+      sudo mkdir $OPTSHARE
     fi
 
     if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
-      sudo mount -o rw,rbind $VIRTUAL_OPT /opt
+      sudo mount -o rw,rbind $OPTSHARE /opt
     fi
 
     # *** important note: ***
@@ -202,9 +197,9 @@ while IFS= read -r uuid; do
     fi
 
     if ! findmnt -al | grep -qE "^/.git[[:blank:]]"; then
-      sudo mount -o rw,rbind $VIRTUAL_ROOT/virtualroot.git/.git /.git
+      sudo mount -o rw,rbind $ROOTSHARE_GIT/.git /.git
       # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
-      for dir in $VIRTUAL_ROOT/virtualroot.git /; do  
+      for dir in $ROOTSHARE_GIT /; do  
         #if ! sudo git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
         if ! sudo git -C $dir diff --quiet; then
           #sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
@@ -215,21 +210,13 @@ while IFS= read -r uuid; do
     fi
     break
   else
-    sudo umount $VIRTUAL_ROOT
+    sudo umount $ROOTSHARE
   fi
-done < <( lsblk -o uuid,fstype,mountpoint | awk -v mountpoint=$VIRTUAL_ROOT ' $2 == "ext4" && ( $3 == "" || $3 == mountpoint ) { print $1 } ' )
+done < <( lsblk -o uuid,fstype,mountpoint | awk -v mountpoint=$ROOTSHARE ' $2 == "ext4" && ( $3 == "" || $3 == mountpoint ) { print $1 } ' )
 
-
-
-# Discarded the $NEW_HOME based method, so the following conditions should be changed:
-
-#if [ "$( id -u )" -ne 0 ] && 
-#   [ -d "$NEW_HOME" ] && [[ "$DEFAULT_HOME" != "$NEW_HOME" ]] &&
-#   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"  &&   
-#   [ -d "$DISTRO_DESKTOP" ]; then 
 
 # Use the following conditions now:
-if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then 
+if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ]  && [ -d "$HOMESHARE_GIT" ] && [ -d "$HOMESHARE" ]; then 
 
 
 
@@ -243,8 +230,8 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then
 
   # ref: ubuntu:
   # /etc/profile.d/xdg_dirs_desktop_session.sh
-  if ! grep -Eq "$DEFAULT_HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
-    export XDG_DATA_DIRS=$DEFAULT_HOME/.local/share:$XDG_DATA_DIRS
+  if ! grep -Eq "$_HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
+    export XDG_DATA_DIRS=$_HOME/.local/share:$XDG_DATA_DIRS
   fi
 
   if ! grep -Eq '/usr/local/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
@@ -255,13 +242,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then
     export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
   fi
 
-  
-  # Discarded the following method:
-  # attach the stuff found on "$NEW_HOME" at $DEFAULT_HOME/: 
-  #sudo mount -o rw,rbind "$NEW_HOME" "$DEFAULT_HOME"
-    
-
-  # attach the stuff found on $DISTRO_DESKTOP/ at $DEFAULT_HOME/: 
+  # attach the stuff found on $HOMESHARE/ at $_HOME/: 
 
   #https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -277,56 +258,56 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then
   # %P     File's name with the name of the starting-point under which it was found removed.
 	
   # non-hidden directories:
-  find -L "$DISTRO_DESKTOP"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+  find -L "$HOMESHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
   while IFS= read -r line; do
-    if [ ! -d $DEFAULT_HOME/"$line" ]; then
-      mkdir $DEFAULT_HOME/"$line"
+    if [ ! -d $_HOME/"$line" ]; then
+      mkdir $_HOME/"$line"
     fi
 
-    if ! findmnt -al | grep -qE "^$DEFAULT_HOME/$line[[:blank:]]"; then
-      sudo mount -o rw,rbind $DISTRO_DESKTOP/"$line" $DEFAULT_HOME/"$line"
+    if ! findmnt -al | grep -qE "^$_HOME/$line[[:blank:]]"; then
+      sudo mount -o rw,rbind $HOMESHARE/"$line" $_HOME/"$line"
     fi
   done
 
 
   # hidden directories except .local:
-  find -L "$DISTRO_DESKTOP"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
+  find -L "$HOMESHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
   awk '! /^[.]local$/' |
   while IFS= read -r line; do
-    if [ ! -d $DEFAULT_HOME/"$line" ]; then
-      mkdir $DEFAULT_HOME/"$line"
+    if [ ! -d $_HOME/"$line" ]; then
+      mkdir $_HOME/"$line"
     fi
 
-    if ! findmnt -al | grep -qE "^$DEFAULT_HOME/$line[[:blank:]]"; then
-      sudo mount -o rw,rbind $DISTRO_DESKTOP/"$line" $DEFAULT_HOME/"$line"
+    if ! findmnt -al | grep -qE "^$_HOME/$line[[:blank:]]"; then
+      sudo mount -o rw,rbind $HOMESHARE/"$line" $_HOME/"$line"
     fi
   done
 
   # .local except .local/share:
-  if [ -d "$DISTRO_DESKTOP"/.local ]; then
-    find -L "$DISTRO_DESKTOP"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+  if [ -d "$HOMESHARE"/.local ]; then
+    find -L "$HOMESHARE"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
     awk '! /^share$/' |
     while IFS= read -r line; do
-      if [ ! -d $DEFAULT_HOME/.local/"$line" ]; then
-	mkdir -p $DEFAULT_HOME/.local/"$line"
+      if [ ! -d $_HOME/.local/"$line" ]; then
+	mkdir -p $_HOME/.local/"$line"
       fi
 
-      if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]local/$line[[:blank:]]"; then
-	sudo mount -o rw,rbind $DISTRO_DESKTOP/.local/"$line" $DEFAULT_HOME/.local/"$line"
+      if ! findmnt -al | grep -qE "^$_HOME/[.]local/$line[[:blank:]]"; then
+	sudo mount -o rw,rbind $HOMESHARE/.local/"$line" $_HOME/.local/"$line"
       fi
     done
   fi
 
   # .local/share:
-  if [ -d "$DISTRO_DESKTOP"/.local/share ]; then
-    find -L "$DISTRO_DESKTOP"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+  if [ -d "$HOMESHARE"/.local/share ]; then
+    find -L "$HOMESHARE"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
     while IFS= read -r line; do
-      if [ ! -d $DEFAULT_HOME/.local/share/"$line" ]; then
-	mkdir -p $DEFAULT_HOME/.local/share/"$line"
+      if [ ! -d $_HOME/.local/share/"$line" ]; then
+	mkdir -p $_HOME/.local/share/"$line"
       fi
 
-      if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]local/share/$line[[:blank:]]"; then
-	sudo mount -o rw,rbind $DISTRO_DESKTOP/.local/share/"$line" $DEFAULT_HOME/.local/share/"$line"
+      if ! findmnt -al | grep -qE "^$_HOME/[.]local/share/$line[[:blank:]]"; then
+	sudo mount -o rw,rbind $HOMESHARE/.local/share/"$line" $_HOME/.local/share/"$line"
       fi
     done
   fi
@@ -337,30 +318,28 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then
   # this can prevent the config files comes from the git repo
   # be superseated by other mount operations using the same file tree path.
 
-  # attach the stuff found on $VIRTUAL_HOME/distro-desktop.git/.git at $DEFAULT_HOME/.git: 
-  if [  -n "$VIRTUAL_HOME" ] && [ -d $VIRTUAL_HOME/distro-desktop.git ]; then 
-    if [ "$( stat -c "%U %G %a" $VIRTUAL_HOME/distro-desktop.git )" != "$_user $_user 755" ]; then
-      sudo chown -hR $_user:$_user $VIRTUAL_HOME/distro-desktop.git
-      sudo chmod -R 755 $VIRTUAL_HOME/distro-desktop.git
-    fi
+  # attach the stuff found on $HOMESHARE_GIT/.git at $_HOME/.git: 
+  if [ "$( stat -c "%U %G %a" $HOMESHARE_GIT )" != "$_user $_user 755" ]; then
+    sudo chown -hR $_user:$_user $HOMESHARE_GIT
+    sudo chmod -R 755 $HOMESHARE_GIT
+  fi
      
-    if [ ! -d $DEFAULT_HOME/.git ]; then
-      mkdir $DEFAULT_HOME/.git
-    fi         
+  if [ ! -d $_HOME/.git ]; then
+    mkdir $_HOME/.git
+  fi         
 	
-    if ! findmnt -al | grep -qE "^$DEFAULT_HOME/[.]git[[:blank:]]"; then
-      sudo mount -o rw,rbind $VIRTUAL_HOME/distro-desktop.git/.git $DEFAULT_HOME/.git
-      for dir in $VIRTUAL_HOME/distro-desktop.git $DEFAULT_HOME; do
-        # it seems not need use sudo for this case:  
-        #if ! git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
-        if ! git -C $dir diff --quiet; then
-          # git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
-          # there is no need to use --recurse-submodules for this case. 
-          git -C $dir reset --hard
-        fi
-      done 
-    fi
-  fi # $VIRTUAL_HOME/distro-desktop.git
+  if ! findmnt -al | grep -qE "^$_HOME/[.]git[[:blank:]]"; then
+    sudo mount -o rw,rbind $HOMESHARE_GIT/.git $_HOME/.git
+    for dir in $HOMESHARE_GIT $_HOME; do
+      # it seems not need use sudo for this case:  
+      #if ! git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
+      if ! git -C $dir diff --quiet; then
+        # git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
+        # there is no need to use --recurse-submodules for this case. 
+        git -C $dir reset --hard
+      fi
+    done 
+  fi
 fi
 
 
@@ -374,7 +353,7 @@ fi
 # 
 #         Where user-specific configurations should be written (analogous to /etc).
 # 
-#         Should default to $DEFAULT_HOME/.config.
+#         Should default to $_HOME/.config.
 # 
 # 
 # 
@@ -382,7 +361,7 @@ fi
 # 
 #         Where user-specific non-essential (cached) data should be written (analogous to /var/cache).
 # 
-#         Should default to $DEFAULT_HOME/.cache.
+#         Should default to $_HOME/.cache.
 # 
 # 
 # 
@@ -390,7 +369,7 @@ fi
 # 
 #         Where user-specific data files should be written (analogous to /usr/share).
 # 
-#         Should default to $DEFAULT_HOME/.local/share.
+#         Should default to $_HOME/.local/share.
 
 
 
