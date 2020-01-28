@@ -216,10 +216,13 @@ while IFS= read -r uuid; do
 done < <( lsblk -o uuid,fstype,mountpoint | awk -v mountpoint=$VIRTUAL_ROOT ' $2 == "ext4" && ( $3 == "" || $3 == mountpoint ) { print $1 } ' )
 
 
-if [ "$( id -u )" -ne 0 ] && 
-   [ -d "$NEW_HOME" ] && [[ "$DEFAULT_HOME" != "$NEW_HOME" ]] &&
-   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"  &&   
-   [ -d "$DISTRO_DESKTOP" ]; then 
+#if [ "$( id -u )" -ne 0 ] && 
+#   [ -d "$NEW_HOME" ] && [[ "$DEFAULT_HOME" != "$NEW_HOME" ]] &&
+#   ! findmnt -al | grep -qE "^$DEFAULT_HOME[ ]+"  &&   
+#   [ -d "$DISTRO_DESKTOP" ]; then 
+
+if [ "$( id -u )" -ne 0 ] && [ -d "$DISTRO_DESKTOP" ]; then 
+
 
 
   #https://specifications.freedesktop.org/menu-spec/latest/
@@ -247,7 +250,7 @@ if [ "$( id -u )" -ne 0 ] &&
 
 
   # attach the stuff found on "$NEW_HOME" at $DEFAULT_HOME/: 
-  sudo mount -o rw,rbind "$NEW_HOME" "$DEFAULT_HOME"
+  #sudo mount -o rw,rbind "$NEW_HOME" "$DEFAULT_HOME"
     
 
   # attach the stuff found on $DISTRO_DESKTOP/ at $DEFAULT_HOME/: 
