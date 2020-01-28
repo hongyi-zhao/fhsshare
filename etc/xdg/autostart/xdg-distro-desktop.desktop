@@ -102,6 +102,40 @@
 #bash -o xtrace -c 'a="-Ennen"; printf "%s\n" "$a"'
 
 
+#On 27.01.2020 16:51, Barry Margolin wrote:
+#> In article <87imkysf0k.fsf@gmail.com>,
+#>  Hongyi Zhao <hongyi.zhao@gmail.com> wrote:
+#> 
+#>> Hi,
+#>>
+#>> I tried the following and it gives nothing but a empty line:
+#>>
+#>> $ bash -c "a=fd;  echo $a"
+#>> $
+#>>
+#>> Is it possible to use -c option of bash to run multiples commdands?
+#> 
+#> Of course it is. Just try
+#> 
+#> bash -c "echo foo; echo bar"
+#> 
+#> The problem in your command is that the variable is in double quotes, so 
+#> it's expanded by the original shell, not the new shell.
+#> 
+#> a=outside
+#> bash -c "a=inside; echo $a"
+#> bash -c 'a=inside; echo $a'
+
+#Or both, to preserve whitespaces in the variable...
+
+#  bash -c 'a=inside; echo "$a"'
+
+
+#Janis
+
+
+
+
 # test it:
 #( set -x ; bash -c 'script_name="$( basename --  "${BASH_SOURCE[0]}" | sed -E 's/[.][^.]*$//' )"; /etc/xdg/autostart/"$script_name".sh' )
 
