@@ -89,9 +89,9 @@ pwd -P
 
 # 一些用到的变量：
 # system_uuid
-system_uuid="$( sudo dmidecode -s system-uuid )"
+#system_uuid="$( sudo dmidecode -s system-uuid )"
 # root uuid
-root_uuid="$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )"
+#root_uuid="$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )"
 # current user
 _user="$( ps -o user= -p $$ | awk '{print $1}' )"
 
@@ -168,7 +168,7 @@ while IFS= read -r uuid; do
        
   if [ -d "$ROOTSHARE/rootshare.git" ]; then
     ROOTSHARE_GIT=$ROOTSHARE/rootshare.git 
-    HOMESHARE_GIT=$ROOTSHARE/homeshare.git
+    #HOMESHARE_GIT=$ROOTSHARE/homeshare.git
  
     # This directory is for holding public data:
     HOMESHARE=$ROOTSHARE/homeshare
@@ -216,7 +216,7 @@ done < <( lsblk -o uuid,fstype,mountpoint | awk -v mountpoint=$ROOTSHARE ' $2 ==
 
 
 # Use the following conditions now:
-if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ]  && [ -d "$HOMESHARE_GIT" ] && [ -d "$HOMESHARE" ]; then 
+if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; then 
 
 
 
@@ -311,36 +311,8 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ]  && [ -d "$HOMESHARE_GIT" ]
       fi
     done
   fi
-
-
-  # *** important note: *** 
-  # mount the git repo should be done after all other mount operations.
-  # this can prevent the config files comes from the git repo
-  # be superseated by other mount operations using the same file tree path.
-
-  # attach the stuff found on $HOMESHARE_GIT/.git at $_HOME/.git: 
-  if [ "$( stat -c "%U %G %a" $HOMESHARE_GIT )" != "$_user $_user 755" ]; then
-    sudo chown -hR $_user:$_user $HOMESHARE_GIT
-    sudo chmod -R 755 $HOMESHARE_GIT
-  fi
-     
-  if [ ! -d $_HOME/.git ]; then
-    mkdir $_HOME/.git
-  fi         
-	
-  if ! findmnt -al | grep -qE "^$_HOME/[.]git[[:blank:]]"; then
-    sudo mount -o rw,rbind $HOMESHARE_GIT/.git $_HOME/.git
-    for dir in $HOMESHARE_GIT $_HOME; do
-      # it seems not need use sudo for this case:  
-      #if ! git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
-      if ! git -C $dir diff --quiet; then
-        # git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
-        # there is no need to use --recurse-submodules for this case. 
-        git -C $dir reset --hard
-      fi
-    done 
-  fi
 fi
+
 
 
 # ref：
