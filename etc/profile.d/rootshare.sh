@@ -97,45 +97,45 @@ _user="$( ps -o user= -p $$ | awk '{print $1}' )"
 
 # default home of the current user
 #getent passwd "$_user" | cut -d: -f6
-_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
+#_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
 # If not exist
-if [ ! -d "$_HOME" ]; then
-  sudo mkdir $_HOME
+if [ ! -d "$HOME" ]; then
+  sudo mkdir $HOME
 fi
 
 # fix the owner, group and mode bits
-if [ "$( stat -c "%U %G %a" $_HOME )" != "$_user $_user 755" ]; then
-  sudo chown -hR $_user:$_user $_HOME
-  sudo chmod -R 755 $_HOME 
+if [ "$( stat -c "%U %G %a" $HOME )" != "$_user $_user 755" ]; then
+  sudo chown -hR $_user:$_user $HOME
+  sudo chmod -R 755 $HOME 
 fi
 
 
 # Discarded the $NEW_HOME based method, so the following desription is not applied now:
 
-# According to the current logic, the $_HOME directory 
+# According to the current logic, the $HOME directory 
 # is used as the mountpoint for $NEW_HOME.  Consider the following case: 
 # when login the system then logout, and re-login,
-# for this case, the $_HOME will have all the stuff mounted there.
+# for this case, the $HOME will have all the stuff mounted there.
 
-# If we do the operation ` rm -fr $_HOME ', 
+# If we do the operation ` rm -fr $HOME ', 
 # all of the stuff mounted there will be deleted, dangerous! 
 
-# In order to prepare a clean $_HOME, we must first ensure that we don't delete any user's stuff
-# mounted at $_HOME, so this thing is done by the following conditions:
+# In order to prepare a clean $HOME, we must first ensure that we don't delete any user's stuff
+# mounted at $HOME, so this thing is done by the following conditions:
 
-# $_HOME not empty
-# $_HOME not be used as a mountpoint
+# $HOME not empty
+# $HOME not be used as a mountpoint
 
 # Though this is safe, but it seems that this is not a good idea.
 # In the early stage of the login process, many processes may need this directory to be there.
 
 # On the other hand, the /etc/xdg/autostart/xdg-virtualroot.{desktop,sh} scripts 
 # will only can be run when user doing a the desktop login.
-# In this case, the $_HOME is still needed to exist at the corresponding location.
+# In this case, the $HOME is still needed to exist at the corresponding location.
 
-# So, the most feasiable method should be keep $_HOME as it is.  And only mount the stuff on 
-# $NEW_HOME and $HOMESHARE at $_HOME using the specific mounting order described following. 
+# So, the most feasiable method should be keep $HOME as it is.  And only mount the stuff on 
+# $NEW_HOME and $HOMESHARE at $HOME using the specific mounting order described following. 
 
 #From: Helmut Waitzmann <nn.throttle@xoxy.net>
 #Newsgroups: comp.unix.shell
@@ -143,10 +143,10 @@ fi
 #… or just a '-prune', which is POSIX compliant, while '-maxdepth' 
 #is not.
 
-#if [ -z "$( sudo find "$_HOME" -maxdepth 0 -type d -empty )" ] &&           
-#   ! findmnt -al | grep -qE "^$_HOME[ ]+"; then 
-#  sudo rm -fr $_HOME
-#  sudo mkdir $_HOME
+#if [ -z "$( sudo find "$HOME" -maxdepth 0 -type d -empty )" ] &&           
+#   ! findmnt -al | grep -qE "^$HOME[ ]+"; then 
+#  sudo rm -fr $HOME
+#  sudo mkdir $HOME
 #fi
 
 
@@ -230,8 +230,8 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
 
   # ref: ubuntu:
   # /etc/profile.d/xdg_dirs_desktop_session.sh
-  if ! grep -Eq "$_HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
-    export XDG_DATA_DIRS=$_HOME/.local/share:$XDG_DATA_DIRS
+  if ! grep -Eq "$HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
+    export XDG_DATA_DIRS=$HOME/.local/share:$XDG_DATA_DIRS
   fi
 
   if ! grep -Eq '/usr/local/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
@@ -242,7 +242,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
     export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
   fi
 
-  # attach the stuff found on $HOMESHARE/ at $_HOME/: 
+  # attach the stuff found on $HOMESHARE/ at $HOME/: 
 
   #https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -260,12 +260,12 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
   # non-hidden directories:
   find -L "$HOMESHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
   while IFS= read -r line; do
-    if [ ! -d $_HOME/"$line" ]; then
-      mkdir $_HOME/"$line"
+    if [ ! -d $HOME/"$line" ]; then
+      mkdir $HOME/"$line"
     fi
 
-    if ! findmnt -al | grep -qE "^$_HOME/$line[[:blank:]]"; then
-      sudo mount -o rw,rbind $HOMESHARE/"$line" $_HOME/"$line"
+    if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
+      sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
     fi
   done
 
@@ -274,12 +274,12 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
   find -L "$HOMESHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
   awk '! /^[.]local$/' |
   while IFS= read -r line; do
-    if [ ! -d $_HOME/"$line" ]; then
-      mkdir $_HOME/"$line"
+    if [ ! -d $HOME/"$line" ]; then
+      mkdir $HOME/"$line"
     fi
 
-    if ! findmnt -al | grep -qE "^$_HOME/$line[[:blank:]]"; then
-      sudo mount -o rw,rbind $HOMESHARE/"$line" $_HOME/"$line"
+    if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
+      sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
     fi
   done
 
@@ -288,12 +288,12 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
     find -L "$HOMESHARE"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
     awk '! /^share$/' |
     while IFS= read -r line; do
-      if [ ! -d $_HOME/.local/"$line" ]; then
-	mkdir -p $_HOME/.local/"$line"
+      if [ ! -d $HOME/.local/"$line" ]; then
+	mkdir -p $HOME/.local/"$line"
       fi
 
-      if ! findmnt -al | grep -qE "^$_HOME/[.]local/$line[[:blank:]]"; then
-	sudo mount -o rw,rbind $HOMESHARE/.local/"$line" $_HOME/.local/"$line"
+      if ! findmnt -al | grep -qE "^$HOME/[.]local/$line[[:blank:]]"; then
+	sudo mount -o rw,rbind $HOMESHARE/.local/"$line" $HOME/.local/"$line"
       fi
     done
   fi
@@ -302,12 +302,12 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
   if [ -d "$HOMESHARE"/.local/share ]; then
     find -L "$HOMESHARE"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
     while IFS= read -r line; do
-      if [ ! -d $_HOME/.local/share/"$line" ]; then
-	mkdir -p $_HOME/.local/share/"$line"
+      if [ ! -d $HOME/.local/share/"$line" ]; then
+	mkdir -p $HOME/.local/share/"$line"
       fi
 
-      if ! findmnt -al | grep -qE "^$_HOME/[.]local/share/$line[[:blank:]]"; then
-	sudo mount -o rw,rbind $HOMESHARE/.local/share/"$line" $_HOME/.local/share/"$line"
+      if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line[[:blank:]]"; then
+	sudo mount -o rw,rbind $HOMESHARE/.local/share/"$line" $HOME/.local/share/"$line"
       fi
     done
   fi
@@ -325,7 +325,7 @@ fi
 # 
 #         Where user-specific configurations should be written (analogous to /etc).
 # 
-#         Should default to $_HOME/.config.
+#         Should default to $HOME/.config.
 # 
 # 
 # 
@@ -333,7 +333,7 @@ fi
 # 
 #         Where user-specific non-essential (cached) data should be written (analogous to /var/cache).
 # 
-#         Should default to $_HOME/.cache.
+#         Should default to $HOME/.cache.
 # 
 # 
 # 
@@ -341,7 +341,7 @@ fi
 # 
 #         Where user-specific data files should be written (analogous to /usr/share).
 # 
-#         Should default to $_HOME/.local/share.
+#         Should default to $HOME/.local/share.
 
 
 
