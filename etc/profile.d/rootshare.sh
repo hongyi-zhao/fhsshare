@@ -174,7 +174,7 @@ while IFS= read -r uuid; do
     #HOMESHARE_GIT=$ROOTSHARE/homeshare.git
  
     # This directory is for holding public data:
-    HOMESHARE=$ROOTSHARE/homeshare
+    HOMESHARE=$ROOTSHARE/home/share
 
     # Third party applications, say, intel's tools, are intalled in this directory for sharing:
     OPTSHARE=$ROOTSHARE/opt
