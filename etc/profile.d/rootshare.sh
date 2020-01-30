@@ -96,6 +96,9 @@ pwd -P
 _user="$( ps -o user= -p $$ | awk '{print $1}' )"
 
 # default home of the current user
+
+# Use the $HOME will do the job, so just keep it simple and stupid.
+
 #getent passwd "$_user" | cut -d: -f6
 #_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
