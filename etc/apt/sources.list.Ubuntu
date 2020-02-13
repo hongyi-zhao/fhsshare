@@ -2,7 +2,7 @@
 #lsb_release -cs
 # 
 # sudo mv sources.list sources.list.orig
-#awk -v codename=$( lsb_release -sc ) '{ if ( !/^[ ]*#/ && $3 ~ /^codename/ ) { sub(/^codename/,codename,$3); print } else print }' sources.list.template.$( lsb_release -is ) | sudo tee sources.list
+#awk -v codename=$( lsb_release -sc ) '{ if ( !/^[ ]*#/ && $3 ~ /^codename/ ) { sub(/^codename/,codename,$3); print } else print }' sources.list.$( lsb_release -is ) | sudo tee sources.list
 deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ codename main restricted universe multiverse
 deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ codename main restricted universe multiverse
 
