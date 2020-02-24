@@ -261,7 +261,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
   # %P     File's name with the name of the starting-point under which it was found removed.
 	
   # non-hidden directories:
-  find -L "$HOMESHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+  find -L "$HOMESHARE"/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.].*" -printf '%P\n' |
   while IFS= read -r line; do
     if [ ! -d $HOME/"$line" ]; then
       mkdir $HOME/"$line"
@@ -273,50 +273,100 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
   done
 
 
-  # hidden directories except .local:
+
+
+#https://bytefreaks.net/gnulinux/bash/how-to-execute-find-that-ignores-git-directories
+#Example 1: Ignore all .git folders no matter where they are in the search path
+
+#For find to ignore all .git folders, even if they appear on the first level of directories or any in-between until the last one, add -not -path '*/\.git*' to your command as in the example below.
+#This parameter will instruct find to filter out any file that has anywhere in its path the folder .git. This is very helpful in case a project has dependencies in other projects (repositories) that are part of the internal structure.
+#1
+#	
+#find . -type f -not -path '*/\.git/*';
+
+#Note, if you are using svn use:
+#1
+#	
+#find . -type f -not -path '*/\.svn/*';
+#Example 2: Ignore all hidden files and folders
+
+#To ignore all hidden files and folders from your find results add -not -path '*/\.*' to your command.
+#1
+#	
+#find . -not -path '*/\.*';
+
+#This parameter instructs find to ignore any file that has anywhere in its path the string /. which is any hidden file or folder in the search path!
+
+
+#http://mywiki.wooledge.org/UsingFind
+#-path looks at the entire pathname, which includes the filename (in other words, what you see in find's output of -print) in order to match things. 
+#(At this point, I must point out that -path is not available on every version of find. In particular, Solaris lacks it. But it's pretty common on everything else.) 
+
+
+
+
   # Some other tests which also can to the job:
   #find -L $PWD/.*  -maxdepth 0 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.][^.].*$" 
-  #find -L $PWD/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -path '*/.*' 
+  #find -L $PWD/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -path "$PWD/.*" 
   #find -L $PWD/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.].*" 
-  #find -L $PWD/ $PWD/.local $PWD/.local/share -mindepth 1  -maxdepth 1 -type d ! -path '*/.local' ! -path '*/.local/share' -path '*/.*'
-  find -L "$HOMESHARE"/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.].*" -printf '%P\n' |
+  #find -L $PWD/ $PWD/.local $PWD/.local/share -mindepth 1  -maxdepth 1 -type d ! -path '*/.local' ! -path '*/.local/share' -path "$PWD/.*" 
+
+  #https://askubuntu.com/questions/76808/how-do-i-use-variables-in-a-sed-command
+
+  
+  # Dealing with hidden directories via one find command:
+  find -L $HOMESHARE/ $HOMESHARE/.local $HOMESHARE/.local/share \
+       -mindepth 1  -maxdepth 1 -type d ! -path '*/.local' ! -path '*/.local/share' -path "$HOMESHARE/.*" |
+  sed -E "s|^$HOMESHARE/||" |
   while IFS= read -r line; do
     if [ ! -d $HOME/"$line" ]; then
-      mkdir $HOME/"$line"
+      mkdir -p $HOME/"$line"
     fi
 
     if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
       sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
     fi
-  done
+  done    
 
-  # .local except .local/share:
-  if [ -d "$HOMESHARE"/.local ]; then
-    find -L "$HOMESHARE"/.local/ -mindepth 1 -maxdepth 1 -type d ! -path '*/share' -regextype posix-extended -regex ".*/[^.].*" -printf '%P\n' |
-    while IFS= read -r line; do
-      if [ ! -d $HOME/.local/"$line" ]; then
-	mkdir -p $HOME/.local/"$line"
-      fi
+  # hidden directories except .local:
+#  find -L "$HOMESHARE"/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.].*" -printf '%P\n' |
+#  while IFS= read -r line; do
+#    if [ ! -d $HOME/"$line" ]; then
+#      mkdir $HOME/"$line"
+#    fi
 
-      if ! findmnt -al | grep -qE "^$HOME/[.]local/$line[[:blank:]]"; then
-	sudo mount -o rw,rbind $HOMESHARE/.local/"$line" $HOME/.local/"$line"
-      fi
-    done
-  fi
+#    if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
+#      sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
+#    fi
+#  done
 
-  # .local/share:
-  if [ -d "$HOMESHARE"/.local/share ]; then
-    find -L "$HOMESHARE"/.local/share/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.].*" -printf '%P\n' |
-    while IFS= read -r line; do
-      if [ ! -d $HOME/.local/share/"$line" ]; then
-	mkdir -p $HOME/.local/share/"$line"
-      fi
+#  # .local except .local/share:
+#  if [ -d "$HOMESHARE"/.local ]; then
+#    find -L "$HOMESHARE"/.local/ -mindepth 1 -maxdepth 1 -type d ! -path '*/share' -regextype posix-extended -regex ".*/[^.].*" -printf '%P\n' |
+#    while IFS= read -r line; do
+#      if [ ! -d $HOME/.local/"$line" ]; then
+#	mkdir -p $HOME/.local/"$line"
+#      fi
 
-      if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line[[:blank:]]"; then
-	sudo mount -o rw,rbind $HOMESHARE/.local/share/"$line" $HOME/.local/share/"$line"
-      fi
-    done
-  fi
+#      if ! findmnt -al | grep -qE "^$HOME/[.]local/$line[[:blank:]]"; then
+#	sudo mount -o rw,rbind $HOMESHARE/.local/"$line" $HOME/.local/"$line"
+#      fi
+#    done
+#  fi
+
+#  # .local/share:
+#  if [ -d "$HOMESHARE"/.local/share ]; then
+#    find -L "$HOMESHARE"/.local/share/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.].*" -printf '%P\n' |
+#    while IFS= read -r line; do
+#      if [ ! -d $HOME/.local/share/"$line" ]; then
+#	mkdir -p $HOME/.local/share/"$line"
+#      fi
+
+#      if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line[[:blank:]]"; then
+#	sudo mount -o rw,rbind $HOMESHARE/.local/share/"$line" $HOME/.local/share/"$line"
+#      fi
+#    done
+#  fi
 fi
 
 
