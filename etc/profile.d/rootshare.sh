@@ -261,7 +261,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
   # %P     File's name with the name of the starting-point under which it was found removed.
 	
   # non-hidden directories:
-  find -L "$HOMESHARE"/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.].*" -printf '%P\n' |
+  find -L "$HOMESHARE"/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
   while IFS= read -r line; do
     if [ ! -d $HOME/"$line" ]; then
       mkdir $HOME/"$line"
@@ -306,9 +306,9 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
 
 
   # Some other tests which also can to the job:
-  #find -L $PWD/.*  -maxdepth 0 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.][^.].*$" 
+  #find -L $PWD/.*  -maxdepth 0 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.][^.][^/]*$" 
   #find -L $PWD/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -path "$PWD/.*" 
-  #find -L $PWD/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.].*" 
+  #find -L $PWD/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.][^/]*$" 
   #find -L $PWD/ $PWD/.local $PWD/.local/share -mindepth 1  -maxdepth 1 -type d ! -path '*/.local' ! -path '*/.local/share' -path "$PWD/.*" 
 
   #https://askubuntu.com/questions/76808/how-do-i-use-variables-in-a-sed-command
@@ -329,7 +329,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
   done    
 
   # hidden directories except .local:
-#  find -L "$HOMESHARE"/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.].*" -printf '%P\n' |
+#  find -L "$HOMESHARE"/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.][^/]*$" -printf '%P\n' |
 #  while IFS= read -r line; do
 #    if [ ! -d $HOME/"$line" ]; then
 #      mkdir $HOME/"$line"
@@ -342,7 +342,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
 
 #  # .local except .local/share:
 #  if [ -d "$HOMESHARE"/.local ]; then
-#    find -L "$HOMESHARE"/.local/ -mindepth 1 -maxdepth 1 -type d ! -path '*/share' -regextype posix-extended -regex ".*/[^.].*" -printf '%P\n' |
+#    find -L "$HOMESHARE"/.local/ -mindepth 1 -maxdepth 1 -type d ! -path '*/share' -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
 #    while IFS= read -r line; do
 #      if [ ! -d $HOME/.local/"$line" ]; then
 #	mkdir -p $HOME/.local/"$line"
@@ -356,7 +356,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
 
 #  # .local/share:
 #  if [ -d "$HOMESHARE"/.local/share ]; then
-#    find -L "$HOMESHARE"/.local/share/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.].*" -printf '%P\n' |
+#    find -L "$HOMESHARE"/.local/share/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
 #    while IFS= read -r line; do
 #      if [ ! -d $HOME/.local/share/"$line" ]; then
 #	mkdir -p $HOME/.local/share/"$line"
