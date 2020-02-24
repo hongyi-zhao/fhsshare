@@ -274,8 +274,11 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
 
 
   # hidden directories except .local:
-  find -L "$HOMESHARE"/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[.][^/]*" -printf '%P\n' |
-  awk '! /^[.]local$/' |
+  # Some other tests which also can to the job:
+  #find -L $PWD/.*  -maxdepth 0 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.][^.].*$" 
+  #find -L $PWD/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -path '*/.*' 
+  #find -L $PWD/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.].*" 
+  find -L "$HOMESHARE"/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.].*" -printf '%P\n' |
   while IFS= read -r line; do
     if [ ! -d $HOME/"$line" ]; then
       mkdir $HOME/"$line"
@@ -288,8 +291,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
 
   # .local except .local/share:
   if [ -d "$HOMESHARE"/.local ]; then
-    find -L "$HOMESHARE"/.local/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
-    awk '! /^share$/' |
+    find -L "$HOMESHARE"/.local/ -mindepth 1 -maxdepth 1 -type d ! -path '*/share' -regextype posix-extended -regex ".*/[^.].*" -printf '%P\n' |
     while IFS= read -r line; do
       if [ ! -d $HOME/.local/"$line" ]; then
 	mkdir -p $HOME/.local/"$line"
@@ -303,7 +305,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
 
   # .local/share:
   if [ -d "$HOMESHARE"/.local/share ]; then
-    find -L "$HOMESHARE"/.local/share/ -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*" -printf '%P\n' |
+    find -L "$HOMESHARE"/.local/share/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.].*" -printf '%P\n' |
     while IFS= read -r line; do
       if [ ! -d $HOME/.local/share/"$line" ]; then
 	mkdir -p $HOME/.local/share/"$line"
