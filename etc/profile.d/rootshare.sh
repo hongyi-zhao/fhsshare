@@ -278,6 +278,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
   #find -L $PWD/.*  -maxdepth 0 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.][^.].*$" 
   #find -L $PWD/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -path '*/.*' 
   #find -L $PWD/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.].*" 
+  #find -L $PWD/ $PWD/.local $PWD/.local/share -mindepth 1  -maxdepth 1 -type d ! -path '*/.local' ! -path '*/.local/share' -path '*/.*'
   find -L "$HOMESHARE"/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.].*" -printf '%P\n' |
   while IFS= read -r line; do
     if [ ! -d $HOME/"$line" ]; then
