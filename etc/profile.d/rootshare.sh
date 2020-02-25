@@ -91,7 +91,7 @@ pwd -P
 # system_uuid
 #system_uuid="$( sudo dmidecode -s system-uuid )"
 # root uuid
-#root_uuid="$( findmnt -alo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )"
+#root_uuid="$( findmnt -ro TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )"
 # current user
 _user="$( ps -o user= -p $$ | awk '{print $1}' )"
 
@@ -114,47 +114,6 @@ if [ "$( stat -c "%U %G %a" $HOME )" != "$_user $_user 755" ]; then
 fi
 
 
-# Discarded the $NEW_HOME based method, so the following desription is not applied now:
-
-# According to the current logic, the $HOME directory 
-# is used as the mountpoint for $NEW_HOME.  Consider the following case: 
-# when login the system then logout, and re-login,
-# for this case, the $HOME will have all the stuff mounted there.
-
-# If we do the operation ` rm -fr $HOME ', 
-# all of the stuff mounted there will be deleted, dangerous! 
-
-# In order to prepare a clean $HOME, we must first ensure that we don't delete any user's stuff
-# mounted at $HOME, so this thing is done by the following conditions:
-
-# $HOME not empty
-# $HOME not be used as a mountpoint
-
-# Though this is safe, but it seems that this is not a good idea.
-# In the early stage of the login process, many processes may need this directory to be there.
-
-# On the other hand, the /etc/xdg/autostart/xdg-virtualroot.{desktop,sh} scripts 
-# will only can be run when user doing a the desktop login.
-# In this case, the $HOME is still needed to exist at the corresponding location.
-
-# So, the most feasiable method should be keep $HOME as it is.  And only mount the stuff on 
-# $NEW_HOME and $HOMESHARE at $HOME using the specific mounting order described following. 
-
-#From: Helmut Waitzmann <nn.throttle@xoxy.net>
-#Newsgroups: comp.unix.shell
-#Subject: Re: The portable way to judge a empty directory.
-#… or just a '-prune', which is POSIX compliant, while '-maxdepth' 
-#is not.
-
-#if [ -z "$( sudo find "$HOME" -maxdepth 0 -type d -empty )" ] &&           
-#   ! findmnt -al | grep -qE "^$HOME[ ]+"; then 
-#  sudo rm -fr $HOME
-#  sudo mkdir $HOME
-#fi
-
-
-# Due to discard the $NEW_HOME based method, there is no need to export the following now:
-# export virtualroot relative vars:
 ROOTSHARE=/rootshare
 
 if [ ! -d "$ROOTSHARE" ]; then
@@ -165,7 +124,7 @@ fi
 # https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
 # https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
 while IFS= read -r uuid; do
-  if ! findmnt -al | grep -qE "^$ROOTSHARE[ ]+"; then 
+  if ! findmnt -r | grep -qE "^$ROOTSHARE[ ]+"; then 
     sudo mount -U $uuid $ROOTSHARE
   fi   
        
@@ -184,7 +143,7 @@ while IFS= read -r uuid; do
       sudo mkdir $OPTSHARE
     fi
 
-    if ! findmnt -al | grep -qE "^/opt[[:blank:]]"; then
+    if ! findmnt -r | grep -qE "^/opt[[:blank:]]"; then
       sudo mount -o rw,rbind $OPTSHARE /opt
     fi
 
@@ -199,7 +158,7 @@ while IFS= read -r uuid; do
       sudo mkdir /.git
     fi
 
-    if ! findmnt -al | grep -qE "^/.git[[:blank:]]"; then
+    if ! findmnt -r | grep -qE "^/.git[[:blank:]]"; then
       sudo mount -o rw,rbind $ROOTSHARE_GIT/.git /.git
       # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
       for dir in $ROOTSHARE_GIT /; do  
@@ -267,7 +226,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
       mkdir $HOME/"$line"
     fi
 
-    if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
+    if ! findmnt -r | grep -qE "^$HOME/$line[[:blank:]]"; then
       sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
     fi
   done
@@ -316,57 +275,17 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
   
   # Dealing with hidden directories via one find command:
   find -L $HOMESHARE/ $HOMESHARE/.local $HOMESHARE/.local/share \
-       -mindepth 1  -maxdepth 1 -type d ! -path '*/.local' ! -path '*/.local/share' -path "$HOMESHARE/.*" |
+       -mindepth 1  -maxdepth 1 -type d ! -path "$HOMESHARE/.local" ! -path "$HOMESHARE/.local/share" -path "$HOMESHARE/.*" |
   sed -E "s|^$HOMESHARE/||" |
   while IFS= read -r line; do
     if [ ! -d $HOME/"$line" ]; then
       mkdir -p $HOME/"$line"
     fi
 
-    if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
+    if ! findmnt -r | grep -qE "^$HOME/$line[[:blank:]]"; then
       sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
     fi
   done    
-
-  # hidden directories except .local:
-#  find -L "$HOMESHARE"/ -mindepth 1 -maxdepth 1 -type d ! -path '*/.local' -regextype posix-extended -regex ".*/[.][^/]*$" -printf '%P\n' |
-#  while IFS= read -r line; do
-#    if [ ! -d $HOME/"$line" ]; then
-#      mkdir $HOME/"$line"
-#    fi
-
-#    if ! findmnt -al | grep -qE "^$HOME/$line[[:blank:]]"; then
-#      sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
-#    fi
-#  done
-
-#  # .local except .local/share:
-#  if [ -d "$HOMESHARE"/.local ]; then
-#    find -L "$HOMESHARE"/.local/ -mindepth 1 -maxdepth 1 -type d ! -path '*/share' -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
-#    while IFS= read -r line; do
-#      if [ ! -d $HOME/.local/"$line" ]; then
-#	mkdir -p $HOME/.local/"$line"
-#      fi
-
-#      if ! findmnt -al | grep -qE "^$HOME/[.]local/$line[[:blank:]]"; then
-#	sudo mount -o rw,rbind $HOMESHARE/.local/"$line" $HOME/.local/"$line"
-#      fi
-#    done
-#  fi
-
-#  # .local/share:
-#  if [ -d "$HOMESHARE"/.local/share ]; then
-#    find -L "$HOMESHARE"/.local/share/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
-#    while IFS= read -r line; do
-#      if [ ! -d $HOME/.local/share/"$line" ]; then
-#	mkdir -p $HOME/.local/share/"$line"
-#      fi
-
-#      if ! findmnt -al | grep -qE "^$HOME/[.]local/share/$line[[:blank:]]"; then
-#	sudo mount -o rw,rbind $HOMESHARE/.local/share/"$line" $HOME/.local/share/"$line"
-#      fi
-#    done
-#  fi
 fi
 
 
