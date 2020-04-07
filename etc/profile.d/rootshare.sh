@@ -87,11 +87,18 @@ pwd -P
 # when there are two or more scripts to be sourced, make sure use correct filenames to 
 # ensure the execute logic among these scripts.
 
+# don't run this script repeatedly:
+if findmnt -l | grep -qE "^/.git[[:blank:]]"; then
+  return
+fi
+
+
+
 # 一些用到的变量：
 # system_uuid
 #system_uuid="$( sudo dmidecode -s system-uuid )"
 # root uuid
-#root_uuid="$( findmnt -ro TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )"
+#root_uuid="$( findmnt -lo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )"
 # current user
 _user="$( ps -o user= -p $$ | awk '{print $1}' )"
 
@@ -123,8 +130,18 @@ fi
 
 # https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
 # https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
+
+# Don't use `findmnt -r`, this use the following rule which makes the regex match impossiable for 
+# specifial characters, say space. See the following for detail:
+# $ findmnt -r | grep 'Virtual'
+#/home/werner/VirtualBox\x20VMs /dev/sdb1[/home/share/VirtualBox\x20VMs] ext4 rw,relatime
+
+#       -r, --raw
+#              Use  raw  output  format.   All  potentially  unsafe  characters  are  hex-escaped
+#              (\x<code>).
+
 while IFS= read -r uuid; do
-  if ! findmnt -r | grep -qE "^$ROOTSHARE[ ]+"; then 
+  if ! findmnt -l | grep -qE "^$ROOTSHARE[ ]+"; then 
     sudo mount -U $uuid $ROOTSHARE
   fi   
        
@@ -143,7 +160,7 @@ while IFS= read -r uuid; do
       sudo mkdir $OPTSHARE
     fi
 
-    if ! findmnt -r | grep -qE "^/opt[[:blank:]]"; then
+    if ! findmnt -l | grep -qE "^/opt[[:blank:]]"; then
       sudo mount -o rw,rbind $OPTSHARE /opt
     fi
 
@@ -158,7 +175,7 @@ while IFS= read -r uuid; do
       sudo mkdir /.git
     fi
 
-    if ! findmnt -r | grep -qE "^/.git[[:blank:]]"; then
+    if ! findmnt -l | grep -qE "^/.git[[:blank:]]"; then
       sudo mount -o rw,rbind $ROOTSHARE_GIT/.git /.git
       # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
       for dir in $ROOTSHARE_GIT /; do  
@@ -226,7 +243,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
       mkdir $HOME/"$line"
     fi
 
-    if ! findmnt -r | grep -qE "^$HOME/$line[[:blank:]]"; then
+    if ! findmnt -l | grep -qE "^$HOME/$line[[:blank:]]"; then
       sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
     fi
   done
@@ -282,7 +299,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
       mkdir -p $HOME/"$line"
     fi
 
-    if ! findmnt -r | grep -qE "^$HOME/$line[[:blank:]]"; then
+    if ! findmnt -l | grep -qE "^$HOME/$line[[:blank:]]"; then
       sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
     fi
   done    
