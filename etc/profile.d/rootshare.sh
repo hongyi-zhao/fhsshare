@@ -88,7 +88,7 @@ pwd -P
 # ensure the execute logic among these scripts.
 
 # don't run this script repeatedly:
-if findmnt -l | grep -qE "^/.git[[:blank:]]"; then
+if findmnt -l -o TARGET | grep -qE "^/.git$"; then
   return
 fi
 
@@ -141,7 +141,7 @@ fi
 #              (\x<code>).
 
 while IFS= read -r uuid; do
-  if ! findmnt -l | grep -qE "^$ROOTSHARE[ ]+"; then 
+  if ! findmnt -l -o TARGET | grep -qE "^$ROOTSHARE$"; then 
     sudo mount -U $uuid $ROOTSHARE
   fi   
        
@@ -160,7 +160,7 @@ while IFS= read -r uuid; do
       sudo mkdir $OPTSHARE
     fi
 
-    if ! findmnt -l | grep -qE "^/opt[[:blank:]]"; then
+    if ! findmnt -l -o TARGET | grep -qE "^/opt$"; then
       sudo mount -o rw,rbind $OPTSHARE /opt
     fi
 
@@ -175,7 +175,7 @@ while IFS= read -r uuid; do
       sudo mkdir /.git
     fi
 
-    if ! findmnt -l | grep -qE "^/.git[[:blank:]]"; then
+    if ! findmnt -l -o TARGET | grep -qE "^/.git$"; then
       sudo mount -o rw,rbind $ROOTSHARE_GIT/.git /.git
       # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
       for dir in $ROOTSHARE_GIT /; do  
@@ -243,7 +243,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
       mkdir $HOME/"$line"
     fi
 
-    if ! findmnt -l | grep -qE "^$HOME/$line[[:blank:]]"; then
+    if ! findmnt -l -o TARGET | grep -qE "^$HOME/$line$"; then
       sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
     fi
   done
@@ -299,7 +299,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
       mkdir -p $HOME/"$line"
     fi
 
-    if ! findmnt -l | grep -qE "^$HOME/$line[[:blank:]]"; then
+    if ! findmnt -l -o TARGET | grep -qE "^$HOME/$line$"; then
       sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
     fi
   done    
