@@ -177,15 +177,17 @@ while IFS= read -r uuid; do
 
     if ! findmnt -l -o TARGET | grep -qE "^/.git$"; then
       sudo mount -o rw,rbind $ROOTSHARE_GIT/.git /.git
+      # Disable the following operations:
+      # sudo git -C $dir reset --hard
       # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
-      for dir in $ROOTSHARE_GIT /; do  
-        #if ! sudo git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
-        if ! sudo git -C $dir diff --quiet; then
-          #sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
-          # it's not need to use --recurse-submodules for this case.    
-          sudo git -C $dir reset --hard
-        fi
-      done       
+      #for dir in $ROOTSHARE_GIT /; do  
+      #  #if ! sudo git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
+      #  if ! sudo git -C $dir diff --quiet; then
+      #    #sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
+      #    # it's not need to use --recurse-submodules for this case.    
+      #    sudo git -C $dir reset --hard
+      #  fi
+      #done       
     fi
     break
   else
