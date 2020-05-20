@@ -60,6 +60,40 @@ pwd -P
 
 
 
+# In the following method, the $script_dirname is equivalent to $topdir otained above in this script:
+#https://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
+script_realpath="$( realpath -e -- "${BASH_SOURCE[0]}")"
+
+script_name="${script_realpath##*/}"                      # Strip longest match of */ from start
+# Revise, removed the trailling /: 
+script_dirname="${script_realpath:0:${#script_realpath} - ${#script_name} - 1}" # Substring from 0 thru pos of filename
+script_basename="${script_name%.[^.]*}"                       # Strip shortest match of . plus at least one non-dot char from end
+script_extname="${script_name:${#script_basename} + 1}"                  # Substring from len of base thru end
+if [[ -z "$script_basename" && -n "$script_extname" ]]; then          # If we have an extension and no base, it's really the base
+  script_basename=".$script_extname"
+  ext=""
+fi
+
+#echo -e "\tscript_realpath  = \"$script_realpath\"\n\tscript_dirname  = \"$script_dirname\"\n\tscript_basename = \"$script_basename\"\n\tscript_extname  = \"$script_extname\""
+
+
+
+
+#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
+
+# software/anti-gfw/not-used/vpngate-relative/ecmp-vpngate/script/ovpn-traverse.sh
+# man find:
+# -printf format
+# %f     File's name with any leading directories removed (only the last element).
+# %h     Leading directories of file's name (all but the last element).  
+# If the file name contains  no  slashes
+#             (since it is in the current directory) the %h specifier expands to `.'.       
+# %H     Starting-point under which file was found.  
+# %p     File's name.
+# %P     File's name with the name of the starting-point under which it was found removed.
+
+
+
 
 # The idea 
 
@@ -132,10 +166,7 @@ fi
 # https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
 
 # Don't use `findmnt -r`, this use the following rule which makes the regex match impossiable for 
-# specifial characters, say space. See the following for detail:
-# $ findmnt -r | grep 'Virtual'
-#/home/werner/VirtualBox\x20VMs /dev/sdb1[/home/share/VirtualBox\x20VMs] ext4 rw,relatime
-
+# specifial characters, say space. 
 #       -r, --raw
 #              Use  raw  output  format.   All  potentially  unsafe  characters  are  hex-escaped
 #              (\x<code>).
@@ -150,7 +181,7 @@ while IFS= read -r uuid; do
     #HOMESHARE_GIT=$ROOTSHARE/homeshare.git
  
     # This directory is for holding public data:
-    HOMESHARE=$ROOTSHARE/home/share
+    HOMESHARE=$ROOTSHARE/homeshare
 
     # Third party applications, say, intel's tools, are intalled in this directory for sharing:
     OPTSHARE=$ROOTSHARE/opt
