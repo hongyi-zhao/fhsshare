@@ -144,7 +144,7 @@ _user="$( ps -o user= -p $$ | awk '{print $1}' )"
 #_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd ) 
 
 # If not exist
-if [ ! -d "$HOME" ]; then
+if [ ! -d $HOME ]; then
   sudo mkdir $HOME
 fi
 
@@ -157,7 +157,7 @@ fi
 
 ROOTSHARE=/rootshare
 
-if [ ! -d "$ROOTSHARE" ]; then
+if [ ! -d $ROOTSHARE ]; then
   sudo mkdir -p $ROOTSHARE
   #sudo chown -hR root:root $ROOTSHARE
 fi
@@ -187,7 +187,7 @@ while IFS= read -r uuid; do
     OPTSHARE=$ROOTSHARE/opt
        
  
-    if [ ! -d "$OPTSHARE" ]; then
+    if [ ! -d $OPTSHARE ]; then
       sudo mkdir $OPTSHARE
     fi
 
@@ -202,7 +202,7 @@ while IFS= read -r uuid; do
     # mount the git repo should be done after all other mount operations.
     # this can prevent the config files comes from the git repo
     # be hiddened by other mount operations using the same file tree path. 
-    if [ ! -d "/.git" ]; then
+    if [ ! -d /.git ]; then
       sudo mkdir /.git
     fi
 
@@ -268,7 +268,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
   # %P     File's name with the name of the starting-point under which it was found removed.
 	
   # non-hidden directories:
-  find -L "$HOMESHARE"/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
+  find -L $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
   while IFS= read -r line; do
     if [ ! -d $HOME/"$line" ]; then
       mkdir $HOME/"$line"
@@ -323,11 +323,11 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
   
   # Dealing with hidden directories via one find command:
   find -L $HOMESHARE/ $HOMESHARE/.local $HOMESHARE/.local/share \
-       -mindepth 1  -maxdepth 1 -type d ! -path "$HOMESHARE/.local" ! -path "$HOMESHARE/.local/share" -path "$HOMESHARE/.*" |
+       -mindepth 1  -maxdepth 1 -type d ! -path "$HOMESHARE/.local" ! -path "$HOMESHARE/.local/share" -path "$HOMESHARE/.*" 2>/dev/null |
   sed -E "s|^$HOMESHARE/||" |
   while IFS= read -r line; do
     if [ ! -d $HOME/"$line" ]; then
-      mkdir -p $HOME/"$line"
+      mkdir -p $HOME/"$line" 
     fi
 
     if ! findmnt -l -o TARGET | grep -qE "^$HOME/$line$"; then
