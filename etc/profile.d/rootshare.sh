@@ -218,7 +218,8 @@ while IFS= read -r uuid; do
       #    # it's not need to use --recurse-submodules for this case.    
       #    sudo git -C $dir reset --hard
       #  fi
-      #done       
+      #done 
+      sudo git -C / reset --hard      
     fi
     break
   else
