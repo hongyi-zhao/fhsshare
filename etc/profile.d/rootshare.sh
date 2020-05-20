@@ -193,14 +193,11 @@ while IFS= read -r uuid; do
   else
     sudo umount $ROOTSHARE
   fi
-done < <( lsblk -o uuid,fstype,mountpoint | awk -v mountpoint=$ROOTSHARE ' $2 == "ext4" && ( $3 == "" || $3 == mountpoint ) { print $1 } ' )
+done < <( lsblk -o uuid,type,fstype,mountpoint | awk '$2 ~ /^part$/ && $3 != "vfat" && $NF != "/" { print $1 } ' )
 
 
 # Use the following conditions now:
 if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; then 
-
-
-
   #https://specifications.freedesktop.org/menu-spec/latest/
   #https://wiki.archlinux.org/index.php/XDG_Base_Directory
   # XDG_DATA_DIRS
