@@ -94,9 +94,12 @@ fi
 
 
 
-if [ -d /.git ]; then
-  sudo git -C / reset --hard
+if findmnt -l -o TARGET | egrep -q '^/[.]git$'; then
+  sudo git -C / reset --hard >/dev/null 2>&1
 fi
+
+
+
 
 
 
