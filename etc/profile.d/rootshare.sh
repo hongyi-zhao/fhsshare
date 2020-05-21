@@ -208,7 +208,6 @@ while IFS= read -r uuid; do
 
     if ! findmnt -l -o TARGET | grep -qE "^/.git$"; then
       sudo mount -o rw,rbind $ROOTSHARE_GIT/.git /.git
-      # Disable the following operations:
       # sudo git -C $dir reset --hard
       # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
       #for dir in $ROOTSHARE_GIT /; do  
@@ -219,7 +218,6 @@ while IFS= read -r uuid; do
       #    sudo git -C $dir reset --hard
       #  fi
       #done 
-      sudo git -C / reset --hard      
     fi
     break
   else
