@@ -218,12 +218,13 @@ while IFS= read -r uuid; do
       #    sudo git -C $dir reset --hard
       #  fi
       #done 
+      sudo git -C / reset --hard
     fi
     break
   else
     sudo umount $ROOTSHARE
   fi
-done < <( lsblk -o type,fstype,uuid,mountpoint | awk '$1 ~ /^part$/ && $2 ~ /^ext4$/ && $NF != "/" { print $3 }' )
+done < <( lsblk -n -o type,uuid,mountpoint | awk 'NF >= 2 && $1 ~ /^part$/ && $2 ~/[0-9a-f-]{36}/ && $NF != "/" { print $2 }' )
 
 
 # Use the following conditions now:
