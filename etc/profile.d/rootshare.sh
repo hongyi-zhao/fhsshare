@@ -223,7 +223,7 @@ while IFS= read -r uuid; do
   else
     sudo umount $ROOTSHARE
   fi
-done < <( lsblk -o uuid,type,fstype,mountpoint | awk '$2 ~ /^part$/ && $3 != "vfat" && $NF != "/" { print $1 } ' )
+done < <( lsblk -o type,fstype,uuid,mountpoint | awk '$1 ~ /^part$/ && $2 ~ /^ext4$/ && $NF != "/" { print $3 }' )
 
 
 # Use the following conditions now:
