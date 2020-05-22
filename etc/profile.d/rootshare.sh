@@ -121,6 +121,12 @@ fi
 # when there are two or more scripts to be sourced, make sure use correct filenames to 
 # ensure the execute logic among these scripts.
 
+
+
+# Some needed tools:
+#sudo apt-get install haproxy socat gawk git uuid gedit-plugins
+
+
 # don't run this script repeatedly:
 if findmnt -l -o TARGET | grep -qE "^/.git$"; then
   return
@@ -170,6 +176,8 @@ fi
 #       -r, --raw
 #              Use  raw  output  format.   All  potentially  unsafe  characters  are  hex-escaped
 #              (\x<code>).
+
+
 
 while IFS= read -r uuid; do
   if ! findmnt -l -o TARGET | grep -qE "^$ROOTSHARE$"; then 
