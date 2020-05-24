@@ -128,42 +128,9 @@ fi
 
 
 
-
-# 一些用到的变量：
-# system_uuid
-#system_uuid="$( sudo dmidecode -s system-uuid )"
-# root uuid
-#root_uuid="$( findmnt -lo TARGET,SOURCE,UUID -M /  | tail -1 | awk ' { print $NF } ' )"
-# current user
-_user="$( ps -o user= -p $$ | awk '{print $1}' )"
-
-# default home of the current user
-
-# Use the $HOME will do the job, so just keep it simple and stupid.
-
-#getent passwd "$_user" | cut -d: -f6
-#_HOME=$( awk -v FS=':' -v user=$_user '$1 == user { print $6}' /etc/passwd )
-
-
-
-
 # don't run this script repeatedly:
 if findmnt -l -o TARGET | grep -qE "^/.git$"; then
   return
-fi
-
-
-
-
-# If not exist
-if [ ! -d $HOME ]; then
-  sudo mkdir $HOME
-fi
-
-# fix the owner, group and mode bits
-if [ "$( stat -c "%U %G %a" $HOME )" != "$_user $_user 755" ]; then
-  sudo chown -hR $_user:$_user $HOME
-  sudo chmod -R 755 $HOME
 fi
 
 
@@ -192,10 +159,12 @@ while IFS= read -r uuid; do
 
   if [ -d "$ROOTSHARE/rootshare.git" ]; then
     ROOTSHARE_GIT=$ROOTSHARE/rootshare.git
-    #HOMESHARE_GIT=$ROOTSHARE/homeshare.git
+    
 
     # This directory is for holding public data:
     HOMESHARE=$ROOTSHARE/homeshare
+    HOMESHARE_GIT=$HOMESHARE/repo/github.com/hongyi-zhao/homeshare.git
+
 
     # Third party applications, say, intel's tools, are intalled in this directory for sharing:
     OPTSHARE=$ROOTSHARE/opt
@@ -241,8 +210,8 @@ while IFS= read -r uuid; do
 done < <( lsblk -n -o type,uuid,mountpoint | awk 'NF >= 2 && $1 ~ /^part$/ && $2 ~/[0-9a-f-]{36}/ && $NF != "/" { print $2 }' )
 
 
-# Use the following conditions now:
-if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; then
+# Based on the following conditions to do the settings:
+if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ] && [ -d "$HOMESHARE_GIT" ]; then
   #https://specifications.freedesktop.org/menu-spec/latest/
   #https://wiki.archlinux.org/index.php/XDG_Base_Directory
   # XDG_DATA_DIRS
@@ -347,6 +316,22 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ]; the
       sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
     fi
   done
+  
+  
+  
+  # Initialization the settings with homeshare.git for the current user:
+  
+  # If use the $HOMESHARE_GIT/.git directory directly without mount it under $HOME, should 
+  # issue the command as following:
+  
+  if ! git --work-tree=$HOME --git-dir=$HOMESHARE_GIT/.git diff --quiet; then 
+    git --work-tree=$HOME --git-dir=$HOMESHARE_GIT/.git reset --hard
+  fi 
+  
+  # After mounting it under $HOME, use the following should do the trick:
+  #if ! git -C $HOME diff --quiet; then 
+  #  git -C $HOME reset --hard
+  #fi
 fi
 
 
