@@ -163,7 +163,7 @@ while IFS= read -r uuid; do
 
     # This directory is for holding public data:
     HOMESHARE=$ROOTSHARE/homeshare
-    HOMESHARE_GIT=$HOMESHARE/repo/github.com/hongyi-zhao/homeshare.git
+    HOMESHARE_GIT=$HOMESHARE/pkg/repo/github.com/hongyi-zhao/homeshare.git
 
 
     # Third party applications, say, intel's tools, are intalled in this directory for sharing:
