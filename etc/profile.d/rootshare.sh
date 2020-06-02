@@ -124,7 +124,7 @@ fi
 
 
 # Some needed tools:
-# sudo apt-get install haproxy socat netcat gawk git uuid gedit-plugins
+# sudo apt-get install git gcc netcat socat haproxy gawk uuid gedit-plugins
 
 
 
