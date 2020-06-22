@@ -249,8 +249,9 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ] && [
   # %p     File's name.
   # %P     File's name with the name of the starting-point under which it was found removed.
 
-  # non-hidden directories:
-  find -L $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
+  # All top directories:
+  #find -L $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
+  find $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d -printf '%P\n' |
   while IFS= read -r line; do
     if [ ! -d $HOME/"$line" ]; then
       mkdir $HOME/"$line"
@@ -304,18 +305,18 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ] && [
 
 
   # Dealing with hidden directories via one find command:
-  find -L $HOMESHARE/ $HOMESHARE/.local $HOMESHARE/.local/share \
-       -mindepth 1  -maxdepth 1 -type d ! -path "$HOMESHARE/.local" ! -path "$HOMESHARE/.local/share" -path "$HOMESHARE/.*" 2>/dev/null |
-  sed -E "s|^$HOMESHARE/||" |
-  while IFS= read -r line; do
-    if [ ! -d $HOME/"$line" ]; then
-      mkdir -p $HOME/"$line"
-    fi
+  #find -L $HOMESHARE/ $HOMESHARE/.local $HOMESHARE/.local/share \
+  #     -mindepth 1  -maxdepth 1 -type d ! -path "$HOMESHARE/.local" ! -path "$HOMESHARE/.local/share" -path "$HOMESHARE/.*" 2>/dev/null |
+  #sed -E "s|^$HOMESHARE/||" |
+  #while IFS= read -r line; do
+  #  if [ ! -d $HOME/"$line" ]; then
+  #    mkdir -p $HOME/"$line"
+  #  fi
 
-    if ! findmnt -l -o TARGET | grep -qE "^$HOME/$line$"; then
-      sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
-    fi
-  done
+  #  if ! findmnt -l -o TARGET | grep -qE "^$HOME/$line$"; then
+  #    sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
+  #  fi
+  #done
   
   
   
