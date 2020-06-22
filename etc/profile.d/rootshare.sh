@@ -262,6 +262,16 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ] && [
     fi
   done
 
+  # Initialize the settings for current user with homeshare.git.
+  # If using the $HOMESHARE_GIT/.git directory directly without mount it under $HOME, 
+  # the following command should be issued:
+  if ! git --work-tree=$HOME --git-dir=$HOMESHARE_GIT/.git diff --quiet; then 
+    git --work-tree=$HOME --git-dir=$HOMESHARE_GIT/.git reset --hard
+  fi 
+fi
+
+
+
 
 
 
@@ -320,20 +330,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ] && [
   
   
   
-  # Initialization the settings with homeshare.git for the current user:
-  
-  # If use the $HOMESHARE_GIT/.git directory directly without mount it under $HOME, should 
-  # issue the command as following:
-  
-  if ! git --work-tree=$HOME --git-dir=$HOMESHARE_GIT/.git diff --quiet; then 
-    git --work-tree=$HOME --git-dir=$HOMESHARE_GIT/.git reset --hard
-  fi 
-  
-  # After mounting it under $HOME, use the following should do the trick:
-  #if ! git -C $HOME diff --quiet; then 
-  #  git -C $HOME reset --hard
-  #fi
-fi
+
 
 
 
