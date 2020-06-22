@@ -249,7 +249,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ] && [
   # %p     File's name.
   # %P     File's name with the name of the starting-point under which it was found removed.
 
-  # All top directories:
+  # Attach all top-level subdirectories found on $HOMESHARE/ at $HOME/:
   #find -L $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
   find $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d -printf '%P\n' |
   while IFS= read -r line; do
