@@ -168,8 +168,6 @@ while IFS= read -r uuid; do
 
     # Third party applications, say, intel's tools, are intalled in this directory for sharing:
     OPTSHARE=$ROOTSHARE/opt
-
-
     if [ ! -d $OPTSHARE ]; then
       sudo mkdir $OPTSHARE
     fi
@@ -178,31 +176,16 @@ while IFS= read -r uuid; do
       sudo mount -o rw,rbind $OPTSHARE /opt
     fi
 
-    # *** important note: ***
-    # Once you mount disk on a folder, everything inside the original folder gets temporarily
-    # hidden and replaced by content of the mounted disk.
 
-    # mount the git repo should be done after all other mount operations.
-    # this can prevent the config files comes from the git repo
-    # be hiddened by other mount operations using the same file tree path.
-    if [ ! -d /.git ]; then
-      sudo mkdir /.git
+    if [[ "$(realpath -e /.git 2>/dev/null)" != "$(realpath -e $ROOTSHARE_GIT/.git)" ]]; then
+      sudo rm -fr /.git
+      sudo ln -sfr $ROOTSHARE_GIT/.git /
     fi
 
-    if ! findmnt -l -o TARGET | grep -qE "^/.git$"; then
-      sudo mount -o rw,rbind $ROOTSHARE_GIT/.git /.git
-      # sudo git -C $dir reset --hard
-      # https://remarkablemark.org/blog/2017/10/12/check-git-dirty/
-      #for dir in $ROOTSHARE_GIT /; do
-      #  #if ! sudo git --work-tree=$dir --git-dir=$dir/.git diff --quiet; then
-      #  if ! sudo git -C $dir diff --quiet; then
-      #    #sudo git --work-tree=$dir --git-dir=$dir/.git reset --recurse-submodules --hard
-      #    # it's not need to use --recurse-submodules for this case.
-      #    sudo git -C $dir reset --hard
-      #  fi
-      #done
+    if ! git -C / diff --quiet; then 
       sudo git -C / reset --hard
     fi
+
     break
   else
     sudo umount $ROOTSHARE
