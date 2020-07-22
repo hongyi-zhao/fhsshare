@@ -1,83 +1,39 @@
 #!/usr/bin/env bash
-
-# ref：
-# From: Alan Mackenzie <acm@muc.de>
-# Newsgroups: comp.unix.shell
-# Subject: How do I convert a filename to absolute in bash?
-# 改为下面的实现：
-
-# 进一步发现了下面的方法：
-# 得到shell脚本文件所在完整路径（绝对路径）及文件名（无论source,bash,.三种调用方式），
-# 且不改变shell的当前目录。
-
-# ref：
-# https://stackoverflow.com/questions/4774054/reliable-way-for-a-bash-script-to-get-the-full-path-to-itself
-# 上文中谈到：
-# if you call it from a "source ../../yourScript", $0 would be "bash"!
-#
-# 故基于 $0 实现的方法，对于 使用 source 命令的时候会失效。
-# ref：
-# From: Hongyi Zhao <hongyi.zhao@gmail.com>
-# Newsgroups: comp.unix.shell
-# Subject: Cann't obtain the script's directory from within sript itself by
-#  uisng the . command.
-
-# 参考下面的出错信息：
-# werner@debian-01:~$ realpath -e -- bash
-# realpath: bash: No such file or directory
-
-# https://stackoverflow.com/questions/59895/getting-the-source-directory-of-a-bash-script-from-within
-
-# 发现脚本所在的实际物理路径的目录名：
-
+# Obtain the canonicalized absolute dirname where the script resides.
+# Both readlink and realpath can do the trick.
 topdir=$(
-cd -P -- "$(dirname -- "$(realpath -e -- "${BASH_SOURCE[0]}")" )" &&
+cd -P -- "$(dirname -- "$(realpath -e -- "${BASH_SOURCE[0]}")")" &&
 pwd -P
-)
-
-# echo $topdir
-
-# or
-#
-# topdir=$(
-# cd -P -- "$(dirname -- "$(readlink -e -- "${BASH_SOURCE[0]}")" )" &&
-# pwd -P
-# )
-
-# echo $topdir
-
-# cd $topdir/doh-dot-dnscrypt
-
-
-
-# 当脚本是一个链接时，下面的操作发现的是该链接所在的目录：
-# topdir=$(
-# cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" &&
-# pwd -P
-# )
-
-# echo $topdir
-
-
+) 
 
 # In the following method, the $script_dirname is equivalent to $topdir otained above in this script:
-#https://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
-script_realpath="$( realpath -e -- "${BASH_SOURCE[0]}")"
+script_realpath="$(realpath -e -- "${BASH_SOURCE[0]}")"
 
-script_name="${script_realpath##*/}"                      # Strip longest match of */ from start
-# Revise, removed the trailling /:
-script_dirname="${script_realpath:0:${#script_realpath} - ${#script_name} - 1}" # Substring from 0 thru pos of filename
-script_basename="${script_name%.[^.]*}"                       # Strip shortest match of . plus at least one non-dot char from end
-script_extname="${script_name:${#script_basename} + 1}"                  # Substring from len of base thru end
-if [[ -z "$script_basename" && -n "$script_extname" ]]; then          # If we have an extension and no base, it's really the base
-  script_basename=".$script_extname"
-  ext=""
+if [[ "$(realpath -e -- "${BASH_SOURCE[0]}")" =~ ^(.*)/(.*)$ ]]; then
+  script_dirname="${BASH_REMATCH[1]}"
+  script_name="${BASH_REMATCH[2]}"
+  #echo script_dirname="$script_dirname"
+  #echo script_name="$script_name"
+  # . not appeared in script_name at all.
+  if [[ "$script_name"  =~ ^([^.]*)$ ]]; then
+    script_basename="$script_name"
+    #echo script_basename="$script_basename"
+  else
+    # . appeared in script_name. 
+    # As far as filename is concerned, when . is used as the last character, it doesn't have any spefical meaning.
+    # Including . as the beginning character.
+    if [[ "$script_name"  =~ ^([.].*)$ ]]; then
+      script_extname="$script_name"
+      #echo script_extname="$script_extname"
+    # Including . but not as the beginning/trailing character.
+    elif [[ "$script_name"  =~ ^([^.].*)[.]([^.]+)$  ]]; then
+      script_basename="${BASH_REMATCH[1]}"
+      script_extname="${BASH_REMATCH[2]}"
+      #echo script_basename="$script_basename"
+      #echo script_extname="$script_extname"
+    fi
+  fi
 fi
-
-#echo -e "\tscript_realpath  = \"$script_realpath\"\n\tscript_dirname  = \"$script_dirname\"\n\tscript_basename = \"$script_basename\"\n\tscript_extname  = \"$script_extname\""
-
-
-
 
 #https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -85,13 +41,21 @@ fi
 # man find:
 # -printf format
 # %f     File's name with any leading directories removed (only the last element).
-# %h     Leading directories of file's name (all but the last element).
+# %h     Leading directories of file's name (all but the last element).  
 # If the file name contains  no  slashes
-#             (since it is in the current directory) the %h specifier expands to `.'.
-# %H     Starting-point under which file was found.
+#             (since it is in the current directory) the %h specifier expands to `.'.       
+# %H     Starting-point under which file was found.  
 # %p     File's name.
 # %P     File's name with the name of the starting-point under which it was found removed.
 
+if [[ $script_extname == "sh" ]]; then
+  if [ -d "$topdir/$script_basename" ]; then  
+    ncore=$(sudo dmidecode -t 4 | grep 'Core Enabled:' | awk '{a+=$NF}END{ print a }')
+    cd $topdir/$script_basename
+  else
+    cd $topdir  
+  fi
+fi
 
 
 
@@ -103,8 +67,8 @@ fi
 # https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard
 
 # Based on the xdg base directory specifications, find out which directories can be completely/partially shared.
-# For the former, put it into the public $HOMESHARE/ directory, for the latter, only put the corresponding partially shared
-# subdirectories into the corresponding location in the $HOMESHARE/ directory.
+# For the former, put it into the public $HOMESHARE_WORK_TREE/ directory, for the latter, only put the corresponding partially shared
+# subdirectories into the corresponding location in the $HOMESHARE_WORK_TREE/ directory.
 
 # For the corresponding (system|user)-wide settings, restore them by git repos as following:
 # system-wide:
@@ -126,15 +90,18 @@ fi
 # Some needed tools:
 # sudo apt-get install git gcc netcat socat haproxy gawk uuid gedit-plugins gnome-tweak-tool copyq telegram-desktop curl apt-file
 
+ROOTSHARE=/rootshare
 
+# Don't use `findmnt -r`, this use the following rule which makes the regex match impossiable for
+# specifial characters, say space.
+#       -r, --raw
+#              Use  raw  output  format.   All  potentially  unsafe  characters  are  hex-escaped
+#              (\x<code>).
 
-# don't run this script repeatedly:
-if findmnt -l -o TARGET | grep -qE "^/.git$"; then
+# Don't run this script repeatedly:
+if findmnt -l -o TARGET | grep -qE "^$ROOTSHARE$"; then
   return
 fi
-
-
-ROOTSHARE=/rootshare
 
 if [ ! -d $ROOTSHARE ]; then
   sudo mkdir -p $ROOTSHARE
@@ -144,26 +111,18 @@ fi
 # https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
 # https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
 
-# Don't use `findmnt -r`, this use the following rule which makes the regex match impossiable for
-# specifial characters, say space.
-#       -r, --raw
-#              Use  raw  output  format.   All  potentially  unsafe  characters  are  hex-escaped
-#              (\x<code>).
-
-
-
 while IFS= read -r uuid; do
   if ! findmnt -l -o TARGET | grep -qE "^$ROOTSHARE$"; then
     sudo mount -U $uuid $ROOTSHARE
   fi
 
   if [ -d "$ROOTSHARE/rootshare.git" ]; then
-    ROOTSHARE_GIT=$ROOTSHARE/rootshare.git
+    ROOTSHARE_ORIGIN_DIR=$ROOTSHARE/rootshare.git
     
 
     # This directory is for holding public data:
-    HOMESHARE=$ROOTSHARE/homeshare
-    HOMESHARE_GIT=$HOMESHARE/Public/repo/github.com/hongyi-zhao/homeshare.git
+    HOMESHARE_WORK_TREE=$ROOTSHARE/homeshare
+    HOMESHARE_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare.git
 
 
     # Third party applications, say, intel's tools, are intalled in this directory for sharing:
@@ -177,9 +136,9 @@ while IFS= read -r uuid; do
     fi
 
 
-    if [[ "$(realpath -e /.git 2>/dev/null)" != "$(realpath -e $ROOTSHARE_GIT/.git)" ]]; then
+    if [[ "$(realpath -e /.git 2>/dev/null)" != "$(realpath -e $ROOTSHARE_ORIGIN_DIR/.git)" ]]; then
       sudo rm -fr /.git
-      sudo ln -sfr $ROOTSHARE_GIT/.git /
+      sudo ln -sfr $ROOTSHARE_ORIGIN_DIR/.git /
     fi
 
     if ! git -C / diff --quiet; then 
@@ -194,7 +153,7 @@ done < <( lsblk -n -o type,uuid,mountpoint | awk 'NF >= 2 && $1 ~ /^part$/ && $2
 
 
 # Based on the following conditions to do the settings:
-if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ] && [ -d "$HOMESHARE_GIT" ]; then
+if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_ORIGIN_DIR" ] && [ -d "$HOMESHARE_WORK_TREE" ] && [ -d "$HOMESHARE_ORIGIN_DIR" ]; then
   #https://specifications.freedesktop.org/menu-spec/latest/
   #https://wiki.archlinux.org/index.php/XDG_Base_Directory
   # XDG_DATA_DIRS
@@ -217,7 +176,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ] && [
     export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
   fi
 
-  # attach the stuff found on $HOMESHARE/ at $HOME/:
+  # attach the stuff found on $HOMESHARE_WORK_TREE/ at $HOME/:
 
   #https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -232,24 +191,24 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_GIT" ] && [ -d "$HOMESHARE" ] && [
   # %p     File's name.
   # %P     File's name with the name of the starting-point under which it was found removed.
 
-  # Attach all top-level subdirectories found on $HOMESHARE/ at $HOME/:
-  #find -L $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
-  find $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d -printf '%P\n' |
+  # Attach all top-level subdirectories found on $HOMESHARE_WORK_TREE/ at $HOME/:
+  #find -L $HOMESHARE_WORK_TREE/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
+  find $HOMESHARE_WORK_TREE/ -mindepth 1 -maxdepth 1 -type d -printf '%P\n' |
   while IFS= read -r line; do
     if [ ! -d $HOME/"$line" ]; then
       mkdir $HOME/"$line"
     fi
 
     if ! findmnt -l -o TARGET | grep -qE "^$HOME/$line$"; then
-      sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
+      sudo mount -o rw,rbind $HOMESHARE_WORK_TREE/"$line" $HOME/"$line"
     fi
   done
 
   # Initialize the settings for current user with homeshare.git.
-  # If using the $HOMESHARE_GIT/.git directory directly without mount it under $HOME, 
+  # If using the $HOMESHARE_ORIGIN_DIR/.git directory directly without mount it under $HOME, 
   # the following command should be issued:
-  if ! git --work-tree=$HOME --git-dir=$HOMESHARE_GIT/.git diff --quiet; then 
-    git --work-tree=$HOME --git-dir=$HOMESHARE_GIT/.git reset --hard
+  if ! git --work-tree=$HOME --git-dir=$HOMESHARE_ORIGIN_DIR/.git diff --quiet; then 
+    git --work-tree=$HOME --git-dir=$HOMESHARE_ORIGIN_DIR/.git reset --hard
   fi 
 fi
 
@@ -298,16 +257,16 @@ fi
 
 
   # Dealing with hidden directories via one find command:
-  #find -L $HOMESHARE/ $HOMESHARE/.local $HOMESHARE/.local/share \
-  #     -mindepth 1  -maxdepth 1 -type d ! -path "$HOMESHARE/.local" ! -path "$HOMESHARE/.local/share" -path "$HOMESHARE/.*" 2>/dev/null |
-  #sed -E "s|^$HOMESHARE/||" |
+  #find -L $HOMESHARE_WORK_TREE/ $HOMESHARE_WORK_TREE/.local $HOMESHARE_WORK_TREE/.local/share \
+  #     -mindepth 1  -maxdepth 1 -type d ! -path "$HOMESHARE_WORK_TREE/.local" ! -path "$HOMESHARE_WORK_TREE/.local/share" -path "$HOMESHARE_WORK_TREE/.*" 2>/dev/null |
+  #sed -E "s|^$HOMESHARE_WORK_TREE/||" |
   #while IFS= read -r line; do
   #  if [ ! -d $HOME/"$line" ]; then
   #    mkdir -p $HOME/"$line"
   #  fi
 
   #  if ! findmnt -l -o TARGET | grep -qE "^$HOME/$line$"; then
-  #    sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
+  #    sudo mount -o rw,rbind $HOMESHARE_WORK_TREE/"$line" $HOME/"$line"
   #  fi
   #done
   
