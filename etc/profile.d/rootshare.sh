@@ -52,7 +52,7 @@ if [[ $script_extname == "sh" ]]; then
   if [ -d "$topdir/$script_basename" ]; then  
     ncore=$(sudo dmidecode -t 4 | grep 'Core Enabled:' | awk '{a+=$NF}END{ print a }')
     cd $topdir/$script_basename
-  else
+  elif [[ $(basename $script_dirname) != profile.d ]]; then
     cd $topdir  
   fi
 fi
