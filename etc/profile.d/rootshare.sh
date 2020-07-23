@@ -52,7 +52,7 @@ fi
 
 #https://superuser.com/questions/731425/bash-detect-execute-vs-source-in-a-script
 #https://stackoverflow.com/questions/2683279/how-to-detect-if-a-script-is-being-sourced
-# Only executing the cd operation when script is not being sourced.
+# Only triggering the cd command logic when script is not being sourced.
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   if [[ $script_extname == "sh" ]]; then
     if [ -d "$topdir/$script_basename" ]; then  
