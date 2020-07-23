@@ -48,12 +48,19 @@ fi
 # %p     File's name.
 # %P     File's name with the name of the starting-point under which it was found removed.
 
-if [[ $script_extname == "sh" ]]; then
-  if [ -d "$topdir/$script_basename" ]; then  
-    ncore=$(sudo dmidecode -t 4 | grep 'Core Enabled:' | awk '{a+=$NF}END{ print a }')
-    cd $topdir/$script_basename
-  elif [[ $(basename $script_dirname) != profile.d ]]; then
-    cd $topdir  
+
+
+#https://superuser.com/questions/731425/bash-detect-execute-vs-source-in-a-script
+#https://stackoverflow.com/questions/2683279/how-to-detect-if-a-script-is-being-sourced
+# Only executing the cd operation when script is not being sourced.
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  if [[ $script_extname == "sh" ]]; then
+    if [ -d "$topdir/$script_basename" ]; then  
+      ncore=$(sudo dmidecode -t 4 | grep 'Core Enabled:' | awk '{a+=$NF}END{ print a }')
+      cd $topdir/$script_basename
+    else
+      cd $topdir  
+    fi
   fi
 fi
 
