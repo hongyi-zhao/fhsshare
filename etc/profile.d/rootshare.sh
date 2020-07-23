@@ -58,6 +58,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     if [ -d "$topdir/$script_basename" ]; then  
       ncore=$(sudo dmidecode -t 4 | grep 'Core Enabled:' | awk '{a+=$NF}END{ print a }')
       cd $topdir/$script_basename
+      if [[ $script_basename =~ \.git$ ]]; then
+        # Ensure the self-defined git function command can be seen by this script:
+        source ~/.bashrc
+      fi      
     else
       cd $topdir  
     fi
