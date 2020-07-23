@@ -129,12 +129,14 @@ while IFS= read -r uuid; do
 
   if [ -d "$ROOTSHARE/rootshare.git" ]; then
     ROOTSHARE_ORIGIN_DIR=$ROOTSHARE/rootshare.git
-    
+    ROOTSHARE_GIT_DIR=$ROOTSHARE_ORIGIN_DIR/.git
+
+    HOMESHARE_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare.git
+    HOMESHARE_GIT_DIR=$HOMESHARE_ORIGIN_DIR/.git  
 
     # This directory is for holding public data:
     HOMESHARE_WORK_TREE=$ROOTSHARE/homeshare
-    HOMESHARE_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare.git
-
+    
 
     # Third party applications, say, intel's tools, are intalled in this directory for sharing:
     OPTSHARE=$ROOTSHARE/opt
@@ -147,9 +149,9 @@ while IFS= read -r uuid; do
     fi
 
 
-    if [[ "$(realpath -e /.git 2>/dev/null)" != "$(realpath -e $ROOTSHARE_ORIGIN_DIR/.git)" ]]; then
+    if [[ "$(realpath -e /.git 2>/dev/null)" != "$(realpath -e $ROOTSHARE_GIT_DIR)" ]]; then
       sudo rm -fr /.git
-      sudo ln -sfr $ROOTSHARE_ORIGIN_DIR/.git /
+      sudo ln -sfr $ROOTSHARE_GIT_DIR /
     fi
 
     if ! git -C / diff --quiet; then 
@@ -216,10 +218,10 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_ORIGIN_DIR" ] && [ -d "$HOMESHARE_
   done
 
   # Initialize the settings for current user with homeshare.git.
-  # If using the $HOMESHARE_ORIGIN_DIR/.git directory directly without mount it under $HOME, 
+  # If using the $HOMESHARE_GIT_DIR directory directly without mount it under $HOME, 
   # the following command should be issued:
-  if ! git --work-tree=$HOME --git-dir=$HOMESHARE_ORIGIN_DIR/.git diff --quiet; then 
-    git --work-tree=$HOME --git-dir=$HOMESHARE_ORIGIN_DIR/.git reset --hard
+  if ! git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR diff --quiet; then 
+    git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR reset --hard
   fi 
 fi
 
