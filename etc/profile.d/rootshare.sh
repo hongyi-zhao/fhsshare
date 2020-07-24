@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # Obtain the canonicalized absolute dirname where the script resides.
 # Both readlink and realpath can do the trick.
+
+# In the following method, the $script_dirname is equivalent to $topdir:
+script_realpath="$(realpath -e -- "${BASH_SOURCE[0]}")"
+
 topdir=$(
-cd -P -- "$(dirname -- "$(realpath -e -- "${BASH_SOURCE[0]}")")" &&
+cd -P -- "$(dirname -- "$script_realpath")" &&
 pwd -P
 ) 
 
-# In the following method, the $script_dirname is equivalent to $topdir otained above in this script:
-script_realpath="$(realpath -e -- "${BASH_SOURCE[0]}")"
-
-if [[ "$(realpath -e -- "${BASH_SOURCE[0]}")" =~ ^(.*)/(.*)$ ]]; then
+if [[ "$script_realpath" =~ ^(.*)/(.*)$ ]]; then
   script_dirname="${BASH_REMATCH[1]}"
   script_name="${BASH_REMATCH[2]}"
   #echo script_dirname="$script_dirname"
@@ -159,6 +160,11 @@ while IFS= read -r uuid; do
     sudo umount $ROOTSHARE
   fi
 done < <( lsblk -n -o type,uuid,mountpoint | awk 'NF >= 2 && $1 ~ /^part$/ && $2 ~/[0-9a-f-]{36}/ && $NF != "/" { print $2 }' )
+
+echo user_id="$( id -u )"
+echo ROOTSHARE_ORIGIN_DIR="$ROOTSHARE_ORIGIN_DIR"
+echo HOMESHARE_WORK_TREE="$HOMESHARE_WORK_TREE"
+echo HOMESHARE_ORIGIN_DIR="$HOMESHARE_ORIGIN_DIR"
 
 
 # Based on the following conditions to do the settings:
