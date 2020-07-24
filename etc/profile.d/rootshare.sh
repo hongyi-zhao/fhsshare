@@ -160,8 +160,13 @@ while IFS= read -r uuid; do
   fi
 done < <( lsblk -n -o type,uuid,mountpoint | awk 'NF >= 2 && $1 ~ /^part$/ && $2 ~/[0-9a-f-]{36}/ && $NF != "/" { print $2 }' )
 
+echo user_id="$( id -u )" 
+echo ROOTSHARE_ORIGIN_DIR="$ROOTSHARE_ORIGIN_DIR"
+echo HOMESHARE_ORIGIN_DIR="$HOMESHARE_ORIGIN_DIR"
+
+
 # Based on the following conditions to do the settings:
-if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_ORIGIN_DIR" ] && [ -d "$HOMESHARE_WORK_TREE" ] && [ -d "$HOMESHARE_ORIGIN_DIR" ]; then
+if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_ORIGIN_DIR" ] && [ -d "$HOMESHARE_ORIGIN_DIR" ]; then
   #https://specifications.freedesktop.org/menu-spec/latest/
   #https://wiki.archlinux.org/index.php/XDG_Base_Directory
   # XDG_DATA_DIRS
@@ -203,12 +208,12 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_ORIGIN_DIR" ] && [ -d "$HOMESHARE_
   #find -L $HOMESHARE_WORK_TREE/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
   find $HOMESHARE_WORK_TREE/ -mindepth 1 -maxdepth 1 -type d -printf '%P\n' |
   while IFS= read -r line; do
-    if [ ! -d $HOME/"$line" ]; then
-      mkdir $HOME/"$line"
+    if [ ! -d "$HOME/$line" ]; then
+      mkdir "$HOME/$line"
     fi
 
     if ! findmnt -l -o TARGET | grep -qE "^$HOME/$line$"; then
-      sudo mount -o rw,rbind $HOMESHARE_WORK_TREE/"$line" $HOME/"$line"
+      sudo mount -o rw,rbind "$HOMESHARE_WORK_TREE/$line" "$HOME/$line"
     fi
   done
 
