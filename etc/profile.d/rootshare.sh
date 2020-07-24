@@ -69,7 +69,7 @@ fi
 
 # The idea
 
-# Use a seperated local partition/remote filesystem ( say, nfs ), for my case, $ROOTSHARE,
+# Use a seperated local partition/remote filesystem ( say, nfs ), for my case, $ROOTSHARE_WORK_TREE,
 # to populate the corresponding stuff which its directories conform to the
 # Filesystem Hierarchy Standard，FHS:
 # https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard
@@ -98,8 +98,11 @@ fi
 # Some needed tools:
 # sudo apt-get install git gcc netcat socat haproxy gawk uuid gedit-plugins gnome-tweak-tool copyq telegram-desktop curl apt-file gparted gddrescue partclone gdebi zstd
 
-ROOTSHARE=/rootshare
-
+# This directory holds the share data for all users under / hierarchy:
+ROOTSHARE_WORK_TREE=/rootshare
+# This directory holds the share data for all non-root users under $HOME hierarchy:
+HOMESHARE_WORK_TREE=$ROOTSHARE/homeshare
+    
 # Don't use `findmnt -r`, this use the following rule which makes the regex match impossiable for
 # specifial characters, say space.
 #       -r, --raw
@@ -107,36 +110,32 @@ ROOTSHARE=/rootshare
 #              (\x<code>).
 
 # Don't run this script repeatedly:
-if findmnt -l -o TARGET | grep -qE "^$ROOTSHARE$"; then
+if findmnt -l -o TARGET | grep -qE "^$ROOTSHARE_WORK_TREE$"; then
   return
 fi
 
-if [ ! -d $ROOTSHARE ]; then
-  sudo mkdir -p $ROOTSHARE
-  #sudo chown -hR root:root $ROOTSHARE
+if [ ! -d $ROOTSHARE_WORK_TREE ]; then
+  sudo mkdir -p $ROOTSHARE_WORK_TREE
+  #sudo chown -hR root:root $ROOTSHARE_WORK_TREE
 fi
 
 # https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
 # https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
 
 while IFS= read -r uuid; do
-  if ! findmnt -l -o TARGET | grep -qE "^$ROOTSHARE$"; then
-    sudo mount -U $uuid $ROOTSHARE
+  if ! findmnt -l -o TARGET | grep -qE "^$ROOTSHARE_WORK_TREE$"; then
+    sudo mount -U $uuid $ROOTSHARE_WORK_TREE
   fi
 
-  if [ -d "$ROOTSHARE/rootshare.git" ]; then
-    ROOTSHARE_ORIGIN_DIR=$ROOTSHARE/rootshare.git
+  if [ -d "$ROOTSHARE_WORK_TREE/rootshare.git" ]; then
+    ROOTSHARE_ORIGIN_DIR=$ROOTSHARE_WORK_TREE/rootshare.git
     ROOTSHARE_GIT_DIR=$ROOTSHARE_ORIGIN_DIR/.git
 
     HOMESHARE_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare.git
     HOMESHARE_GIT_DIR=$HOMESHARE_ORIGIN_DIR/.git  
 
-    # This directory is for holding public data:
-    HOMESHARE_WORK_TREE=$ROOTSHARE/homeshare
-    
-
     # Third party applications, say, intel's tools, are intalled in this directory for sharing:
-    OPTSHARE=$ROOTSHARE/opt
+    OPTSHARE=$ROOTSHARE_WORK_TREE/opt
     if [ ! -d $OPTSHARE ]; then
       sudo mkdir $OPTSHARE
     fi
@@ -157,15 +156,9 @@ while IFS= read -r uuid; do
 
     break
   else
-    sudo umount $ROOTSHARE
+    sudo umount $ROOTSHARE_WORK_TREE
   fi
 done < <( lsblk -n -o type,uuid,mountpoint | awk 'NF >= 2 && $1 ~ /^part$/ && $2 ~/[0-9a-f-]{36}/ && $NF != "/" { print $2 }' )
-
-echo user_id="$( id -u )"
-echo ROOTSHARE_ORIGIN_DIR="$ROOTSHARE_ORIGIN_DIR"
-echo HOMESHARE_WORK_TREE="$HOMESHARE_WORK_TREE"
-echo HOMESHARE_ORIGIN_DIR="$HOMESHARE_ORIGIN_DIR"
-
 
 # Based on the following conditions to do the settings:
 if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_ORIGIN_DIR" ] && [ -d "$HOMESHARE_WORK_TREE" ] && [ -d "$HOMESHARE_ORIGIN_DIR" ]; then
