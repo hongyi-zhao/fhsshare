@@ -101,7 +101,7 @@ fi
 # This directory holds the share data for all users under / hierarchy:
 ROOTSHARE_WORK_TREE=/rootshare
 # This directory holds the share data for all non-root users under $HOME hierarchy:
-HOMESHARE_WORK_TREE=$ROOTSHARE/homeshare
+HOMESHARE_WORK_TREE=$ROOTSHARE_WORK_TREE/homeshare
     
 # Don't use `findmnt -r`, this use the following rule which makes the regex match impossiable for
 # specifial characters, say space.
@@ -160,9 +160,11 @@ while IFS= read -r uuid; do
   fi
 done < <( lsblk -n -o type,uuid,mountpoint | awk 'NF >= 2 && $1 ~ /^part$/ && $2 ~/[0-9a-f-]{36}/ && $NF != "/" { print $2 }' )
 
-echo user_id="$( id -u )" 
-echo ROOTSHARE_ORIGIN_DIR="$ROOTSHARE_ORIGIN_DIR"
-echo HOMESHARE_ORIGIN_DIR="$HOMESHARE_ORIGIN_DIR"
+
+# For debug the errors occurred in the variables assignment operation.
+#echo user_id="$( id -u )" 
+#echo ROOTSHARE_ORIGIN_DIR="$ROOTSHARE_ORIGIN_DIR"
+#echo HOMESHARE_ORIGIN_DIR="$HOMESHARE_ORIGIN_DIR"
 
 
 # Based on the following conditions to do the settings:
