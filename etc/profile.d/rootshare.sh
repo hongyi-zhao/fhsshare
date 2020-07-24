@@ -106,9 +106,9 @@ ROOTSHARE=/rootshare
 #              (\x<code>).
 
 # Don't run this script repeatedly:
-if findmnt -l -o TARGET | grep -qE "^$ROOTSHARE$"; then
-  return
-fi
+#if findmnt -l -o TARGET | grep -qE "^$ROOTSHARE$"; then
+#  return
+#fi
 
 if [ ! -d $ROOTSHARE ]; then
   sudo mkdir -p $ROOTSHARE
