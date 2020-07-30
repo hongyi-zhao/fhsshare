@@ -3,7 +3,7 @@
 # Both readlink and realpath can do the trick.
 
 script_realpath="$(realpath -e -- "${BASH_SOURCE[0]}")"
-[[ "$script_realpath" =~ ^(.*)[.](bash|sh)$ ]] && script_repo_dir="${BASH_REMATCH[1]}" || return
+[[ "$script_realpath" =~ ^(.*)[.](bash|sh)$ ]] && repo_dir="${BASH_REMATCH[1]}" || return
 
 
 # The idea
