@@ -1,0 +1,34 @@
+#https://askubuntu.com/questions/35223/syntax-for-socks-proxy-in-apt-conf
+#https://www.jianshu.com/p/bc4d7b758503
+
+# For temperary use:
+#sudo apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:18887/" update
+
+#https://serverfault.com/questions/482318/apt-get-proxy-for-specific-repos
+#Acquire::http::Proxy::external.repo.host "http://your.proxy.host/";
+
+#https://askubuntu.com/questions/92764/disable-proxy-server-for-one-apt-repository
+#Acquire::http::Proxy "http://proxy:8080";
+#Acquire::http::Proxy {
+#    in-house.debian.example.com DIRECT;
+#    no-protocol-colon-or-slashes.example.com DIRECT;
+#};
+
+# Check it with the following:
+#$ apt-config dump |grep -i proxy
+
+Acquire::http::proxy::deepin-wine.i-m.dev "socks5h://127.0.0.1:18887";
+Acquire::https::proxy::deepin-wine.i-m.dev "socks5h://127.0.0.1:18887";
+
+Acquire::http::proxy::dl.google.com "socks5h://127.0.0.1:18887";
+Acquire::https::proxy::dl.google.com "socks5h://127.0.0.1:18887";
+
+
+Acquire::http::Proxy {
+    mirrors.tuna.tsinghua.edu.cn DIRECT; 
+};
+
+Acquire::https::Proxy {
+    mirrors.tuna.tsinghua.edu.cn DIRECT;    
+};
+
