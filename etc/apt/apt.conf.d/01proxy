@@ -17,7 +17,7 @@
 # Check it with the following.
 #$ apt-config dump |grep -i proxy
 
-# Run the following command with(out) running the socks5 proxy to check the configuration.
+#Use the following commands to check the configuration when the socks5 proxy is running and not running respectively.
 #$ sudo apt-get update 
 
 # Method 1:
