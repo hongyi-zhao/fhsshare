@@ -33,16 +33,14 @@ Acquire::http::proxy "socks5h://127.0.0.1:18887" {
      deepin-wine.i-m.dev;
      dl.google.com;
 };
-
-Acquire::http::Proxy {
-    mirrors.tuna.tsinghua.edu.cn DIRECT; 
-};
-
 Acquire::https::proxy "socks5h://127.0.0.1:18887" {
      deepin-wine.i-m.dev;
      dl.google.com; 
 };
 
+Acquire::http::Proxy {
+    mirrors.tuna.tsinghua.edu.cn DIRECT; 
+};
 Acquire::https::Proxy {
     mirrors.tuna.tsinghua.edu.cn DIRECT;    
 };
