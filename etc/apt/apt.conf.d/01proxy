@@ -14,21 +14,39 @@
 #    no-protocol-colon-or-slashes.example.com DIRECT;
 #};
 
-# Check it with the following:
+# Check it with the following.
 #$ apt-config dump |grep -i proxy
 
-Acquire::http::proxy::deepin-wine.i-m.dev "socks5h://127.0.0.1:18887";
-Acquire::https::proxy::deepin-wine.i-m.dev "socks5h://127.0.0.1:18887";
+# Run the following command with(out) running the socks5 proxy to check the configuration.
+#$ sudo apt-get update 
 
-Acquire::http::proxy::dl.google.com "socks5h://127.0.0.1:18887";
-Acquire::https::proxy::dl.google.com "socks5h://127.0.0.1:18887";
+# Method 1:
+#Acquire::http::proxy::deepin-wine.i-m.dev "socks5h://127.0.0.1:18887";
+#Acquire::http::proxy::dl.google.com "socks5h://127.0.0.1:18887";
 
+#Acquire::https::proxy::deepin-wine.i-m.dev "socks5h://127.0.0.1:18887";
+#Acquire::https::proxy::dl.google.com "socks5h://127.0.0.1:18887";
+
+
+# Method 2:
+Acquire::http::proxy "socks5h://127.0.0.1:18887" {
+     deepin-wine.i-m.dev;
+     dl.google.com;
+};
 
 Acquire::http::Proxy {
     mirrors.tuna.tsinghua.edu.cn DIRECT; 
 };
 
+Acquire::https::proxy "socks5h://127.0.0.1:18887" {
+     deepin-wine.i-m.dev;
+     dl.google.com; 
+};
+
 Acquire::https::Proxy {
     mirrors.tuna.tsinghua.edu.cn DIRECT;    
 };
+
+
+
 
