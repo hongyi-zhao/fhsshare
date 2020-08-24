@@ -79,10 +79,13 @@ while IFS= read -r uuid; do
     HOMESHARE_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare.git
     HOMESHARE_GIT_DIR=$HOMESHARE_ORIGIN_DIR/.git  
     
+    
+    # Disable homeshare-apollo.git relevant settings.
+    
     # Add supporting for https://github.com/ApolloAuto/apollo using the following repository:
     # https://github.com/hongyi-zhao/homeshare-apollo.git
-    HOMESHARE_APOLLO_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare-apollo.git
-    HOMESHARE_APOLLO_GIT_DIR=$HOMESHARE_APOLLO_ORIGIN_DIR/.git     
+    #HOMESHARE_APOLLO_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare-apollo.git
+    #HOMESHARE_APOLLO_GIT_DIR=$HOMESHARE_APOLLO_ORIGIN_DIR/.git     
 
     # Third party applications, say, intel's tools, are intalled in this directory for sharing:
     OPTSHARE=$ROOTSHARE_WORK_TREE/opt
@@ -172,19 +175,25 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_ORIGIN_DIR" ] && [ -d "$HOMESHARE_
   # Initialize the settings for current user with homeshare.git | homeshare-apollo.git.
   # If using the $HOMESHARE_GIT_DIR | $HOMESHARE_APOLLO_GIT_DIR directory directly without mount it under $HOME, 
   # the following command should be issued:
-  if [[ "$(uname -r)" =~ -apollo- ]]; then
-    if [[ -d $HOMESHARE_APOLLO_GIT_DIR ]]; then
-      if ! git --work-tree=$HOME --git-dir=$HOMESHARE_APOLLO_GIT_DIR diff --quiet; then 
-        git --work-tree=$HOME --git-dir=$HOMESHARE_APOLLO_GIT_DIR reset --hard
-      fi       
-    fi
-  else
-    if [[ -d $HOMESHARE_GIT_DIR ]]; then
-      if ! git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR diff --quiet; then 
-        git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR reset --hard
-      fi      
-    fi  
-  fi
+  #if [[ "$(uname -r)" =~ -apollo- ]]; then
+  #  if [[ -d $HOMESHARE_APOLLO_GIT_DIR ]]; then
+  #    if ! git --work-tree=$HOME --git-dir=$HOMESHARE_APOLLO_GIT_DIR diff --quiet; then 
+  #      git --work-tree=$HOME --git-dir=$HOMESHARE_APOLLO_GIT_DIR reset --hard
+  #    fi       
+  #  fi
+  #else
+  #  if [[ -d $HOMESHARE_GIT_DIR ]]; then
+  #    if ! git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR diff --quiet; then 
+  #      git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR reset --hard
+  #    fi      
+  #  fi  
+  #fi
+  
+  if [[ -d $HOMESHARE_GIT_DIR ]]; then
+    if ! git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR diff --quiet; then 
+      git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR reset --hard
+    fi      
+  fi   
 fi
 
 
