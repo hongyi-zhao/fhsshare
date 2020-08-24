@@ -33,11 +33,13 @@ Acquire::http::proxy "socks5h://127.0.0.1:18888" {
      deepin-wine.i-m.dev;
      dl.google.com;
      download.docker.com;
+     nvidia.github.io;
 };
 Acquire::https::proxy "socks5h://127.0.0.1:18888" {
      deepin-wine.i-m.dev;
      dl.google.com;
      download.docker.com;
+     nvidia.github.io;
 };
 
 Acquire::http::Proxy {
