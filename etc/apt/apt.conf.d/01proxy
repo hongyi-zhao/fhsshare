@@ -2,7 +2,7 @@
 #https://www.jianshu.com/p/bc4d7b758503
 
 # For temperary use:
-#sudo apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:18887/" update
+#sudo apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:18888/" update
 
 #https://serverfault.com/questions/482318/apt-get-proxy-for-specific-repos
 #Acquire::http::Proxy::external.repo.host "http://your.proxy.host/";
@@ -21,21 +21,23 @@
 #$ sudo apt-get update 
 
 # Method 1:
-#Acquire::http::proxy::deepin-wine.i-m.dev "socks5h://127.0.0.1:18887";
-#Acquire::http::proxy::dl.google.com "socks5h://127.0.0.1:18887";
+#Acquire::http::proxy::deepin-wine.i-m.dev "socks5h://127.0.0.1:18888";
+#Acquire::http::proxy::dl.google.com "socks5h://127.0.0.1:18888";
 
-#Acquire::https::proxy::deepin-wine.i-m.dev "socks5h://127.0.0.1:18887";
-#Acquire::https::proxy::dl.google.com "socks5h://127.0.0.1:18887";
+#Acquire::https::proxy::deepin-wine.i-m.dev "socks5h://127.0.0.1:18888";
+#Acquire::https::proxy::dl.google.com "socks5h://127.0.0.1:18888";
 
 
 # Method 2:
-Acquire::http::proxy "socks5h://127.0.0.1:18887" {
+Acquire::http::proxy "socks5h://127.0.0.1:18888" {
      deepin-wine.i-m.dev;
      dl.google.com;
+     download.docker.com;
 };
-Acquire::https::proxy "socks5h://127.0.0.1:18887" {
+Acquire::https::proxy "socks5h://127.0.0.1:18888" {
      deepin-wine.i-m.dev;
-     dl.google.com; 
+     dl.google.com;
+     download.docker.com;
 };
 
 Acquire::http::Proxy {
