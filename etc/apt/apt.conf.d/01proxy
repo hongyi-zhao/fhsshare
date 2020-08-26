@@ -29,19 +29,24 @@
 
 
 # Method 2:
+#$ sudo apt-get update | egrep -Eo 'http[s]?://[^ /]+' | awk '!a[$0]++' | grep -v 'mirrors.tuna.tsinghua.edu.cn' | sed -Ee 's|^http[s]?://||' | awk '{print $0";"}'
+
+
 Acquire::http::proxy "socks5h://127.0.0.1:18888" {
-     deepin-wine.i-m.dev;
-     dl.google.com;
-     download.docker.com;
-     nvidia.github.io;
-     developer.download.nvidia.com;
+  dl.google.com;
+  nvidia.github.io;
+  download.docker.com;
+  ppa.launchpad.net;
+  deepin-wine.i-m.dev;
+  developer.download.nvidia.cn;
 };
 Acquire::https::proxy "socks5h://127.0.0.1:18888" {
-     deepin-wine.i-m.dev;
-     dl.google.com;
-     download.docker.com;
-     nvidia.github.io;
-     developer.download.nvidia.com;
+  dl.google.com;
+  nvidia.github.io;
+  download.docker.com;
+  ppa.launchpad.net;
+  deepin-wine.i-m.dev;
+  developer.download.nvidia.cn;
 };
 
 Acquire::http::Proxy {
