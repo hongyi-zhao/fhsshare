@@ -1,7 +1,7 @@
 #!/use/bin/env bash
 
 codename=$(lsb_release -sc)
-sources_list=/etc/apt/sources.list11
+sources_list=/etc/apt/sources.list
 
 
 if [ ! -e $sources_list ] || ! grep -q -m1 '^deb https://mirrors.tuna.tsinghua.edu.cn/' $sources_list; then
