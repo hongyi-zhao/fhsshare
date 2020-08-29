@@ -8,19 +8,18 @@
 #sudo systemctl daemon-reload
 #sudo systemctl restart docker
 # Confirm the environment variable is set correctly: 
-#systemctl show --property=Environment docker
+#docker info |& grep -i proxy
 # Check the http proxy is in use when running docker:
-#$ sudo tcpdump -i any port 8118
+#$ sudo tcpdump -i any port 8080
 
 #https://github.com/ApolloAuto/apollo/issues/12224
 #Disable that proxy and try again, or use http/https proxy. See https://docs.bazel.build/versions/master/external.html#using-proxies
 
-#For maximum compatibility, use pproxy for converting socks5://127.0.0.1:18888 to http://127.0.0.1:8080
-#$ pproxy --reuse -r socks5://127.0.0.1:18888 -l http://:8080/ -vv
+#For maximum compatibility, use pproxy for converting socks5 to http:
+#$ pproxy --reuse -r socks5://127.0.0.1:18889 -l http://:8080/ -vv
 
 #https://docs.docker.com/network/proxy/#configure-the-docker-client
 #Configure Docker to use a proxy server
-#Estimated reading time: 2 minutes
 
 #If your container needs to use an HTTP, HTTPS, or FTP proxy server, you can configure it in different ways:
 
