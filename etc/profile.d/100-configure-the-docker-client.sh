@@ -29,6 +29,14 @@
 # At the same time, using tcpdump to confirm it:
 #$ sudo tcpdump -i any 'port 8080'
 
+# For any case, the current proxy setting can be checked within the docker environment:
+#$ env | grep -i proxy
+#HTTP_PROXY=http://127.0.0.1:8080
+#https_proxy=http://127.0.0.1:8080
+#http_proxy=http://127.0.0.1:8080
+#no_proxy=localhost,127.0.0.1
+#NO_PROXY=localhost,127.0.0.1
+#HTTPS_PROXY=http://127.0.0.1:8080
 
 
 #https://docs.docker.com/network/proxy/#configure-the-docker-client
