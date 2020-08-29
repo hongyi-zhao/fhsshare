@@ -10,7 +10,20 @@
 # So we can use it to judge whether or not we should disable Nouveau nvidia driver.
 # nvidia-smi -L | grep -q '^GPU '
 
-blacklist_nvidia_nouveau_conf=/etc/modprobe.d/blacklist-nvidia-nouveau.conf
+#https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#runfile-nouveau-ubuntu
+
+#    Create a file at /etc/modprobe.d/blacklist-nouveau.conf with the following contents:
+
+#    blacklist nouveau
+#    options nouveau modeset=0
+
+#    Regenerate the kernel initramfs:
+
+#    $ sudo update-initramfs -u
+
+
+
+blacklist_nvidia_nouveau_conf=/etc/modprobe.d/blacklist-nouveau.conf
 if type -afp nvidia-smi >/dev/null; then
   if ! grep -q '^blacklist nouveau' $blacklist_nvidia_nouveau_conf 2>/dev/null; then
     # https://stackoverflow.com/questions/8467424/echo-newline-in-bash-prints-literal-n
