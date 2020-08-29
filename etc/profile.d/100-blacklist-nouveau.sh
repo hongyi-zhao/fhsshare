@@ -31,6 +31,7 @@ if type -afp nvidia-smi >/dev/null; then
     #sudo bash -c "echo $'blacklist nouveau\noptions nouveau modeset=0' > $blacklist_nvidia_nouveau_conf"
     #sudo bash -c "echo blacklist nouveau$'\n'options nouveau modeset=0 > $blacklist_nvidia_nouveau_conf"
     sudo bash -c "printf 'blacklist nouveau\noptions nouveau modeset=0\n' > $blacklist_nvidia_nouveau_conf"
+    sudo update-initramfs -u
   fi
 fi
 
