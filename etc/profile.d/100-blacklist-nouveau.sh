@@ -23,14 +23,14 @@
 
 
 
-blacklist_nvidia_nouveau_conf=/etc/modprobe.d/blacklist-nouveau.conf
+blacklist_nouveau_conf=/etc/modprobe.d/blacklist-nouveau.conf
 if type -afp nvidia-smi >/dev/null; then
-  if ! grep -q '^blacklist nouveau' $blacklist_nvidia_nouveau_conf 2>/dev/null; then
+  if ! grep -q '^blacklist nouveau' $blacklist_nouveau_conf 2>/dev/null; then
     # https://stackoverflow.com/questions/8467424/echo-newline-in-bash-prints-literal-n
-    #sudo bash -c "echo -e 'blacklist nouveau\noptions nouveau modeset=0' > $blacklist_nvidia_nouveau_conf"
-    #sudo bash -c "echo $'blacklist nouveau\noptions nouveau modeset=0' > $blacklist_nvidia_nouveau_conf"
-    #sudo bash -c "echo blacklist nouveau$'\n'options nouveau modeset=0 > $blacklist_nvidia_nouveau_conf"
-    sudo bash -c "printf 'blacklist nouveau\noptions nouveau modeset=0\n' > $blacklist_nvidia_nouveau_conf"
+    #sudo bash -c "echo -e 'blacklist nouveau\noptions nouveau modeset=0' > $blacklist_nouveau_conf"
+    #sudo bash -c "echo $'blacklist nouveau\noptions nouveau modeset=0' > $blacklist_nouveau_conf"
+    #sudo bash -c "echo blacklist nouveau$'\n'options nouveau modeset=0 > $blacklist_nouveau_conf"
+    sudo bash -c "printf 'blacklist nouveau\noptions nouveau modeset=0\n' > $blacklist_nouveau_conf"
     sudo update-initramfs -u
   fi
 fi
