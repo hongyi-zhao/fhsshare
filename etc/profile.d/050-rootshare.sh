@@ -41,7 +41,7 @@ pwd -P
 
 
 # Some needed tools:
-# sudo apt-get install git gcc netcat socat haproxy gawk uuid gedit-plugins gnome-tweak-tool copyq telegram-desktop curl apt-file gparted gddrescue partclone gdebi zstd
+# sudo apt-get install git gcc netcat socat haproxy gawk uuid gedit-plugins gnome-tweak-tool copyq telegram-desktop curl apt-file gparted gddrescue partclone gdebi zstd jq
 
 # This directory holds the share data for all users under / hierarchy:
 ROOTSHARE_WORK_TREE=/rootshare
