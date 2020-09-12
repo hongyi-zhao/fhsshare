@@ -76,7 +76,6 @@ if test -S /var/run/docker.sock; then
   if ! groups $USER | grep -q docker; then
     sudo gpasswd -a $USER docker  
     sudo usermod -aG docker $USER 
-
   fi
   
   #https://github.com/ApolloAuto/apollo/issues/12257#issuecomment-682305336
