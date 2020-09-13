@@ -40,10 +40,8 @@ pwd -P
 
 
 # Some needed tools:
-# sudo apt-get -y install git gcc netcat socat haproxy gawk uuid gedit-plugins gnome-tweak-tool copyq telegram-desktop curl apt-file gparted gddrescue partclone gdebi zstd jq tor golang
-
+# sudo apt-get -y install git gcc netcat socat haproxy gawk uuid gedit-plugins gnome-tweak-tool copyq telegram-desktop curl apt-file gparted gddrescue partclone gdebi zstd jq tor golang flashplugin-installer
 # sudo apt-get -y build-dep golang
-
 
 
 # This directory holds the share data for all users under / hierarchy:
