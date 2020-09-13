@@ -79,9 +79,10 @@ if test -S /var/run/docker.sock; then
   fi
   
   #https://github.com/ApolloAuto/apollo/issues/12257#issuecomment-682305336
-  #if [[ $(stat -c '%a' /var/run/docker.sock) != 777 ]]; then
-  #  sudo chmod 777 /var/run/docker.sock
-  #fi
+  #https://github.com/ApolloAuto/apollo/issues/12509
+  if [[ $(stat -c '%a' /var/run/docker.sock) != 777 ]]; then
+    sudo chmod 777 /var/run/docker.sock
+  fi
 fi
 
 
