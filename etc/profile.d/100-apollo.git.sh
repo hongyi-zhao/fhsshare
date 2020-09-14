@@ -74,15 +74,20 @@ fi
 #https://stackoverflow.com/questions/48957195/how-to-fix-docker-got-permission-denied-issue
 if test -S /var/run/docker.sock; then
   if ! groups $USER | grep -q docker; then
+    sudo groupadd docker
+    newgrp docker
+    sudo chown "$USER":"$USER" /home/"$USER"/.docker -R
+    sudo chmod g+rwx "$HOME/.docker" -R
     sudo gpasswd -a $USER docker  
     sudo usermod -aG docker $USER 
   fi
   
+  #https://github.com/ApolloAuto/apollo/issues/12509#issuecomment-691742501
   #https://github.com/ApolloAuto/apollo/issues/12257#issuecomment-682305336
-  #https://github.com/ApolloAuto/apollo/issues/12509
-  if [[ $(stat -c '%a' /var/run/docker.sock) != 777 ]]; then
-    sudo chmod 777 /var/run/docker.sock
-  fi
+
+  #if [[ $(stat -c '%a' /var/run/docker.sock) != 777 ]]; then
+  #  sudo chmod 777 /var/run/docker.sock
+  #fi
 fi
 
 
