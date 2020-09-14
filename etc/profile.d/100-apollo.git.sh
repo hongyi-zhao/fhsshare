@@ -72,6 +72,9 @@ fi
 #https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user
 #https://groups.google.com/forum/#!topic/comp.unix.shell/DD04hWElRy8
 #https://stackoverflow.com/questions/48957195/how-to-fix-docker-got-permission-denied-issue
+
+#https://github.com/ApolloAuto/apollo/issues/12509#issuecomment-691742501
+#https://github.com/ApolloAuto/apollo/issues/12257#issuecomment-682305336
 if test -S /var/run/docker.sock; then
   if ! groups $USER | grep -q docker; then
     sudo groupadd docker
@@ -81,13 +84,6 @@ if test -S /var/run/docker.sock; then
     sudo gpasswd -a $USER docker  
     sudo usermod -aG docker $USER 
   fi
-  
-  #https://github.com/ApolloAuto/apollo/issues/12509#issuecomment-691742501
-  #https://github.com/ApolloAuto/apollo/issues/12257#issuecomment-682305336
-
-  #if [[ $(stat -c '%a' /var/run/docker.sock) != 777 ]]; then
-  #  sudo chmod 777 /var/run/docker.sock
-  #fi
 fi
 
 
