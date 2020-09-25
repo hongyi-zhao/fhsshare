@@ -40,7 +40,7 @@ pwd -P
 
 
 # Some needed tools:
-# sudo apt-get -y install git gcc netcat socat haproxy gawk uuid gedit-plugins gnome-tweak-tool copyq telegram-desktop curl apt-file gparted gddrescue partclone gdebi zstd jq tor golang flashplugin-installer synaptic gimp
+# sudo apt-get -y install git gcc netcat socat haproxy gawk uuid gedit-plugins gnome-tweak-tool copyq telegram-desktop curl apt-file gparted gddrescue partclone gdebi zstd jq tor golang flashplugin-installer synaptic gimp pandoc
 # sudo apt-get -y build-dep golang
 
 
