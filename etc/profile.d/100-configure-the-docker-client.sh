@@ -84,6 +84,10 @@
 docker_config_dir=$HOME/.docker
 docker_config=$docker_config_dir/config.json
 
+# Running the host proxy server on the docker0 interface, so that it can be used from docker container.
+#$ ip a s docker0 | grep 'inet '
+#    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+
 if [ $(id -u) -ne 0 ] && type -afp docker > /dev/null && [[ $( docker -v | egrep -o '[0-9]+[.][0-9]+' | sed -e 's/[.]//' ) -ge 1707 ]]; then
   if [ ! -d "$docker_config_dir" ]; then
     mkdir -p $docker_config_dir
@@ -95,8 +99,8 @@ if [ $(id -u) -ne 0 ] && type -afp docker > /dev/null && [[ $( docker -v | egrep
         | {
         |   "default":
         |   {
-        |     "httpProxy": "http://127.0.0.1:8080",
-        |     "httpsProxy": "http://127.0.0.1:8080",
+        |     "httpProxy": "http://172.17.0.1:8080",
+        |     "httpsProxy": "http://172.17.0.1:8080",
         |     "noProxy": "localhost,127.0.0.1",
         |     "comment": "https://docs.docker.com/network/proxy/#configure-the-docker-client"
         |   }
