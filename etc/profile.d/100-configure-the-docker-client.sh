@@ -88,11 +88,11 @@ docker_config=$docker_config_dir/config.json
 #$ ip a s docker0 | grep 'inet '
 #    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
 
-if [ $(id -u) -ne 0 ] && type -afp docker > /dev/null && [[ $( docker -v | egrep -o '[0-9]+[.][0-9]+' | sed -e 's/[.]//' ) -ge 1707 ]]; then
+if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null && [[ $( docker -v | egrep -o '[0-9]+[.][0-9]+' | sed -e 's/[.]//' ) -ge 1707 ]]; then
   if [ ! -d "$docker_config_dir" ]; then
     mkdir -p $docker_config_dir
   fi
-  if [ ! -e "$docker_config" ] || ! egrep -q '^[ ]*"httpProxy": "http://127.0.0.1:8080",' $docker_config; then
+  if [ ! -e "$docker_config" ] || ! egrep -q '^[ ]*"httpProxy": "http://172.17.0.1:8080",' $docker_config; then
     sed 's/^ *|//' > $docker_config <<-EOF
         |{
         | "proxies":
