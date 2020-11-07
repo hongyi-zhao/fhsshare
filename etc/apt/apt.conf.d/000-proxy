@@ -37,7 +37,7 @@ Acquire::http::proxy "socks5h://127.0.0.1:18888" {
   nvidia.github.io;
   download.docker.com;
   ppa.launchpad.net;
-  developer.download.nvidia.cn;
+  developer.download.nvidia.com;
 };
 Acquire::https::proxy "socks5h://127.0.0.1:18888" {
   apt.postgresql.org;
@@ -45,7 +45,7 @@ Acquire::https::proxy "socks5h://127.0.0.1:18888" {
   nvidia.github.io;
   download.docker.com;
   ppa.launchpad.net;
-  developer.download.nvidia.cn;
+  developer.download.nvidia.com;
 };
 
 Acquire::http::Proxy {
