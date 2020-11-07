@@ -24,7 +24,7 @@
 
 
 blacklist_nouveau_conf=/etc/modprobe.d/blacklist-nouveau.conf
-if type -afp nvidia-smi >/dev/null; then
+if type -fp nvidia-smi >/dev/null; then
   if ! grep -q '^blacklist nouveau' $blacklist_nouveau_conf 2>/dev/null; then
     # https://stackoverflow.com/questions/8467424/echo-newline-in-bash-prints-literal-n
     #sudo bash -c "echo -e 'blacklist nouveau\noptions nouveau modeset=0' > $blacklist_nouveau_conf"
