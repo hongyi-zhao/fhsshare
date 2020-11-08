@@ -15,12 +15,15 @@ if [ ! -e $sources_list ] || ! grep -q -m1 '^deb https://mirrors.tuna.tsinghua.e
         |
         |deb https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename main contrib non-free
         |deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename main contrib non-free
-        |deb https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename-updates main contrib non-free
-        |deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename-updates main contrib non-free
-        |deb https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename-backports main contrib non-free
-        |# deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename-backports main contrib non-free
-        |deb https://mirrors.tuna.tsinghua.edu.cn/debian-security $codename/updates main contrib non-free
-        |deb-src https://mirrors.tuna.tsinghua.edu.cn/debian-security $codename/updates main contrib non-free
+        |
+        |#deb https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename-updates main contrib non-free
+        |#deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename-updates main contrib non-free
+        |
+        |#deb https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename-backports main contrib non-free
+        |#deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename-backports main contrib non-free
+        |
+        |#deb https://mirrors.tuna.tsinghua.edu.cn/debian-security $codename/updates main contrib non-free
+        |#deb-src https://mirrors.tuna.tsinghua.edu.cn/debian-security $codename/updates main contrib non-free
 	EOF
   elif lsb_release -i | grep -qi Ubuntu; then
     sed 's/^ *|//' <<-EOF | sudo tee $sources_list >/dev/null
@@ -33,14 +36,14 @@ if [ ! -e $sources_list ] || ! grep -q -m1 '^deb https://mirrors.tuna.tsinghua.e
         |deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename main restricted universe multiverse
         |deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename main restricted universe multiverse
         | 
-        |deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-security main restricted universe multiverse
-        |deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-security main restricted universe multiverse
+        |#deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-security main restricted universe multiverse
+        |#deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-security main restricted universe multiverse
         |
-        |deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-updates main restricted universe multiverse
-        |deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-updates main restricted universe multiverse
+        |#deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-updates main restricted universe multiverse
+        |#deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-updates main restricted universe multiverse
         |
-        |deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-backports main restricted universe multiverse
-        |deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-backports main restricted universe multiverse
+        |#deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-backports main restricted universe multiverse
+        |#deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-backports main restricted universe multiverse
         |
         |## Not recommended
         |# deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-proposed main restricted universe multiverse
