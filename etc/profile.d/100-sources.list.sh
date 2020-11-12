@@ -13,7 +13,7 @@ if [ ! -e $sources_list ] || ! grep -q -m1 '^deb https://mirrors.tuna.tsinghua.e
         |#如果遇到无法拉取 https 源的情况，请先使用 http 源并安装：
         |#$ sudo apt install apt-transport-https
         |
-        |# For solving the unmet dependencies of packages, the updates and security components can be used 
+        |# For solving the unmet dependencies of packages, the updates and security suites can be used 
         |# temporarily.
         |
         |deb https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename main contrib non-free
@@ -36,7 +36,7 @@ if [ ! -e $sources_list ] || ! grep -q -m1 '^deb https://mirrors.tuna.tsinghua.e
         |#如果遇到无法拉取 https 源的情况，请先使用 http 源并安装：
         |#$ sudo apt install apt-transport-https
         |
-        |# For solving the unmet dependencies of packages, the updates and security components can be used 
+        |# For solving the unmet dependencies of packages, the updates and security suites can be used 
         |# temporarily.
         |        	
         |deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename main restricted universe multiverse
