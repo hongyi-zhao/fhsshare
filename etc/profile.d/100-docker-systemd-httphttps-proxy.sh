@@ -127,11 +127,34 @@
 # Running the host proxy server on the docker0 interface, so that it can be used from docker container.
 #$ ip a s docker0 | grep 'inet '
 #    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
-[Service]
-#Environment="HTTP_PROXY=socks5://172.17.0.1:18888/"
-Environment="HTTP_PROXY=http://172.17.0.1:8080/"
-Environment="HTTPS_PROXY=http://172.17.0.1:8080/"
-Environment="NO_PROXY=localhost,127.0.0.1,*.cn"
+
+
+#info sed
+#'[:blank:]'
+#     Blank characters: space and tab.
+#'[:space:]'
+#     Space characters: in the 'C' locale, this is tab, newline, vertical
+#     tab, form feed, carriage return, and space.
+
+
+docker_service_d=/etc/systemd/system/docker.service.d
+http_proxy_conf=$docker_service_d/http-proxy.conf 
+
+
+if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
+  if [ ! -d "$docker_service_d" ]; then
+    mkdir -p "$docker_service_d"
+  fi
+  if [ ! -e "$http_proxy_conf" ] || ! egrep -q '^[ ]*"httpProxy": "http://172.17.0.1:8080",' $http_proxy_conf; then
+    sed -r 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $http_proxy_conf > /dev/null  
+        |[Service]
+        |#Environment="HTTP_PROXY=socks5://172.17.0.1:18888/"
+        |Environment="HTTP_PROXY=http://172.17.0.1:8080/"
+        |Environment="HTTPS_PROXY=http://172.17.0.1:8080/"
+        |Environment="NO_PROXY=localhost,127.0.0.1,*.cn"
+	EOF
+  fi
+fi
 
 
 
