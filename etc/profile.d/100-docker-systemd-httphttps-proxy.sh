@@ -153,6 +153,8 @@ if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
         |Environment="HTTPS_PROXY=http://172.17.0.1:8080/"
         |Environment="NO_PROXY=localhost,127.0.0.1,*.cn"
 	EOF
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
   fi
 fi
 
