@@ -151,7 +151,7 @@ if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
         |#Environment="HTTP_PROXY=socks5://172.17.0.1:18888/"
         |Environment="HTTP_PROXY=http://172.17.0.1:8080/"
         |Environment="HTTPS_PROXY=http://172.17.0.1:8080/"
-        |Environment="NO_PROXY=localhost,127.0.0.1,*.cn"
+        |Environment="NO_PROXY=localhost,127.0.0.1,packages.deepin.com,*.cn"
 	EOF
     sudo systemctl daemon-reload
     sudo systemctl restart docker
