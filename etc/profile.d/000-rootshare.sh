@@ -105,7 +105,7 @@ while IFS= read -r uuid; do
     fi
 
     if ! git -C / diff --quiet; then 
-      git -C / diff | sudo tee /$(git rev-parse --short HEAD).diff > /dev/null
+      git -C / diff | sudo tee /$(git rev-parse HEAD).diff > /dev/null
       sudo git -C / reset --hard
     fi
 
@@ -193,7 +193,7 @@ if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_ORIGIN_DIR" ] && [ -d "$HOMESHARE_
   
   if [[ -d $HOMESHARE_GIT_DIR ]]; then
     if ! git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR diff --quiet; then 
-      git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR diff > $HOME/$(git rev-parse --short HEAD).diff
+      git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR diff > $HOME/$(git rev-parse HEAD).diff
       git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR reset --hard
     fi      
   fi   
