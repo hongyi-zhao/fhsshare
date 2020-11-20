@@ -140,6 +140,76 @@
 #The proxy set in this file is for dockerd which can use any of the host network interfaces, including docker0.
 #The proxy types can be orgnized including http/https/socks5 and socks5h is not supported yet. 
 
+#https://github.com/yeasy/docker_practice/blob/master/install/mirror.md#ubuntu-1604debian-8centos-7
+#Ubuntu 16.04+、Debian 8+、CentOS 7+
+
+#目前主流 Linux 发行版均已使用 systemd 进行服务管理，这里介绍如何在使用 systemd 的 Linux 发行版中配置镜像加速器。
+
+#请首先执行以下命令，查看是否在 docker.service 文件中配置过镜像地址。
+
+#$ systemctl cat docker | grep '\-\-registry\-mirror'
+
+#如果该命令有输出，那么请执行 $ systemctl cat docker 查看 ExecStart= 出现的位置，修改对应的文件内容去掉 --registry-mirror 参数及其值，并按接下来的步骤进行配置。
+
+#如果以上命令没有任何输出，那么就可以在 /etc/docker/daemon.json 中写入如下内容（如果文件不存在请新建该文件）：
+
+#{
+#  "registry-mirrors": [
+#    "https://hub-mirror.c.163.com",
+#    "https://mirror.baidubce.com"
+#  ]
+#}
+
+#    注意，一定要保证该文件符合 json 规范，否则 Docker 将不能启动。
+
+#之后重新启动服务。
+
+#$ sudo systemctl daemon-reload
+#$ sudo systemctl restart docker
+
+#https://github.com/docker-practice/docker-registry-cn-mirror-test/actions/runs/148084125/workflow
+#          registrys="
+#          docker.io
+#          registry-1.docker.io
+#          mirror.baidubce.com
+#          hub-mirror.c.163.com
+#          docker.mirrors.ustc.edu.cn
+#          mirror.gcr.io
+#          $ALIYUN_MIRROR
+#          "
+
+#https://lug.ustc.edu.cn/wiki/mirrors/help/docker/
+
+#Docker 镜像使用帮助
+#目录
+
+#    使用说明
+
+#使用说明Permalink
+
+#新版的 Docker 使用 /etc/docker/daemon.json（Linux） 或者 %programdata%\docker\config\daemon.json（Windows） 来配置 Daemon。
+
+#请在该配置文件中加入（没有该文件的话，请先建一个）：
+
+#{
+#  "registry-mirrors": ["https://docker.mirrors.ustc.edu.cn"]
+#}
+
+#https://mirrors.ustc.edu.cn/help/dockerhub.html
+#由于访问原始站点的网络带宽等条件的限制，导致 Docker Hub, Google Container Registry (gcr.io) 与 Quay Container Registry (quay.io) 的镜像缓存处于基本不可用的状态。故从 2020 年 4 月起，从科大校外对 Docker Hub 镜像缓存的访问会被 302 重定向至其他国内 Docker Hub 镜像源。从 2020 年 8 月 16 日起，从科大校外对 Google Container Registry 的镜像缓存的访问会被 302 重定向至阿里云提供的公开镜像服务（包含了部分 gcr.io 上存在的容器镜像）；从科大校外对 Quay Container Registry 的镜像缓存的访问会被 302 重定向至源站。
+
+#对于使用 systemd 的系统（Ubuntu 16.04+、Debian 8+、CentOS 7）， 在配置文件 /etc/docker/daemon.json 中加入：
+
+#{
+#  "registry-mirrors": ["https://docker.mirrors.ustc.edu.cn/"]
+#}
+
+#重新启动 dockerd：
+
+#sudo systemctl restart docker
+
+
+
 docker_service_d=/etc/systemd/system/docker.service.d
 http_proxy_conf=$docker_service_d/http-proxy.conf 
 
@@ -148,13 +218,12 @@ if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
   if [ ! -d "$docker_service_d" ]; then
     mkdir -p "$docker_service_d"
   fi
-  if [ ! -e "$http_proxy_conf" ] || ! egrep -q '^[ ]*"httpProxy": "http://127.0.0.1:8080",' $http_proxy_conf; then
+  if [ ! -e "$http_proxy_conf" ] || ! egrep -q '^[ ]*"httpProxy": "socks5://127.0.0.1:18888",' $http_proxy_conf; then
     sed -r 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $http_proxy_conf > /dev/null  
         |[Service]
-        |#Environment="HTTP_PROXY=socks5://127.0.0.1:18888/"
-        |Environment="HTTP_PROXY=http://127.0.0.1:8080/"
-        |Environment="HTTPS_PROXY=http://127.0.0.1:8080/"
-        |Environment="NO_PROXY=localhost,127.0.0.1,packages.deepin.com,*.cn"
+        |Environment="HTTP_PROXY=socks5://127.0.0.1:18888/"
+        |Environment="HTTPS_PROXY=socks5://127.0.0.1:18888/"
+        |Environment="NO_PROXY=localhost,127.0.0.1,packages.deepin.com,*.mirror.aliyuncs.com,mirror.baidubce.com,hub-mirror.c.163.com,*.cn"
 	EOF
     sudo systemctl daemon-reload
     sudo systemctl restart docker
