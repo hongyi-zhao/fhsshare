@@ -136,6 +136,9 @@
 #     Space characters: in the 'C' locale, this is tab, newline, vertical
 #     tab, form feed, carriage return, and space.
 
+#https://note.qidong.name/2020/05/docker-proxy/
+#The proxy set in this file is for dockerd which can use any of the host network interfaces, including docker0.
+#The proxy types can be orgnized including http/https/socks5 and socks5h is not supported yet. 
 
 docker_service_d=/etc/systemd/system/docker.service.d
 http_proxy_conf=$docker_service_d/http-proxy.conf 
@@ -145,12 +148,12 @@ if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
   if [ ! -d "$docker_service_d" ]; then
     mkdir -p "$docker_service_d"
   fi
-  if [ ! -e "$http_proxy_conf" ] || ! egrep -q '^[ ]*"httpProxy": "http://172.17.0.1:8080",' $http_proxy_conf; then
+  if [ ! -e "$http_proxy_conf" ] || ! egrep -q '^[ ]*"httpProxy": "http://127.0.0.1:8080",' $http_proxy_conf; then
     sed -r 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $http_proxy_conf > /dev/null  
         |[Service]
-        |#Environment="HTTP_PROXY=socks5://172.17.0.1:18888/"
-        |Environment="HTTP_PROXY=http://172.17.0.1:8080/"
-        |Environment="HTTPS_PROXY=http://172.17.0.1:8080/"
+        |#Environment="HTTP_PROXY=socks5://127.0.0.1:18888/"
+        |Environment="HTTP_PROXY=http://127.0.0.1:8080/"
+        |Environment="HTTPS_PROXY=http://127.0.0.1:8080/"
         |Environment="NO_PROXY=localhost,127.0.0.1,packages.deepin.com,*.cn"
 	EOF
     sudo systemctl daemon-reload
