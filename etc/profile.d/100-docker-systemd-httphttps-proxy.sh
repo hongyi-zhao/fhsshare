@@ -140,17 +140,6 @@
 #The proxy set in this file is for dockerd which can use any of the host network interfaces, including docker0.
 #The proxy types can be orgnized including http/https/socks5 and socks5h is not supported yet. 
 
-#https://github.com/docker-practice/docker-registry-cn-mirror-test/actions/runs/148084125/workflow
-#          registrys="
-#          docker.io
-#          registry-1.docker.io
-#          mirror.baidubce.com
-#          hub-mirror.c.163.com
-#          docker.mirrors.ustc.edu.cn
-#          mirror.gcr.io
-#          $ALIYUN_MIRROR
-#          "
-
 #https://lug.ustc.edu.cn/wiki/mirrors/help/docker/
 
 #Docker 镜像使用帮助
@@ -196,7 +185,7 @@ if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
         |[Service]
         |Environment="HTTP_PROXY=socks5://127.0.0.1:18888/"
         |Environment="HTTPS_PROXY=socks5://127.0.0.1:18888/"
-        |Environment="NO_PROXY=localhost,127.0.0.1,packages.deepin.com,*.mirror.aliyuncs.com,mirror.baidubce.com,hub-mirror.c.163.com,*.cn"
+        |Environment="NO_PROXY=localhost,127.0.0.1,*.cn"
 	EOF
     sudo systemctl daemon-reload
     sudo systemctl restart docker
