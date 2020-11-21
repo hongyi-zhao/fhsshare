@@ -43,6 +43,9 @@ pwd -P
 # sudo apt-get -y install apt-transport-https apt-utils ca-certificates software-properties-common gnupg-agent devscripts gcc make cmake git netcat socat haproxy gawk uuid gedit-plugins gnome-tweak-tool copyq telegram-desktop curl apt-file gparted gddrescue partclone gdebi zstd jq tor golang synaptic gimp pandoc equivs unrar
 # sudo apt-get -y build-dep golang
 
+#For Apollo D-kit hardware platform.
+#$ sudo dmidecode -s baseboard-manufacturer | egrep --color 'Neousys Technology Inc\.'
+#Neousys Technology Inc.
 
 # This directory holds the share data for all users under / hierarchy:
 ROOTSHARE_WORK_TREE=/rootshare
