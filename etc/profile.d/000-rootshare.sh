@@ -48,6 +48,13 @@ pwd -P
 ROOTSHARE_WORK_TREE=/rootshare
 # This directory holds the share data for all non-root users under $HOME hierarchy:
 HOMESHARE_WORK_TREE=$ROOTSHARE_WORK_TREE/homeshare
+
+ROOTSHARE_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/rootshare.git
+ROOTSHARE_GIT_DIR=$ROOTSHARE_ORIGIN_DIR/.git
+
+HOMESHARE_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare.git
+HOMESHARE_GIT_DIR=$HOMESHARE_ORIGIN_DIR/.git  
+
     
 # Don't use `findmnt -r`, this use the following rule which makes the regex match impossiable for
 # specifial characters, say space.
@@ -60,70 +67,62 @@ if findmnt -l -o TARGET | grep -qE "^$ROOTSHARE_WORK_TREE$"; then
   return
 fi
 
-if [ ! -d $ROOTSHARE_WORK_TREE ]; then
-  sudo mkdir -p $ROOTSHARE_WORK_TREE
-  #sudo chown -hR root:root $ROOTSHARE_WORK_TREE
-fi
-
-# https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
-# https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
-
-while IFS= read -r uuid; do
-  if ! findmnt -l -o TARGET | grep -qE "^$ROOTSHARE_WORK_TREE$"; then
-    sudo mount -U $uuid $ROOTSHARE_WORK_TREE
+# Only do the settings for non-root users:
+if [ "$( id -u )" -ne 0 ]; then
+  if [ ! -d $ROOTSHARE_WORK_TREE ]; then
+    sudo mkdir -p $ROOTSHARE_WORK_TREE
+    #sudo chown -hR root:root $ROOTSHARE_WORK_TREE
   fi
 
-  if [ -d "$ROOTSHARE_WORK_TREE/rootshare.git" ]; then
-    ROOTSHARE_ORIGIN_DIR=$ROOTSHARE_WORK_TREE/rootshare.git
-    ROOTSHARE_GIT_DIR=$ROOTSHARE_ORIGIN_DIR/.git
+  # https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
+  # https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
 
-    HOMESHARE_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare.git
-    HOMESHARE_GIT_DIR=$HOMESHARE_ORIGIN_DIR/.git  
-    
-    
-    # Disable homeshare-apollo.git relevant settings.
-    
-    # Add supporting for https://github.com/ApolloAuto/apollo using the following repository:
-    # https://github.com/hongyi-zhao/homeshare-apollo.git
-    #HOMESHARE_APOLLO_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare-apollo.git
-    #HOMESHARE_APOLLO_GIT_DIR=$HOMESHARE_APOLLO_ORIGIN_DIR/.git     
-
-    # Third party applications, say, intel's tools, are intalled in this directory for sharing:
-    OPTSHARE=$ROOTSHARE_WORK_TREE/opt
-    if [ ! -d $OPTSHARE ]; then
-      sudo mkdir $OPTSHARE
+  while IFS= read -r uuid; do
+    if ! findmnt -l -o TARGET | grep -qE "^$ROOTSHARE_WORK_TREE$"; then
+      sudo mount -U $uuid $ROOTSHARE_WORK_TREE
     fi
+  
+    if [[ -d "$ROOTSHARE_ORIGIN_DIR" && -d "$HOMESHARE_ORIGIN_DIR" ]]; then
+      # Disable homeshare-apollo.git relevant settings.
+   
+      # Add supporting for https://github.com/ApolloAuto/apollo using the following repository:
+      # https://github.com/hongyi-zhao/homeshare-apollo.git
+      #HOMESHARE_APOLLO_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare-apollo.git
+      #HOMESHARE_APOLLO_GIT_DIR=$HOMESHARE_APOLLO_ORIGIN_DIR/.git     
 
-    if ! findmnt -l -o TARGET | grep -qE "^/opt$"; then
-      sudo mount -o rw,rbind $OPTSHARE /opt
+      # Third party applications, say, intel's tools, are intalled in this directory for sharing:
+      OPTSHARE=$ROOTSHARE_WORK_TREE/opt
+      if [ ! -d $OPTSHARE ]; then
+        sudo mkdir $OPTSHARE
+      fi
+
+      if ! findmnt -l -o TARGET | grep -qE "^/opt$"; then
+        sudo mount -o rw,rbind $OPTSHARE /opt
+      fi
+
+      if [[ "$(realpath -e /.git 2>/dev/null)" != "$(realpath -e $ROOTSHARE_GIT_DIR)" ]]; then
+        sudo rm -fr /.git
+        sudo ln -sfr $ROOTSHARE_GIT_DIR /
+      fi
+
+      if ! git -C / diff --quiet; then 
+        git -C / diff | sudo tee /$(git rev-parse HEAD).diff > /dev/null
+        sudo git -C / reset --hard
+      fi
+
+      break
+    else
+      sudo umount $ROOTSHARE_WORK_TREE
     fi
+  done < <( lsblk -n -o type,uuid,mountpoint | awk 'NF >= 2 && $1 ~ /^part$/ && $2 ~/[0-9a-f-]{36}/ && $NF != "/" { print $2 }' )
 
 
-    if [[ "$(realpath -e /.git 2>/dev/null)" != "$(realpath -e $ROOTSHARE_GIT_DIR)" ]]; then
-      sudo rm -fr /.git
-      sudo ln -sfr $ROOTSHARE_GIT_DIR /
-    fi
-
-    if ! git -C / diff --quiet; then 
-      git -C / diff | sudo tee /$(git rev-parse HEAD).diff > /dev/null
-      sudo git -C / reset --hard
-    fi
-
-    break
-  else
-    sudo umount $ROOTSHARE_WORK_TREE
-  fi
-done < <( lsblk -n -o type,uuid,mountpoint | awk 'NF >= 2 && $1 ~ /^part$/ && $2 ~/[0-9a-f-]{36}/ && $NF != "/" { print $2 }' )
+  # For debug the errors occurred in the variables assignment operation.
+  #echo user_id="$( id -u )" 
+  #echo ROOTSHARE_ORIGIN_DIR="$ROOTSHARE_ORIGIN_DIR"
+  #echo HOMESHARE_ORIGIN_DIR="$HOMESHARE_ORIGIN_DIR"
 
 
-# For debug the errors occurred in the variables assignment operation.
-#echo user_id="$( id -u )" 
-#echo ROOTSHARE_ORIGIN_DIR="$ROOTSHARE_ORIGIN_DIR"
-#echo HOMESHARE_ORIGIN_DIR="$HOMESHARE_ORIGIN_DIR"
-
-
-# Based on the following conditions to do the settings:
-if [ "$( id -u )" -ne 0 ] && [ -d "$ROOTSHARE_ORIGIN_DIR" ] && [ -d "$HOMESHARE_ORIGIN_DIR" ]; then
   #https://specifications.freedesktop.org/menu-spec/latest/
   #https://wiki.archlinux.org/index.php/XDG_Base_Directory
   # XDG_DATA_DIRS
