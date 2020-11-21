@@ -164,8 +164,39 @@ if [ "$( id -u )" -ne 0 ]; then
   # %P     File's name with the name of the starting-point under which it was found removed.
 
   # Attach all top-level subdirectories found on $HOMESHARE_WORK_TREE/ at $HOME/:
+  #$ find /rootshare/homeshare -maxdepth 1 -mindepth 1 -type d -printf "\"%P\"\n" | sed -re 's|$| \\|' 
+  #"Pictures" \
+  #"Templates" \
+  #"News" \
+  #"Videos" \
+  #"Music" \
+  #"docker" \
+  #"Downloads" \
+  #".profile.d" \
+  #"Documents" \
+  #".emacs.d" \
+  #".gnus.d" \
+  #".vim" \
+  #"VirtualBox VMs" \
+  #".pan2" \
+  #".ssh" \
+  #".cache" \
+  #"Desktop" \
+  #".aiida" \
+  #"Mail" \
+  #"snap" \
+  #"delegate" \
+  #".gnupg" \
+  #"go" \
+  #"Public" \
+  #".brew" \
+  #".conda" \
+  #".wine" \
+  #".pki" \
+
+  
   #find -L $HOMESHARE_WORK_TREE/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
-  find $HOMESHARE_WORK_TREE/ -mindepth 1 -maxdepth 1 -type d -printf '%P\n' |
+  find $HOMESHARE_WORK_TREE/ -mindepth 1 -maxdepth 1 -type d -printf '%f\n' |
   while IFS= read -r line; do
     if [ ! -d "$HOME/$line" ]; then
       mkdir "$HOME/$line"
