@@ -136,6 +136,7 @@
 #     Space characters: in the 'C' locale, this is tab, newline, vertical
 #     tab, form feed, carriage return, and space.
 
+#https://medium.com/@airman604/getting-docker-to-work-with-a-proxy-server-fadec841194e
 #https://note.qidong.name/2020/05/docker-proxy/
 #The proxy set in this file is for dockerd which can use any of the host network interfaces, including docker0.
 #The proxy types can be orgnized including http/https/socks5 and socks5h is not supported yet. 
