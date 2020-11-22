@@ -2,6 +2,7 @@
 # Obtain the canonicalized absolute dirname where the script resides.
 # Both readlink and realpath can do the trick.
 
+# In the following method, the $script_dirname is equivalent to $topdir:
 script_realpath="$(realpath -e -- "${BASH_SOURCE[0]}")"
 
 topdir=$(
@@ -9,7 +10,70 @@ cd -P -- "$(dirname -- "$script_realpath")" &&
 pwd -P
 ) 
 
-[[ "${BASH_SOURCE[0]}" != "${0}" ]] && [[ "$script_realpath" =~ ^(.*)[.](bash|sh)$ ]] && repo_dir="${BASH_REMATCH[1]}" || return
+if [[ "$script_realpath" =~ ^(.*)/(.*)$ ]]; then
+  script_dirname="${BASH_REMATCH[1]}"
+  script_name="${BASH_REMATCH[2]}"
+  #echo script_dirname="$script_dirname"
+  #echo script_name="$script_name"
+  # . not appeared in script_name at all.
+  if [[ "$script_name"  =~ ^([^.]*)$ ]]; then
+    script_basename="$script_name"
+    #echo script_basename="$script_basename"
+  else
+    # . appeared in script_name. 
+    # As far as filename is concerned, when . is used as the last character, it doesn't have any spefical meaning.
+    # Including . as the beginning character.
+    if [[ "$script_name"  =~ ^([.].*)$ ]]; then
+      script_extname="$script_name"
+      #echo script_extname="$script_extname"
+      # Including . but not as the beginning/trailing character.
+    elif [[ "$script_name"  =~ ^([^.].*)[.]([^.]+)$ ]]; then
+      script_basename="${BASH_REMATCH[1]}"
+      script_extname="${BASH_REMATCH[2]}"
+      #echo script_basename="$script_basename"
+      #echo script_extname="$script_extname"
+    fi
+  fi
+fi
+
+#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
+
+# software/anti-gfw/not-used/vpngate-relative/ecmp-vpngate/script/ovpn-traverse.sh
+# man find:
+# -printf format
+# %f     File's name with any leading directories removed (only the last element).
+# %h     Leading directories of file's name (all but the last element).  
+# If the file name contains  no  slashes
+#             (since it is in the current directory) the %h specifier expands to `.'.       
+# %H     Starting-point under which file was found.  
+# %p     File's name.
+# %P     File's name with the name of the starting-point under which it was found removed.
+
+#https://superuser.com/questions/731425/bash-detect-execute-vs-source-in-a-script
+#https://stackoverflow.com/questions/2683279/how-to-detect-if-a-script-is-being-sourced
+# Only triggering the cd command logic when script is not being sourced.
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  if [ -d "$topdir/$script_basename" ]; then 
+    cd $topdir/$script_basename
+    if [[ $script_basename =~ [.]git$ ]]; then
+      ncore=$(sudo dmidecode -t 4 | grep 'Core Enabled:' | awk '{a+=$NF}END{ print a }')
+    fi
+  else
+    cd $topdir  
+  fi
+fi
+
+# Execute the judgemant logic for using the self-defined git function when the corresponding git repo exists.
+if [[ "$(declare -pF git 2>/dev/null)" =~ ' -fx ' ]] && [[ "${BASH_SOURCE[0]}" = "${0}" ]] && [ -d "$topdir/$script_basename/.git" ]; then
+  prepare_repo () {
+    git clean -xdf
+    git reset --hard
+    git pull
+  }
+fi 
+  
+#$script_dirname is equivalent to $topdir.
+
 
 
 # The idea
@@ -106,6 +170,7 @@ if [ "$( id -u )" -ne 0 ]; then
       if [[ "$(realpath -e /.git 2>/dev/null)" != "$(realpath -e $ROOTSHARE_GIT_DIR)" ]]; then
         sudo rm -fr /.git
         sudo ln -sfr $ROOTSHARE_GIT_DIR /
+        sudo git -C / reset --hard
       fi
 
       if ! git -C / diff --quiet; then 
