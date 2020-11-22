@@ -171,13 +171,13 @@
 #sudo systemctl restart docker
 
 docker_service_d=/etc/systemd/system/docker.service.d
-http_proxy_conf=$docker_service_d/http-proxy.conf 
+proxy_conf=$docker_service_d/proxy.conf 
 
 if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
   if [ ! -d "$docker_service_d" ]; then
     mkdir -p "$docker_service_d"
   fi
-  sed -r 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $http_proxy_conf > /dev/null  
+  sed -r 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $proxy_conf > /dev/null  
         |[Service]
         |Environment="HTTP_PROXY=socks5://127.0.0.1:18888/"
         |Environment="HTTPS_PROXY=socks5://127.0.0.1:18888/"
