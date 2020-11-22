@@ -179,8 +179,11 @@ if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
   fi
   sed -r 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $proxy_conf > /dev/null  
         |[Service]
+        |Environment="http_proxy=socks5://127.0.0.1:18888/"
         |Environment="HTTP_PROXY=socks5://127.0.0.1:18888/"
+        |Environment="https_proxy=socks5://127.0.0.1:18888/"
         |Environment="HTTPS_PROXY=socks5://127.0.0.1:18888/"
+        |Environment="no_proxy=localhost,127.0.0.1,*.cn"
         |Environment="NO_PROXY=localhost,127.0.0.1,*.cn"
 	EOF
   sudo systemctl daemon-reload
