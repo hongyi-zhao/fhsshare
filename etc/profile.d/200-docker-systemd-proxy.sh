@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 #For maximum compatibility, use pproxy for converting socks5 to http:
 #$ pproxy --reuse -r socks5://127.0.0.1:18889 -l http://:8080/ -vv
 
@@ -176,7 +178,7 @@ proxy_conf=$docker_service_d/proxy.conf
 
 if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
   if [ ! -d "$docker_service_d" ]; then
-    mkdir -p "$docker_service_d"
+    sudo mkdir -p "$docker_service_d"
   fi
   sed -r 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $proxy_conf > /dev/null  
         |[Service]
