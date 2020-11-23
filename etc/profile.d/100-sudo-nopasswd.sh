@@ -4,7 +4,7 @@ sudoers_d=/etc/sudoers.d
 nopasswd=$sudoers_d/nopasswd
 
 if [ $(id -u) -ne 0 ]; then
-  if [ -e $nopasswd ] && egrep -q "^$USER[[:blank:]]+" $nopasswd; then
+  if [ -e $nopasswd ] && egrep -q "^$USER[[:blank:]]+ALL=\(ALL:ALL\) NOPASSWD:ALL$" $nopasswd; then
     return
   fi
 
