@@ -63,6 +63,17 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   fi
 fi
 
+# Execute the judgemant logic for using the self-defined git function when the corresponding git repo exists.
+if [[ "$(declare -pF git 2>/dev/null)" =~ ' -fx ' ]] && [[ "${BASH_SOURCE[0]}" = "${0}" ]] && [ -d "$topdir/$script_basename/.git" ]; then
+  prepare_repo () {
+    git clean -xdf
+    git reset --hard
+    git pull
+  }
+fi 
+  
+#$script_dirname is equivalent to $topdir.
+
 
 #https://github.com/ApolloAuto/apollo/blob/master/docs/specs/D-kit/Waypoint_Following/Apollo_Installation_cn.md#%E8%AE%BE%E7%BD%AEapollo%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83
 
