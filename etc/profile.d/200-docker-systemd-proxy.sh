@@ -173,6 +173,26 @@
 
 #sudo systemctl restart docker
 
+
+
+#For docker push, use the following mirror and disable the proxy.
+
+#{
+#  "registry-mirrors": ["https://docker.mirrors.ustc.edu.cn/"]
+#}
+
+#$ cat /etc/systemd/system/docker.service.d/proxy.conf 
+#[Service]
+##Environment="HTTP_PROXY=socks5://127.0.0.1:18888/"
+##Environment="HTTPS_PROXY=socks5://127.0.0.1:18888/"
+##Environment="NO_PROXY=localhost,127.0.0.1,.cn"
+
+#$ sudo systemctl daemon-reload
+#$ sudo systemctl restart docker
+
+#$ docker push hongyizhao/deepin-wine:lion 
+
+
 docker_service_d=/etc/systemd/system/docker.service.d
 proxy_conf=$docker_service_d/proxy.conf 
 
