@@ -31,7 +31,7 @@
 # Method 2:
 #$ apt-cache policy | egrep '^[ ]*origin ' | awk '!a[$0]++ { print $2 }' | grep -v 'mirrors.tuna.tsinghua.edu.cn' | awk '{print $0";"}'
 
-Acquire::http::proxy "socks5h://127.0.0.1:18888" {
+Acquire::http::proxy $SOCKS5H_PROXY {
   apt.postgresql.org;
   dl.google.com;
   nvidia.github.io;
@@ -39,7 +39,7 @@ Acquire::http::proxy "socks5h://127.0.0.1:18888" {
   ppa.launchpad.net;
   developer.download.nvidia.com;
 };
-Acquire::https::proxy "socks5h://127.0.0.1:18888" {
+Acquire::https::proxy $SOCKS5H_PROXY {
   apt.postgresql.org;
   dl.google.com;
   nvidia.github.io;
