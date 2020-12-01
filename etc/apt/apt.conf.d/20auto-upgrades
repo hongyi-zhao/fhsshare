@@ -1,3 +1,6 @@
+#https://askubuntu.com/questions/1059971/disable-updates-from-command-line-in-ubuntu-16-04
+#systemctl disable --now apt-daily{,-upgrade}.{timer,service}
+
 #https://askubuntu.com/questions/218755/how-to-disable-the-update-manager-popup
 
 #https://wiki.debian.org/UnattendedUpgrades
