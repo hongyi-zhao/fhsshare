@@ -181,17 +181,11 @@
 #  "registry-mirrors": ["https://docker.mirrors.ustc.edu.cn/"]
 #}
 
-#$ cat /etc/systemd/system/docker.service.d/proxy.conf 
-#[Service]
-##Environment="HTTP_PROXY=socks5://127.0.0.1:18888/"
-##Environment="HTTPS_PROXY=socks5://127.0.0.1:18888/"
-##Environment="NO_PROXY=localhost,127.0.0.1,.cn"
-
-#$ sudo systemctl daemon-reload
-#$ sudo systemctl restart docker
-
 #$ docker push hongyizhao/deepin-wine:lion 
 
+
+#https://github.com/ApolloAuto/apollo/issues/12224
+#Disable that proxy and try again, or use http/https proxy. See https://docs.bazel.build/versions/master/external.html#using-proxies
 
 docker_service_d=/etc/systemd/system/docker.service.d
 proxy_conf=$docker_service_d/proxy.conf 
@@ -202,8 +196,8 @@ if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
   fi
   sed -r 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $proxy_conf > /dev/null  
         |[Service]
-        |Environment="HTTP_PROXY=socks5://127.0.0.1:18888/"
-        |Environment="HTTPS_PROXY=socks5://127.0.0.1:18888/"
+        |Environment="HTTP_PROXY=http://127.0.0.1:8080/"
+        |Environment="HTTPS_PROXY=http://127.0.0.1:8080/"
         |Environment="NO_PROXY=localhost,127.0.0.1,.cn"
 	EOF
   sudo systemctl daemon-reload
