@@ -187,6 +187,11 @@
 #https://github.com/ApolloAuto/apollo/issues/12224
 #Disable that proxy and try again, or use http/https proxy. See https://docs.bazel.build/versions/master/external.html#using-proxies
 
+#OTOH, socks5h protocol cannot be used here.
+#$ docker pull hongyizhao/deepin:apricot 
+#Error response from daemon: Get https://registry-1.docker.io/v2/: proxyconnect tcp: dial tcp: lookup socks5h: Temporary failure in name resolution
+
+
 docker_service_d=/etc/systemd/system/docker.service.d
 proxy_conf=$docker_service_d/proxy.conf 
 
