@@ -27,9 +27,12 @@ done
 
 
 #$ sudo apt install dconf-editor
-#$ gsettings set com.ubuntu.update-notifier no-show-notifications true
 #$ gsettings list-recursively | grep -i no-show-notifications
-#com.ubuntu.update-notifier no-show-notifications true
+#$ gsettings list-recursively com.ubuntu.update-notifier
+if [[ $( gsettings get com.ubuntu.update-notifier no-show-notifications ) = false ]]; then
+  gsettings set com.ubuntu.update-notifier no-show-notifications true
+fi
+
 
 
 #https://developer.gnome.org/gio/stable/gsettings-tool.html
