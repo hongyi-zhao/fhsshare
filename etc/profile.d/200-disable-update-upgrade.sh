@@ -14,3 +14,38 @@ for srv in apt-daily.service \
     sudo systemctl disable --now $srv >/dev/null 2>&1
   fi          
 done
+
+
+#https://askubuntu.com/questions/291063/how-to-disable-update-notification-for-all-users
+#In newer versions of Ubuntu, there is a (hidden) per-user config option for this.
+
+#Just run (as the user for whom you want to disable notifications):
+
+#gsettings set com.ubuntu.update-notifier no-show-notifications true
+
+#Or, if you prefer doing things visually, run dconf-editor, browse to /com/ubuntu/update-notifier and enable the no-show-notifications option.
+
+
+#$ sudo apt install dconf-editor
+#$ gsettings set com.ubuntu.update-notifier no-show-notifications true
+#$ gsettings list-recursively | grep -i no-show-notifications
+#com.ubuntu.update-notifier no-show-notifications true
+
+
+#https://developer.gnome.org/gio/stable/gsettings-tool.html
+#https://itectec.com/ubuntu/ubuntu-where-can-i-get-a-list-of-schema-path-key-to-use-with-gsettings/
+##!/bin/bash
+## Gnome 3 can be customised from the command line via the gsettings command
+## This script should help you to find what you're looking for by
+## listing the ranges for all keys for each schema
+
+#for schema in $(gsettings list-schemas | sort)
+#do
+#    for key in $(gsettings list-keys $schema | sort)
+#    do
+#        value="$(gsettings range $schema $key | tr "\n" " ")"
+#        echo "$schema :: $key :: $value"
+#    done
+#done
+
+
