@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if dpkg -l unattended-upgrades | grep -q '^ii '; then
+if dpkg -l unattended-upgrades >/dev/null 2>&1; then
   sudo apt-get remove -y unattended-upgrades
 fi
 
@@ -34,7 +34,7 @@ if [[ $( gsettings get com.ubuntu.update-notifier no-show-notifications ) = fals
 fi
 
 #https://askubuntu.com/questions/446395/how-to-turn-off-software-updater-xubuntu
-if dpkg -l crudini | grep -q '^ii '; then
+if ! dpkg -l crudini >/dev/null 2>&1; then
   sudo apt-get install -y crudini
 fi
 
