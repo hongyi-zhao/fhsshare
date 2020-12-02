@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if dpkg --get-selections | grep unattended-upgrades | awk '$NF == "install"'; then
+if dpkg -l unattended-upgrades | grep -q '^ii '; then
   sudo apt-get remove -y unattended-upgrades
 fi
 
@@ -33,6 +33,14 @@ if [[ $( gsettings get com.ubuntu.update-notifier no-show-notifications ) = fals
   gsettings set com.ubuntu.update-notifier no-show-notifications true
 fi
 
+#https://askubuntu.com/questions/446395/how-to-turn-off-software-updater-xubuntu
+if dpkg -l crudini | grep -q '^ii '; then
+  sudo apt-get install -y crudini
+fi
+
+if [[ $(crudini --get /etc/xdg/autostart/update-notifier.desktop 'Desktop Entry' Hidden 2>/dev/null) != "true" ]]; then
+  sudo crudini --set /etc/xdg/autostart/update-notifier.desktop 'Desktop Entry' Hidden true
+fi
 
 
 #https://developer.gnome.org/gio/stable/gsettings-tool.html
