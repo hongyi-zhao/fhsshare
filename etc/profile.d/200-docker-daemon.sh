@@ -233,6 +233,23 @@
 #https://sdwhti62.mirror.aliyuncs.com
 #https://xclx5e0b.mirror.aliyuncs.com
 
+#https://mirrors.nwafu.edu.cn/help/reverse-proxy/dockerhub/
+#Docker Hub 反向代理
+
+#https://dockerhub.mirrors.nwafu.edu.cn/
+#使用方法
+
+#修改 /etc/docker/daemon.json ，加入：
+
+#{
+#  "registry-mirrors": ["https://dockerhub.mirrors.nwafu.edu.cn/"]
+#}
+
+#然后重新启动 Docker 服务：
+
+#sudo systemctl daemon-reload
+#sudo systemctl restart docker
+
 
 etc_docker=/etc/docker
 daemon_json=$etc_docker/daemon.json
@@ -254,9 +271,7 @@ if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
         |         }
         |    },
         |    "registry-mirrors":[
-        |        "https://xclx5e0b.mirror.aliyuncs.com",
-        |        "https://dockerhub.azk8s.cn",
-        |        "https://docker.fuckcloudnative.io",
+        |        "https://dockerhub.mirrors.nwafu.edu.cn",
         |        "https://gcr.fuckcloudnative.io"
         |    ]
         |}
