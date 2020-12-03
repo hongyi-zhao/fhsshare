@@ -233,6 +233,9 @@
 #https://sdwhti62.mirror.aliyuncs.com
 #https://xclx5e0b.mirror.aliyuncs.com
 
+
+#Only the genuine reverse proxy for Docker Hub can give highest performance and up-to-date images content.
+
 #https://mirrors.nwafu.edu.cn/help/reverse-proxy/dockerhub/
 #Docker Hub 反向代理
 
