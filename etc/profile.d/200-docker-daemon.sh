@@ -192,18 +192,86 @@
 #Error response from daemon: Get https://registry-1.docker.io/v2/: proxyconnect tcp: dial tcp: lookup socks5h: Temporary failure in name resolution
 
 
+#https://unix.stackexchange.com/questions/24926/how-do-i-check-the-network-speed-right-now
+#sudo tcpdump -w - |pv >/dev/null
+#sudo iftop
+
+
+#Direct reverse proxy can ensure that the acquired image is the latest and most complete, which is much more reliable than the cache proxy.
+#The king are the envoy proxy or the mirror acceleration service 
+#provided by domestic educational institutions and major cloud service providers.
+
+#https://gist.github.com/y0ngb1n/7e8f16af3242c7815e7ca2f0833d3ea6#%E9%85%8D%E7%BD%AE%E5%8A%A0%E9%80%9F%E5%9C%B0%E5%9D%80
+#配置加速地址
+#创建或修改 /etc/docker/daemon.json：
+
+#sudo mkdir -p /etc/docker
+#sudo tee /etc/docker/daemon.json <<-'EOF'
+#{
+#    "registry-mirrors": [
+#        "https://1nj0zren.mirror.aliyuncs.com",
+#        "https://docker.mirrors.ustc.edu.cn",
+#        "http://f1361db2.m.daocloud.io",
+#        "https://dockerhub.azk8s.cn"
+#    ]
+#}
+#EOF
+#sudo systemctl daemon-reload
+#sudo systemctl restart docker
+
+
+#https://fuckcloudnative.io/posts/docker-registry-proxy/
+#在使用 Docker 和 Kubernetes 时，我们经常需要访问 gcr.io 和 quay.io 镜像仓库，由于众所周知的原因，这些镜像仓库在中国都无法访问，唯一能访问的是 Docker Hub，但速度也是奇慢无比。gcr.azk8s.cn 是 gcr.io 镜像仓库的代理站点，原来可以通过 gcr.azk8s.cn 访问 gcr.io 仓库里的镜像，但是目前 *.azk8s.cn 已经仅限于 Azure 中国的 IP 使用，不再对外提供服务了。国内其他的镜像加速方案大多都是采用定时同步的方式来缓存，不能保证及时更新，ustc 和七牛云等镜像加速器我都试过了，非常不靠谱，很多镜像都没有。
+
+#为了能够顺利访问 gcr.io 等镜像仓库，我们需要在墙外自己搭建一个类似于 gcr.azk8s.cn 的镜像仓库代理站点。直接反代可以保证获取到的镜像是最新最全的，比缓存靠谱多了。
+
+
+#For gcr.io hosted images: "https://gcr.fuckcloudnative.io"
+#For docker.io hosted images: "https://docker.fuckcloudnative.io"
+
+
+#https://github.com/Azure/container-service-for-azure-china/issues/60
+#目前 *.azk8s.cn 已经仅限于 Azure China IP 使用，不再对外提供服务, 如果确实有需求，可以联系akscn@microsoft.com 并提供IP地址，我们会根据需求 做决定是否对特定IP提供服务，谢谢理解。
+
+#Sorry, currently *.azk8s.cn could only be accessed by Azure China IP, we don't provide public outside access any more. If you have such requirement to whitelist your IP, please contact akscn@microsoft.com, provide your IP address, we will decide whether to whitelist your IP per your reasonable requirement, thanks for understanding.
+
+etc_docker=/etc/docker
+daemon_json=$etc_docker/daemon.json
+
 docker_service_d=/etc/systemd/system/docker.service.d
 proxy_conf=$docker_service_d/proxy.conf 
 
 if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
+  if [ ! -d "$etc_docker" ]; then
+    sudo mkdir -p "$etc_docker"
+  fi
+  sed -r 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $daemon_json > /dev/null  
+        |{
+        |    "dns" : ["172.17.0.1"],
+        |       "runtimes": {
+        |          "nvidia": {
+        |            "path": "nvidia-container-runtime",
+        |            "runtimeArgs": []
+        |         }
+        |    },
+        |    "registry-mirrors":[
+        |        "https://1nj0zren.mirror.aliyuncs.com",
+        |        "https://dockerhub.azk8s.cn",
+        |        "https://gcr.fuckcloudnative.io",
+        |        "https://docker.fuckcloudnative.io"
+        |    ]
+        |}
+	EOF
+
+  #Disable the proxy settings for docker daemon:
   if [ ! -d "$docker_service_d" ]; then
     sudo mkdir -p "$docker_service_d"
   fi
   sed -r 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $proxy_conf > /dev/null  
         |[Service]
-        |Environment="HTTP_PROXY=http://127.0.0.1:8080/"
-        |Environment="HTTPS_PROXY=http://127.0.0.1:8080/"
-        |Environment="NO_PROXY=localhost,127.0.0.1,.cn"
+        |#Environment="HTTP_PROXY=http://127.0.0.1:8080/"
+        |#Environment="HTTPS_PROXY=http://127.0.0.1:8080/"
+        |#Environment="NO_PROXY=localhost,127.0.0.1,.cn"
 	EOF
   sudo systemctl daemon-reload
   sudo systemctl restart docker
