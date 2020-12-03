@@ -255,7 +255,9 @@ if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
         |    },
         |    "registry-mirrors":[
         |        "https://xclx5e0b.mirror.aliyuncs.com",
-        |        "https://dockerhub.azk8s.cn"
+        |        "https://dockerhub.azk8s.cn",
+        |        "https://docker.fuckcloudnative.io",
+        |        "https://gcr.fuckcloudnative.io"
         |    ]
         |}
 	EOF
