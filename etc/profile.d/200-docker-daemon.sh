@@ -235,6 +235,12 @@
 
 
 #Only the genuine reverse proxy for Docker Hub can give highest performance and up-to-date images content.
+#Currently, the following ones can be used for this purpose:
+# "https://dockerhub.mirrors.nwafu.edu.cn",
+# "https://gcr.fuckcloudnative.io"
+#The following one shows a unstable speed, so the supplier/provider doesn't recommend me to use it.    
+# "https://docker.fuckcloudnative.io"
+
 
 #https://mirrors.nwafu.edu.cn/help/reverse-proxy/dockerhub/
 #Docker Hub 反向代理
