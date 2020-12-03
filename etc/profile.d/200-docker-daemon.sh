@@ -220,20 +220,19 @@
 #sudo systemctl restart docker
 
 
-#https://fuckcloudnative.io/posts/docker-registry-proxy/
-#在使用 Docker 和 Kubernetes 时，我们经常需要访问 gcr.io 和 quay.io 镜像仓库，由于众所周知的原因，这些镜像仓库在中国都无法访问，唯一能访问的是 Docker Hub，但速度也是奇慢无比。gcr.azk8s.cn 是 gcr.io 镜像仓库的代理站点，原来可以通过 gcr.azk8s.cn 访问 gcr.io 仓库里的镜像，但是目前 *.azk8s.cn 已经仅限于 Azure 中国的 IP 使用，不再对外提供服务了。国内其他的镜像加速方案大多都是采用定时同步的方式来缓存，不能保证及时更新，ustc 和七牛云等镜像加速器我都试过了，非常不靠谱，很多镜像都没有。
-
-#为了能够顺利访问 gcr.io 等镜像仓库，我们需要在墙外自己搭建一个类似于 gcr.azk8s.cn 的镜像仓库代理站点。直接反代可以保证获取到的镜像是最新最全的，比缓存靠谱多了。
-
-
-#For gcr.io hosted images: "https://gcr.fuckcloudnative.io"
-#For docker.io hosted images: "https://docker.fuckcloudnative.io"
-
-
 #https://github.com/Azure/container-service-for-azure-china/issues/60
 #目前 *.azk8s.cn 已经仅限于 Azure China IP 使用，不再对外提供服务, 如果确实有需求，可以联系akscn@microsoft.com 并提供IP地址，我们会根据需求 做决定是否对特定IP提供服务，谢谢理解。
 
 #Sorry, currently *.azk8s.cn could only be accessed by Azure China IP, we don't provide public outside access any more. If you have such requirement to whitelist your IP, please contact akscn@microsoft.com, provide your IP address, we will decide whether to whitelist your IP per your reasonable requirement, thanks for understanding.
+
+
+#Image booster supplied by aliyun container registry.
+#The following ones are registered by myself:
+#https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors
+#https://cr.console.aliyun.com/undefined/instances/mirrors
+#https://sdwhti62.mirror.aliyuncs.com
+#https://xclx5e0b.mirror.aliyuncs.com
+
 
 etc_docker=/etc/docker
 daemon_json=$etc_docker/daemon.json
@@ -255,10 +254,8 @@ if [ $(id -u) -ne 0 ] && type -fp docker > /dev/null; then
         |         }
         |    },
         |    "registry-mirrors":[
-        |        "https://1nj0zren.mirror.aliyuncs.com",
-        |        "https://dockerhub.azk8s.cn",
-        |        "https://gcr.fuckcloudnative.io",
-        |        "https://docker.fuckcloudnative.io"
+        |        "https://xclx5e0b.mirror.aliyuncs.com",
+        |        "https://dockerhub.azk8s.cn"
         |    ]
         |}
 	EOF
