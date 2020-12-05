@@ -104,7 +104,7 @@ fi
 
 
 # Some needed tools:
-# sudo apt-get -y install apt-transport-https apt-utils ca-certificates software-properties-common gnupg-agent devscripts gcc make cmake git netcat socat haproxy gawk uuid gedit-plugins gnome-tweak-tool copyq telegram-desktop curl apt-file gparted gddrescue partclone gdebi zstd jq tor golang synaptic gimp pandoc equivs unrar
+# sudo apt-get -y install apt-transport-https apt-utils ca-certificates software-properties-common gnupg-agent devscripts gcc make cmake git netcat ncat socat tcpdump pv iftop haproxy gawk uuid gedit-plugins gnome-tweak-tool copyq telegram-desktop curl apt-file gparted gddrescue partclone gdebi zstd jq tor golang synaptic gimp pandoc equivs unrar
 # sudo apt-get -y build-dep golang
 
 #For Apollo D-kit hardware platform.
