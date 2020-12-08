@@ -78,14 +78,14 @@ fi
 
 # The idea
 
-# Use a seperated local partition/remote filesystem ( say, nfs ), for my case, $ROOTSHARE_WORK_TREE,
+# Use a separate local disk/partition/remote filesystem, say, nfs, as the $ROOTSHARE partition,
 # to populate the corresponding stuff which its directories conform to the
 # Filesystem Hierarchy Standard，FHS:
 # https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard
 
 # Based on the xdg base directory specifications, find out which directories can be completely/partially shared.
-# For the former, put it into the public $HOMESHARE_WORK_TREE/ directory, for the latter, only put the corresponding partially shared
-# subdirectories into the corresponding location in the $HOMESHARE_WORK_TREE/ directory.
+# For the former, put it into the public $HOMESHARE/ directory, for the latter, only put the corresponding partially shared
+# subdirectories into the corresponding location in the $HOMESHARE/ directory.
 
 # For the corresponding (system|user)-wide settings, restore them by git repos as following:
 # system-wide:
@@ -112,15 +112,15 @@ fi
 #Neousys Technology Inc.
 
 # This directory holds the share data for all users under / hierarchy:
-ROOTSHARE_WORK_TREE=/rootshare
+ROOTSHARE=/rootshare
 # This directory holds the share data for all non-root users under $HOME hierarchy:
-HOMESHARE_WORK_TREE=$ROOTSHARE_WORK_TREE/homeshare
+HOMESHARE=$ROOTSHARE/homeshare
 
-ROOTSHARE_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/rootshare.git
-ROOTSHARE_GIT_DIR=$ROOTSHARE_ORIGIN_DIR/.git
+ROOTSHARE_REPO=$HOMESHARE/Public/repo/github.com/hongyi-zhao/rootshare.git
+ROOTSHARE_REPO_GIT_DIR=$ROOTSHARE_REPO/.git
 
-HOMESHARE_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare.git
-HOMESHARE_GIT_DIR=$HOMESHARE_ORIGIN_DIR/.git  
+HOMESHARE_REPO=$HOMESHARE/Public/repo/github.com/hongyi-zhao/homeshare.git
+HOMESHARE_REPO_GIT_DIR=$HOMESHARE_REPO/.git  
 
     
 # Don't use `findmnt -r`, this use the following rule which makes the regex match impossiable for
@@ -130,35 +130,35 @@ HOMESHARE_GIT_DIR=$HOMESHARE_ORIGIN_DIR/.git
 #              (\x<code>).
 
 # Don't run this script repeatedly:
-if findmnt -l -o TARGET | grep -qE "^$ROOTSHARE_WORK_TREE$"; then
+if findmnt -l -o TARGET | grep -qE "^$ROOTSHARE$"; then
   return
 fi
 
 # Only do the settings for non-root users:
 if [ "$( id -u )" -ne 0 ]; then
-  if [ ! -d $ROOTSHARE_WORK_TREE ]; then
-    sudo mkdir -p $ROOTSHARE_WORK_TREE
-    #sudo chown -hR root:root $ROOTSHARE_WORK_TREE
+  if [ ! -d $ROOTSHARE ]; then
+    sudo mkdir -p $ROOTSHARE
+    #sudo chown -hR root:root $ROOTSHARE
   fi
 
   # https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
   # https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
 
   while IFS= read -r uuid; do
-    if ! findmnt -l -o TARGET | grep -qE "^$ROOTSHARE_WORK_TREE$"; then
-      sudo mount -U $uuid $ROOTSHARE_WORK_TREE
+    if ! findmnt -l -o TARGET | grep -qE "^$ROOTSHARE$"; then
+      sudo mount -U $uuid $ROOTSHARE
     fi
   
-    if [[ -d "$ROOTSHARE_ORIGIN_DIR" && -d "$HOMESHARE_ORIGIN_DIR" ]]; then
+    if [[ -d "$ROOTSHARE_REPO" && -d "$HOMESHARE_REPO" ]]; then
       # Disable homeshare-apollo.git relevant settings.
    
       # Add supporting for https://github.com/ApolloAuto/apollo using the following repository:
       # https://github.com/hongyi-zhao/homeshare-apollo.git
-      #HOMESHARE_APOLLO_ORIGIN_DIR=$HOMESHARE_WORK_TREE/Public/repo/github.com/hongyi-zhao/homeshare-apollo.git
+      #HOMESHARE_APOLLO_ORIGIN_DIR=$HOMESHARE/Public/repo/github.com/hongyi-zhao/homeshare-apollo.git
       #HOMESHARE_APOLLO_GIT_DIR=$HOMESHARE_APOLLO_ORIGIN_DIR/.git     
 
       # Third party applications, say, intel's tools, are intalled in this directory for sharing:
-      OPTSHARE=$ROOTSHARE_WORK_TREE/opt
+      OPTSHARE=$ROOTSHARE/opt
       if [ ! -d $OPTSHARE ]; then
         sudo mkdir $OPTSHARE
       fi
@@ -167,28 +167,28 @@ if [ "$( id -u )" -ne 0 ]; then
         sudo mount -o rw,rbind $OPTSHARE /opt
       fi
 
-      if [[ "$(realpath -e /.git 2>/dev/null)" != "$(realpath -e $ROOTSHARE_GIT_DIR)" ]]; then
+      if [[ "$(realpath -e /.git 2>/dev/null)" != "$(realpath -e $ROOTSHARE_REPO_GIT_DIR)" ]]; then
         sudo rm -fr /.git
-        sudo ln -sfr $ROOTSHARE_GIT_DIR /
+        sudo ln -sfr $ROOTSHARE_REPO_GIT_DIR /
         sudo git -C / reset --hard
       fi
 
       if ! git -C / diff --quiet; then 
-        git -C / diff | sudo tee /$(git rev-parse HEAD).diff > /dev/null
+        git -C / diff | sudo tee /$(git -C $ROOTSHARE_REPO rev-parse HEAD).diff > /dev/null
         sudo git -C / reset --hard
       fi
 
       break
     else
-      sudo umount $ROOTSHARE_WORK_TREE
+      sudo umount $ROOTSHARE
     fi
   done < <( lsblk -n -o type,uuid,mountpoint | awk 'NF >= 2 && $1 ~ /^part$/ && $2 ~/[0-9a-f-]{36}/ && $NF != "/" { print $2 }' )
 
 
   # For debug the errors occurred in the variables assignment operation.
   #echo user_id="$( id -u )" 
-  #echo ROOTSHARE_ORIGIN_DIR="$ROOTSHARE_ORIGIN_DIR"
-  #echo HOMESHARE_ORIGIN_DIR="$HOMESHARE_ORIGIN_DIR"
+  #echo ROOTSHARE_REPO="$ROOTSHARE_REPO"
+  #echo HOMESHARE_REPO="$HOMESHARE_REPO"
 
 
   #https://specifications.freedesktop.org/menu-spec/latest/
@@ -213,7 +213,7 @@ if [ "$( id -u )" -ne 0 ]; then
   #  export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
   #fi
 
-  # attach the stuff found on $HOMESHARE_WORK_TREE/ at $HOME/:
+  # attach the stuff found on $HOMESHARE/ at $HOME/:
 
   #https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -228,7 +228,7 @@ if [ "$( id -u )" -ne 0 ]; then
   # %p     File's name.
   # %P     File's name with the name of the starting-point under which it was found removed.
 
-  # Attach all top-level subdirectories found on $HOMESHARE_WORK_TREE/ at $HOME/:
+  # Attach all top-level subdirectories found on $HOMESHARE/ at $HOME/:
   #$ find /rootshare/homeshare -maxdepth 1 -mindepth 1 -type d -printf "\"%P\"\n" | sed -re 's|$| \\|' 
   #"Pictures" \
   #"Templates" \
@@ -260,39 +260,22 @@ if [ "$( id -u )" -ne 0 ]; then
   #".pki" \
 
   
-  #find -L $HOMESHARE_WORK_TREE/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
-  find $HOMESHARE_WORK_TREE/ -mindepth 1 -maxdepth 1 -type d -printf '%f\n' |
+  #find -L $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
+  find $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d -printf '%f\n' |
   while IFS= read -r line; do
     if [ ! -d "$HOME/$line" ]; then
       mkdir "$HOME/$line"
     fi
 
     if ! findmnt -l -o TARGET | grep -qE "^$HOME/$line$"; then
-      sudo mount -o rw,rbind "$HOMESHARE_WORK_TREE/$line" "$HOME/$line"
+      sudo mount -o rw,rbind "$HOMESHARE/$line" "$HOME/$line"
     fi
   done
 
-  # Initialize the settings for current user with homeshare.git | homeshare-apollo.git.
-  # If using the $HOMESHARE_GIT_DIR | $HOMESHARE_APOLLO_GIT_DIR directory directly without mount it under $HOME, 
-  # the following command should be issued:
-  #if [[ "$(uname -r)" =~ -apollo- ]]; then
-  #  if [[ -d $HOMESHARE_APOLLO_GIT_DIR ]]; then
-  #    if ! git --work-tree=$HOME --git-dir=$HOMESHARE_APOLLO_GIT_DIR diff --quiet; then 
-  #      git --work-tree=$HOME --git-dir=$HOMESHARE_APOLLO_GIT_DIR reset --hard
-  #    fi       
-  #  fi
-  #else
-  #  if [[ -d $HOMESHARE_GIT_DIR ]]; then
-  #    if ! git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR diff --quiet; then 
-  #      git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR reset --hard
-  #    fi      
-  #  fi  
-  #fi
-  
-  if [[ -d $HOMESHARE_GIT_DIR ]]; then
-    if ! git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR diff --quiet; then 
-      git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR diff > $HOME/$(git rev-parse HEAD).diff
-      git --work-tree=$HOME --git-dir=$HOMESHARE_GIT_DIR reset --hard
+  if [[ -d $HOMESHARE_REPO_GIT_DIR ]]; then
+    if ! git --work-tree=$HOME --git-dir=$HOMESHARE_REPO_GIT_DIR diff --quiet; then 
+      git --work-tree=$HOME --git-dir=$HOMESHARE_REPO_GIT_DIR diff > $HOME/$(git -C $HOMESHARE_REPO rev-parse HEAD).diff
+      git --work-tree=$HOME --git-dir=$HOMESHARE_REPO_GIT_DIR reset --hard
     fi      
   fi   
 fi
@@ -342,16 +325,16 @@ fi
 
 
   # Dealing with hidden directories via one find command:
-  #find -L $HOMESHARE_WORK_TREE/ $HOMESHARE_WORK_TREE/.local $HOMESHARE_WORK_TREE/.local/share \
-  #     -mindepth 1  -maxdepth 1 -type d ! -path "$HOMESHARE_WORK_TREE/.local" ! -path "$HOMESHARE_WORK_TREE/.local/share" -path "$HOMESHARE_WORK_TREE/.*" 2>/dev/null |
-  #sed -E "s|^$HOMESHARE_WORK_TREE/||" |
+  #find -L $HOMESHARE/ $HOMESHARE/.local $HOMESHARE/.local/share \
+  #     -mindepth 1  -maxdepth 1 -type d ! -path "$HOMESHARE/.local" ! -path "$HOMESHARE/.local/share" -path "$HOMESHARE/.*" 2>/dev/null |
+  #sed -E "s|^$HOMESHARE/||" |
   #while IFS= read -r line; do
   #  if [ ! -d $HOME/"$line" ]; then
   #    mkdir -p $HOME/"$line"
   #  fi
 
   #  if ! findmnt -l -o TARGET | grep -qE "^$HOME/$line$"; then
-  #    sudo mount -o rw,rbind $HOMESHARE_WORK_TREE/"$line" $HOME/"$line"
+  #    sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
   #  fi
   #done
   
