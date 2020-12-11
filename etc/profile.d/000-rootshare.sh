@@ -103,9 +103,85 @@ fi
 # ensure the execute logic among these scripts.
 
 
+codename=$(lsb_release -sc)
+sources_list=/etc/apt/sources.list
+
+
+#info sed
+#'[:blank:]'
+#     Blank characters: space and tab.
+#'[:space:]'
+#     Space characters: in the 'C' locale, this is tab, newline, vertical
+#     tab, form feed, carriage return, and space.
+
+if lsb_release -i | grep -qi Debian; then
+  sed 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $sources_list >/dev/null
+        |#http://mirrors.ustc.edu.cn/repogen/
+        |#https://mirrors.tuna.tsinghua.edu.cn/help/debian/
+        |
+        |#如果遇到无法拉取 https 源的情况，请先使用 http 源并安装：
+        |#$ sudo apt install apt-transport-https
+        |
+        |# For solving the unmet dependencies of packages, the updates and security suites can be used 
+        |# temporarily.
+        |
+        |deb https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename main contrib non-free
+        |deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename main contrib non-free
+        |
+        |deb https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename-updates main contrib non-free
+        |deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename-updates main contrib non-free
+        |      
+        |deb https://mirrors.tuna.tsinghua.edu.cn/debian-security $codename/updates main contrib non-free
+        |deb-src https://mirrors.tuna.tsinghua.edu.cn/debian-security $codename/updates main contrib non-free
+        |
+        |#deb https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename-backports main contrib non-free
+        |#deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ $codename-backports main contrib non-free
+	EOF
+elif lsb_release -i | grep -qi Ubuntu; then
+  sed 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $sources_list >/dev/null
+        |#http://mirrors.ustc.edu.cn/repogen/
+        |#https://mirrors.tuna.tsinghua.edu.cn/help/debian/
+        | 
+        |#如果遇到无法拉取 https 源的情况，请先使用 http 源并安装：
+        |#$ sudo apt install apt-transport-https
+        |
+        |# For solving the unmet dependencies of packages, the updates and security suites can be used 
+        |# temporarily.
+        |        	
+        |deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename main restricted universe multiverse
+        |deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename main restricted universe multiverse
+        |
+        |deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-updates main restricted universe multiverse
+        |deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-updates main restricted universe multiverse
+        |         
+        |deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-security main restricted universe multiverse
+        |deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-security main restricted universe multiverse
+        |
+        |#deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-backports main restricted universe multiverse
+        |#deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-backports main restricted universe multiverse
+        |
+        |## Not recommended
+        |# deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-proposed main restricted universe multiverse
+        |# deb-src http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ $codename-proposed main restricted universe multiverse 
+	EOF
+fi	
+
+# man apt-get
+#       -q, --quiet
+#           Quiet; produces output suitable for logging, omitting progress
+#           indicators. More q's will produce more quiet up to a maximum of 2.
+#           You can also use -q=# to set the quiet level, overriding the
+#           configuration file. Note that quiet level 2 implies -y; you should
+#           never use -qq without a no-action modifier such as -d, --print-uris
+#           or -s as APT may decide to do something you did not expect.
+#           Configuration Item: quiet.
+
+
 # Some needed tools:
-# sudo apt-get -y install dialog apt-transport-https apt-utils ca-certificates software-properties-common gnupg-agent devscripts gcc make cmake git netcat ncat socat tcpdump pv iftop haproxy gawk uuid gedit-plugins gnome-tweak-tool copyq telegram-desktop curl apt-file gparted gddrescue partclone gdebi zstd jq tor golang synaptic gimp pandoc equivs unrar
-# sudo apt-get -y build-dep golang
+sudo apt-get -qq install dialog apt-transport-https apt-utils ca-certificates software-properties-common gnupg-agent devscripts gcc make cmake git netcat ncat socat tcpdump pv iftop haproxy gawk uuid gedit-plugins gnome-tweak-tool telegram-desktop curl apt-file gparted gddrescue partclone gdebi zstd jq tor golang synaptic gimp pandoc equivs unrar
+sudo apt-get -qq build-dep golang
+
+
 
 #For Apollo D-kit hardware platform.
 #$ sudo dmidecode -s baseboard-manufacturer | egrep --color 'Neousys Technology Inc\.'
@@ -150,14 +226,7 @@ if [ "$( id -u )" -ne 0 ]; then
     fi
   
     if [[ -d "$ROOTSHARE_REPO" && -d "$HOMESHARE_REPO" ]]; then
-      # Disable homeshare-apollo.git relevant settings.
-   
-      # Add supporting for https://github.com/ApolloAuto/apollo using the following repository:
-      # https://github.com/hongyi-zhao/homeshare-apollo.git
-      #HOMESHARE_APOLLO_ORIGIN_DIR=$HOMESHARE/Public/repo/github.com/hongyi-zhao/homeshare-apollo.git
-      #HOMESHARE_APOLLO_GIT_DIR=$HOMESHARE_APOLLO_ORIGIN_DIR/.git     
-
-      # Third party applications, say, intel's tools, are intalled in this directory for sharing:
+      # Third party applications, say, intel's tools, are intalled under this directory:
       OPTSHARE=$ROOTSHARE/opt
       if [ ! -d $OPTSHARE ]; then
         sudo mkdir $OPTSHARE
