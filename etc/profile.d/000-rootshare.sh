@@ -168,6 +168,8 @@ if ! grep -qE "^[[:blank:]]*deb(-src)? https?://$MIRROR/" $sources_list; then
 	EOF
   fi
 
+  sudo apt-get -qq update
+  
   # man apt-get
   #       -q, --quiet
   #           Quiet; produces output suitable for logging, omitting progress
