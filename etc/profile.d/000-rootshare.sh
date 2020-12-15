@@ -66,7 +66,7 @@ fi
 # Execute the judgemant logic for using the self-defined git function when the corresponding git repo exists.
 if [[ "$(declare -pF git 2>/dev/null)" =~ ' -fx ' ]] && [[ "${BASH_SOURCE[0]}" = "${0}" ]] && [ -d "$topdir/$script_basename/.git" ]; then
   prepare_repo () {
-    git clean -xdf
+    sudo git clean -xdf
     git reset --hard
     git pull
   }
@@ -74,6 +74,15 @@ fi
   
 #$script_dirname is equivalent to $topdir.
 
+#if declare -F prepare_repo >/dev/null; then
+#or
+if type -t prepare_repo >/dev/null; then
+  pkgname=$(tr [A-Z] [a-z] <<< "${script_basename%.git}")
+  if apt-cache pkgnames | egrep -q "^${pkgname}$"; then
+    sudo apt-get build-dep -y $pkgname
+  fi
+  prepare_repo
+fi
 
 
 # The idea
