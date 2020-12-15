@@ -184,7 +184,7 @@ if ! grep -qE "^[[:blank:]]*deb(-src)? https?://$MIRROR/" $sources_list; then
   sudo apt-get -qq install dialog apt-transport-https apt-utils ca-certificates software-properties-common gnupg-agent devscripts \
                            gcc make cmake git netcat ncat socat tcpdump pv iftop haproxy gawk uuid gedit-plugins gnome-tweaks \
                            gnome-shell-extensions-gpaste gpaste telegram-desktop curl apt-file gparted gddrescue partclone gdebi \
-                           zstd jq tor golang synaptic gimp pandoc equivs unrar
+                           zstd jq tor golang synaptic gimp pandoc equivs unrar xclip xsel
   sudo apt-get -qq build-dep golang
 fi	
 
