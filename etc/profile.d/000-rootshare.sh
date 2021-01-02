@@ -51,8 +51,10 @@ fi
 
 #https://superuser.com/questions/731425/bash-detect-execute-vs-source-in-a-script
 #https://stackoverflow.com/questions/2683279/how-to-detect-if-a-script-is-being-sourced
-# Only triggering the cd command logic when script is not being sourced.
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+# Only triggering the cd operation when the following conditions meet:
+# The $script_basename isn't a command name; 
+# The script isn't being sourced.
+if ! type -at $script_basename >/dev/null && [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   if [ -d "$topdir/$script_basename" ]; then 
     cd $topdir/$script_basename
     if [[ $script_basename =~ [.]git$ ]]; then
@@ -110,92 +112,6 @@ fi
 # these scripts are sourced by lexical / dictionary order,
 # when there are two or more scripts to be sourced, make sure use correct filenames to
 # ensure the execute logic among these scripts.
-
-
-codename=$(lsb_release -sc)
-sources_list=/etc/apt/sources.list
-MIRROR=mirrors.tuna.tsinghua.edu.cn
-
-#info sed
-#'[:blank:]'
-#     Blank characters: space and tab.
-#'[:space:]'
-#     Space characters: in the 'C' locale, this is tab, newline, vertical
-#     tab, form feed, carriage return, and space.
-
-
-if ! grep -qE "^[[:blank:]]*deb(-src)? https?://$MIRROR/" $sources_list; then
-  if lsb_release -i | grep -qi Debian; then
-    sed 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $sources_list >/dev/null
-        |#http://mirrors.ustc.edu.cn/repogen/
-        |#https://mirrors.tuna.tsinghua.edu.cn/help/debian/
-        |
-        |#如果遇到无法拉取 https 源的情况，请先使用 http 源并安装：
-        |#$ sudo apt install apt-transport-https
-        |
-        |# For solving the unmet dependencies of packages, the updates and security suites can be used 
-        |# temporarily.
-        |
-        |deb https://$MIRROR/debian/ $codename main contrib non-free
-        |deb-src https://$MIRROR/debian/ $codename main contrib non-free
-        |
-        |deb https://$MIRROR/debian/ $codename-updates main contrib non-free
-        |deb-src https://$MIRROR/debian/ $codename-updates main contrib non-free
-        |      
-        |deb https://$MIRROR/debian-security $codename/updates main contrib non-free
-        |deb-src https://$MIRROR/debian-security $codename/updates main contrib non-free
-        |
-        |#deb https://$MIRROR/debian/ $codename-backports main contrib non-free
-        |#deb-src https://$MIRROR/debian/ $codename-backports main contrib non-free
-	EOF
-  elif lsb_release -i | grep -qi Ubuntu; then
-    sed 's/^[[:blank:]]*[|]//' <<-EOF | sudo tee $sources_list >/dev/null
-        |#http://mirrors.ustc.edu.cn/repogen/
-        |#https://mirrors.tuna.tsinghua.edu.cn/help/debian/
-        | 
-        |#如果遇到无法拉取 https 源的情况，请先使用 http 源并安装：
-        |#$ sudo apt install apt-transport-https
-        |
-        |# For solving the unmet dependencies of packages, the updates and security suites can be used 
-        |# temporarily.
-        |        	
-        |deb http://$MIRROR/ubuntu/ $codename main restricted universe multiverse
-        |deb-src http://$MIRROR/ubuntu/ $codename main restricted universe multiverse
-        |
-        |deb http://$MIRROR/ubuntu/ $codename-updates main restricted universe multiverse
-        |deb-src http://$MIRROR/ubuntu/ $codename-updates main restricted universe multiverse
-        |         
-        |deb http://$MIRROR/ubuntu/ $codename-security main restricted universe multiverse
-        |deb-src http://$MIRROR/ubuntu/ $codename-security main restricted universe multiverse
-        |
-        |#deb http://$MIRROR/ubuntu/ $codename-backports main restricted universe multiverse
-        |#deb-src http://$MIRROR/ubuntu/ $codename-backports main restricted universe multiverse
-        |
-        |## Not recommended
-        |# deb http://$MIRROR/ubuntu/ $codename-proposed main restricted universe multiverse
-        |# deb-src http://$MIRROR/ubuntu/ $codename-proposed main restricted universe multiverse 
-	EOF
-  fi
-
-  sudo apt-get -qq update
-  
-  # man apt-get
-  #       -q, --quiet
-  #           Quiet; produces output suitable for logging, omitting progress
-  #           indicators. More q's will produce more quiet up to a maximum of 2.
-  #           You can also use -q=# to set the quiet level, overriding the
-  #           configuration file. Note that quiet level 2 implies -y; you should
-  #           never use -qq without a no-action modifier such as -d, --print-uris
-  #           or -s as APT may decide to do something you did not expect.
-  #           Configuration Item: quiet.
-
-  # Some needed tools:
-  sudo apt-get -y install dialog apt-transport-https apt-utils ca-certificates software-properties-common gnupg-agent devscripts \
-                          gcc make cmake git netcat ncat socat tcpdump pv iftop haproxy gawk uuid gedit-plugins gnome-tweaks \
-                          gnome-shell-extensions-gpaste gpaste telegram-desktop curl apt-file dlocate gparted gddrescue partclone gdebi \
-                          zstd jq tor golang synaptic gimp pandoc equivs unrar xclip xsel
-  sudo apt-get -y build-dep golang
-fi	
 
 
 #For Apollo D-kit hardware platform.
