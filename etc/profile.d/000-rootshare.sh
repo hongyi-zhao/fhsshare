@@ -2,39 +2,72 @@
 # Obtain the canonicalized absolute dirname where the script resides.
 # Both readlink and realpath can do the trick.
 
-# In the following method, the $script_dirname is equivalent to $topdir:
+# In the following method, the $script_realdirname is equivalent to $topdir_realpath:
 script_realpath="$(realpath -e -- "${BASH_SOURCE[0]}")"
-
-topdir=$(
+topdir_realpath=$(
 cd -P -- "$(dirname -- "$script_realpath")" &&
 pwd -P
 ) 
 
 if [[ "$script_realpath" =~ ^(.*)/(.*)$ ]]; then
-  script_dirname="${BASH_REMATCH[1]}"
-  script_name="${BASH_REMATCH[2]}"
-  #echo script_dirname="$script_dirname"
-  #echo script_name="$script_name"
-  # . not appeared in script_name at all.
-  if [[ "$script_name"  =~ ^([^.]*)$ ]]; then
-    script_basename="$script_name"
-    #echo script_basename="$script_basename"
+  script_realdirname="${BASH_REMATCH[1]}"
+  script_realname="${BASH_REMATCH[2]}"
+  #echo script_realdirname="$script_realdirname"
+  #echo script_realname="$script_realname"
+  # . not appeared in script_realname at all.
+  if [[ "$script_realname"  =~ ^([^.]*)$ ]]; then
+    script_realbasename="$script_realname"
+    #echo script_realbasename="$script_realbasename"
   else
-    # . appeared in script_name. 
+    # . appeared in script_realname. 
     # As far as filename is concerned, when . is used as the last character, it doesn't have any spefical meaning.
     # Including . as the beginning character.
-    if [[ "$script_name"  =~ ^([.].*)$ ]]; then
-      script_extname="$script_name"
-      #echo script_extname="$script_extname"
+    if [[ "$script_realname"  =~ ^([.].*)$ ]]; then
+      script_realextname="$script_realname"
+      #echo script_realextname="$script_realextname"
       # Including . but not as the beginning/trailing character.
-    elif [[ "$script_name"  =~ ^([^.].*)[.]([^.]+)$ ]]; then
-      script_basename="${BASH_REMATCH[1]}"
-      script_extname="${BASH_REMATCH[2]}"
-      #echo script_basename="$script_basename"
-      #echo script_extname="$script_extname"
+    elif [[ "$script_realname"  =~ ^([^.].*)[.]([^.]+)$ ]]; then
+      script_realbasename="${BASH_REMATCH[1]}"
+      script_realextname="${BASH_REMATCH[2]}"
+      #echo script_realbasename="$script_realbasename"
+      #echo script_realextname="$script_realextname"
     fi
   fi
 fi
+
+
+script_path="${BASH_SOURCE[0]}"
+topdir_path=$(
+cd -P -- "$(dirname -- "$script_path")" &&
+pwd -P
+) 
+
+if [[ "$scriptpath" =~ ^(.*)/(.*)$ ]]; then
+  scriptdirname="${BASH_REMATCH[1]}"
+  scriptname="${BASH_REMATCH[2]}"
+  #echo scriptdirname="$scriptdirname"
+  #echo scriptname="$scriptname"
+  # . not appeared in scriptname at all.
+  if [[ "$scriptname"  =~ ^([^.]*)$ ]]; then
+    scriptbasename="$scriptname"
+    #echo scriptbasename="$scriptbasename"
+  else
+    # . appeared in scriptname. 
+    # As far as filename is concerned, when . is used as the last character, it doesn't have any spefical meaning.
+    # Including . as the beginning character.
+    if [[ "$scriptname"  =~ ^([.].*)$ ]]; then
+      scriptextname="$scriptname"
+      #echo scriptextname="$scriptextname"
+      # Including . but not as the beginning/trailing character.
+    elif [[ "$scriptname"  =~ ^([^.].*)[.]([^.]+)$ ]]; then
+      scriptbasename="${BASH_REMATCH[1]}"
+      scriptextname="${BASH_REMATCH[2]}"
+      #echo scriptbasename="$scriptbasename"
+      #echo scriptextname="$scriptextname"
+    fi
+  fi
+fi
+
 
 #https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -52,21 +85,33 @@ fi
 #https://superuser.com/questions/731425/bash-detect-execute-vs-source-in-a-script
 #https://stackoverflow.com/questions/2683279/how-to-detect-if-a-script-is-being-sourced
 # Only triggering the cd operation when the following conditions meet:
-# The $script_basename isn't a command name; 
+# The $script_realbasename isn't a command name; 
 # The script isn't being sourced.
-if ! type -at $script_basename >/dev/null && [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  if [ -d "$topdir/$script_basename" ]; then 
-    cd $topdir/$script_basename
-    if [[ $script_basename =~ [.]git$ ]]; then
-      ncore=$(sudo dmidecode -t 4 | grep 'Core Enabled:' | awk '{a+=$NF}END{ print a }')
+git_repo=$topdir_realpath/$script_realbasename
+if ! type -at $script_realbasename >/dev/null && ! type -at $script_basename >/dev/null && [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  if [[ $git_repo =~ [^/]+[.]git$ ]]; then
+    ncore=$(sudo dmidecode -t 4 | grep 'Core Enabled:' | awk '{a+=$NF}END{ print a }') 
+    if [ ! -d $git_repo ]; then
+      remote_origin_url_https=$(sed -re "s|^$HOME/Public/repo/|https://|" <<< $git_repo)
+      remote_origin_url_git=$(sed -re "s|^$HOME/Public/repo/|git://|" <<< $git_repo)
+      if [ "$(curl -o /dev/null -x socks5://127.0.0.1:18888 -I -L -s -w '%{http_code}' $remote_origin_url_https)" -eq 200 ]; then
+        git clone $remote_origin_url_https $git_repo 
+      else
+        git clone $remote_origin_url_git $git_repo 
+      fi
     fi
+    cd $git_repo
   else
-    cd $topdir  
+    if [ -d "$git_repo" ]; then 
+      cd $git_repo
+    else
+      cd $topdir_realpath  
+    fi
   fi
 fi
 
 # Execute the judgemant logic for using the self-defined git function when the corresponding git repo exists.
-if [[ "$(declare -pF git 2>/dev/null)" =~ ' -fx ' ]] && [[ "${BASH_SOURCE[0]}" = "${0}" ]] && [ -d "$topdir/$script_basename/.git" ]; then
+if ! type -at $script_basename >/dev/null && [[ "$(declare -pF git 2>/dev/null)" =~ ' -fx ' ]] && [[ "${BASH_SOURCE[0]}" = "${0}" ]] && [ -d "$git_repo/.git" ]; then
   prepare_repo () {
     sudo git clean -xdf
     git reset --hard
@@ -74,17 +119,28 @@ if [[ "$(declare -pF git 2>/dev/null)" =~ ' -fx ' ]] && [[ "${BASH_SOURCE[0]}" =
   }
 fi 
   
-#$script_dirname is equivalent to $topdir.
-
-#if declare -F prepare_repo >/dev/null; then
-#or
-if type -t prepare_repo >/dev/null; then
-  pkgname=$(tr [A-Z] [a-z] <<< "${script_basename%.git}")
+build_dep () {
+  pkgname=$(tr [A-Z] [a-z] <<< "${script_realbasename%.git}")
   if apt-cache pkgnames | egrep -q "^${pkgname}$"; then
     sudo apt-get build-dep -y $pkgname
   fi
+}
+  
+#if declare -F prepare_repo >/dev/null; then
+#or
+if type -t prepare_repo >/dev/null; then
   prepare_repo
 fi
+
+non_zero_status () {
+  status_code=$?
+  echo '*** Ouch! Exiting ***'
+  echo "The script_realpath: ${script_realpath}"
+  exit $status_code
+}
+
+#$script_realdirname is equivalent to $topdir_realpath.
+#$script_dirname is equivalent to $topdir_path.
 
 
 # The idea
