@@ -1,147 +1,22 @@
 #!/usr/bin/env bash
-# Obtain the canonicalized absolute dirname where the script resides.
-# Both readlink and realpath can do the trick.
+scriptdir_realdirname=$(cd -P -- "$(dirname -- "${1:-${BASH_SOURCE[0]}}")" && pwd -P)
 
-# In the following method, the $script_realdirname is equivalent to $topdir_realpath:
-script_realpath="$(realpath -e -- "${BASH_SOURCE[0]}")"
-topdir_realpath=$(
-cd -P -- "$(dirname -- "$script_realpath")" &&
-pwd -P
-) 
+script_realdirname=$(dirname "$(realpath -e "${1:-${BASH_SOURCE[0]}}")")
+script_dirname=$(cd -- "$(dirname -- "${1:-${BASH_SOURCE[0]}}")" && pwd)
 
-if [[ "$script_realpath" =~ ^(.*)/(.*)$ ]]; then
-  script_realdirname="${BASH_REMATCH[1]}"
-  script_realname="${BASH_REMATCH[2]}"
-  #echo script_realdirname="$script_realdirname"
-  #echo script_realname="$script_realname"
-  # . not appeared in script_realname at all.
-  if [[ "$script_realname"  =~ ^([^.]*)$ ]]; then
-    script_realbasename="$script_realname"
-    #echo script_realbasename="$script_realbasename"
-  else
-    # . appeared in script_realname. 
-    # As far as filename is concerned, when . is used as the last character, it doesn't have any spefical meaning.
-    # Including . as the beginning character.
-    if [[ "$script_realname"  =~ ^([.].*)$ ]]; then
-      script_realextname="$script_realname"
-      #echo script_realextname="$script_realextname"
-      # Including . but not as the beginning/trailing character.
-    elif [[ "$script_realname"  =~ ^([^.].*)[.]([^.]+)$ ]]; then
-      script_realbasename="${BASH_REMATCH[1]}"
-      script_realextname="${BASH_REMATCH[2]}"
-      #echo script_realbasename="$script_realbasename"
-      #echo script_realextname="$script_realextname"
-    fi
-  fi
-fi
+script_realname=$(basename "$(realpath -e "${1:-${BASH_SOURCE[0]}}")")
+script_name=$(basename "${1:-${BASH_SOURCE[0]}}")
 
+script_realpath=$script_realdirname/$script_realname
+script_path=$script_dirname/$script_name
 
-script_path="${BASH_SOURCE[0]}"
-topdir_path=$(
-cd -P -- "$(dirname -- "$script_path")" &&
-pwd -P
-) 
+pkg_repo=${script_realpath%.*}
 
-if [[ "$scriptpath" =~ ^(.*)/(.*)$ ]]; then
-  scriptdirname="${BASH_REMATCH[1]}"
-  scriptname="${BASH_REMATCH[2]}"
-  #echo scriptdirname="$scriptdirname"
-  #echo scriptname="$scriptname"
-  # . not appeared in scriptname at all.
-  if [[ "$scriptname"  =~ ^([^.]*)$ ]]; then
-    scriptbasename="$scriptname"
-    #echo scriptbasename="$scriptbasename"
-  else
-    # . appeared in scriptname. 
-    # As far as filename is concerned, when . is used as the last character, it doesn't have any spefical meaning.
-    # Including . as the beginning character.
-    if [[ "$scriptname"  =~ ^([.].*)$ ]]; then
-      scriptextname="$scriptname"
-      #echo scriptextname="$scriptextname"
-      # Including . but not as the beginning/trailing character.
-    elif [[ "$scriptname"  =~ ^([^.].*)[.]([^.]+)$ ]]; then
-      scriptbasename="${BASH_REMATCH[1]}"
-      scriptextname="${BASH_REMATCH[2]}"
-      #echo scriptbasename="$scriptbasename"
-      #echo scriptextname="$scriptextname"
-    fi
-  fi
-fi
+script_realbasename=${script_realname%.*}
+script_basename=${script_name%.*}
 
-
-#https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
-
-# software/anti-gfw/not-used/vpngate-relative/ecmp-vpngate/script/ovpn-traverse.sh
-# man find:
-# -printf format
-# %f     File's name with any leading directories removed (only the last element).
-# %h     Leading directories of file's name (all but the last element).  
-# If the file name contains  no  slashes
-#             (since it is in the current directory) the %h specifier expands to `.'.       
-# %H     Starting-point under which file was found.  
-# %p     File's name.
-# %P     File's name with the name of the starting-point under which it was found removed.
-
-#https://superuser.com/questions/731425/bash-detect-execute-vs-source-in-a-script
-#https://stackoverflow.com/questions/2683279/how-to-detect-if-a-script-is-being-sourced
-# Only triggering the cd operation when the following conditions meet:
-# The $script_realbasename isn't a command name; 
-# The script isn't being sourced.
-git_repo=$topdir_realpath/$script_realbasename
-if ! type -at $script_realbasename >/dev/null && ! type -at $script_basename >/dev/null && [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  if [[ $git_repo =~ [^/]+[.]git$ ]]; then
-    ncore=$(sudo dmidecode -t 4 | grep 'Core Enabled:' | awk '{a+=$NF}END{ print a }') 
-    if [ ! -d $git_repo ]; then
-      remote_origin_url_https=$(sed -re "s|^$HOME/Public/repo/|https://|" <<< $git_repo)
-      remote_origin_url_git=$(sed -re "s|^$HOME/Public/repo/|git://|" <<< $git_repo)
-      if [ "$(curl -o /dev/null -x socks5://127.0.0.1:18888 -I -L -s -w '%{http_code}' $remote_origin_url_https)" -eq 200 ]; then
-        git clone $remote_origin_url_https $git_repo 
-      else
-        git clone $remote_origin_url_git $git_repo 
-      fi
-    fi
-    cd $git_repo
-  else
-    if [ -d "$git_repo" ]; then 
-      cd $git_repo
-    else
-      cd $topdir_realpath  
-    fi
-  fi
-fi
-
-# Execute the judgemant logic for using the self-defined git function when the corresponding git repo exists.
-if ! type -at $script_basename >/dev/null && [[ "$(declare -pF git 2>/dev/null)" =~ ' -fx ' ]] && [[ "${BASH_SOURCE[0]}" = "${0}" ]] && [ -d "$git_repo/.git" ]; then
-  prepare_repo () {
-    sudo git clean -xdf
-    git reset --hard
-    git pull
-  }
-fi 
-  
-build_dep () {
-  pkgname=$(tr [A-Z] [a-z] <<< "${script_realbasename%.git}")
-  if apt-cache pkgnames | egrep -q "^${pkgname}$"; then
-    sudo apt-get build-dep -y $pkgname
-  fi
-}
-  
-#if declare -F prepare_repo >/dev/null; then
-#or
-if type -t prepare_repo >/dev/null; then
-  prepare_repo
-fi
-
-non_zero_status () {
-  status_code=$?
-  echo '*** Ouch! Exiting ***'
-  echo "The script_realpath: ${script_realpath}"
-  exit $status_code
-}
-
-#$script_realdirname is equivalent to $topdir_realpath.
-#$script_dirname is equivalent to $topdir_path.
-
+script_realextname=${script_realname##*.}
+script_extname=${script_name##*.}
 
 # The idea
 
@@ -183,7 +58,7 @@ ROOTSHARE_REPO=$HOMESHARE/Public/repo/github.com/hongyi-zhao/rootshare.git
 ROOTSHARE_REPO_GIT_DIR=$ROOTSHARE_REPO/.git
 
 HOMESHARE_REPO=$HOMESHARE/Public/repo/github.com/hongyi-zhao/homeshare.git
-HOMESHARE_REPO_GIT_DIR=$HOMESHARE_REPO/.git  
+HOMESHARE_REPO_GIT_DIR=$HOMESHARE_REPO/.git
 
     
 # Don't use `findmnt -r`, this use the following rule which makes the regex match impossiable for
