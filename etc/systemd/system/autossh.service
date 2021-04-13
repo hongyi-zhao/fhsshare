@@ -1,0 +1,206 @@
+#https://stackoverflow.com/questions/23935637/systemd-string-escaping
+#ExecStart=/bin/bash -c '\
+#  while :; do \
+#    port=$(/usr/bin/docker port my-container 5000 | cut -d: -f2); \
+#    json=$(jq -nc \
+#      --arg host 1 \
+#      --arg port "$port" \
+#      '{} | .host=$host | .port=($port | tonumber)'); \
+#    /usr/bin/etcdctl set my-container "$json" --ttl 60; \
+#    sleep 45; \
+#  done'
+
+#https://gist.github.com/Strykar/a65cf6461fdcc41a3e78f5fbbf9e18f9
+#https://avizard.blogspot.com/2021/01/aggressive-yet-sane-persistent-ssh-with.html
+#[Unit]
+#Description=AutoSSH service to remotely access signald's unix socket for weechat's signal.py (/smsg +145789323231)
+#After=network-online.target
+## Use this instead if autossh will interact with the local SSH server
+## After=network-online.target sshd.service
+
+#[Service]
+#Environment="AUTOSSH_GATETIME=30"
+#Environment="AUTOSSH_POLL=30"
+#Environment="AUTOSSH_FIRST_POLL=30"
+#Environment="SSOCK=/var/run/signald/signald.sock"
+
+## Set aggressive network timeouts not autossh systemd unit timeouts and also avoid Broken pipe errors.
+## After 30 seconds of no server response, Autossh will re-negotiate a new session.
+## This assumes SSH version >=2. See https://bit.ly/3bINv8v
+## Set 'ClientAliveInterval 10' in the remote sshd_config so unresponsive SSH clients will be 
+## disconnected after approx. (10 x ClientAliveCountMax) = 30 seconds
+
+#ExecStart=/usr/bin/autossh -M 0 \
+#-o "ServerAliveInterval 10" \
+#-o "ServerAliveCountMax 3" \
+#-o "StreamLocalBindUnlink yes" \
+#-o "ExitOnForwardFailure yes" \
+#-L ${SSOCK}:${SSOCK} -N lair2 #sleep 10
+## We set 'sleep 10' to make ssh exit in case no TCP connections are forwarded in 10 seconds.
+## Useful to get remote shell exit codes.
+
+#ExecStop=/usr/bin/kill $MAINPID
+#ExecReload=/usr/bin/kill -HUP $MAINPID
+
+#Restart=always
+## On Linux TCP_TIMEWAIT_LEN is not tunable and set to (60*HZ), about 60 seconds. TCP_FIN_TIMEOUT also defauls to 60 seconds.
+#RestartSec=60 
+
+## See systemd.kill(5)
+#KillMode=process
+
+#[Install]
+#WantedBy=default.target
+
+#https://gist.github.com/thomasfr/9707568#file-autossh-service
+#[Unit]
+#Description=Keeps a tunnel to 'remote.example.com' open
+#After=network.target
+
+#[Service]
+#User=autossh
+## -p [PORT]
+## -l [user]
+## -M 0 --> no monitoring
+## -N Just open the connection and do nothing (not interactive)
+## LOCALPORT:IP_ON_EXAMPLE_COM:PORT_ON_EXAMPLE_COM
+#ExecStart=/usr/bin/autossh -M 0 -N -q -o "ServerAliveInterval 60" -o "ServerAliveCountMax 3" -p 22 -l autossh remote.example.com -L 7474:127.0.0.1:7474 -i /home/autossh/.ssh/id_rsa
+
+#[Install]
+#WantedBy=multi-user.target
+
+
+#https://serverfault.com/questions/806617/configuring-systemd-service-to-run-with-root-access
+#To clear, systemd system services run as root by default, but there is still a difference between the default behavior and running a system service with User=root.
+
+#As documented in Environment variables in spawned processes, these variables are only set if User= is set:
+
+#$USER, $LOGNAME, $HOME, $SHELL
+
+#I tested to confirm this finding. So if you want to run a systemd service as root that needs one of the above variables, you need to set User=root.
+
+#https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Environment%20variables%20in%20spawned%20processes
+#$USER, $LOGNAME, $HOME, $SHELL
+
+#    User name (twice), home directory, and the login shell. The variables are set for the units that have User= set, which includes user systemd instances. See passwd(5). 
+#    
+    
+#sudo systemctl restart autossh.service
+#For use the autossh.service through systemd, should do the following first:
+#$ sudo -i
+#$ printf 'y\n' | ssh-keygen -t rsa -b 4096 -N '' -C "hongyi.zhao@gmail.com" -f ~/.ssh/id_rsa 
+#$ eval "$(ssh-agent -s)"
+#$ ssh-add .ssh/id_rsa
+#$ ssh-copy-id -i .ssh/id_rsa.pub werner@pve.hyddns.xyz -p 2101
+#$ ssh -p '2101' 'werner@pve.hyddns.xyz'
+
+# Further test with the following:
+#$ microsocks
+#$ sudo autossh -M 0 -4 -NT -o ServerAliveInterval=30 -o "ServerAliveCountMax=3" -o "ExitOnForwardFailure=yes" -o StrictHostKeyChecking=no -R 21081:localhost:1080 -R 20023:localhost:22 -i /root/.ssh/id_rsa werner@pve.hyddns.xyz -p 2101
+#$ curl -x socks5://192.168.10.101:21081 www.baidu.com
+
+
+[Unit]
+Description=autossh reverse penetration proxy
+After=network-online.target microsocks.service
+# Use this instead if autossh will interact with the local SSH server
+# After=network-online.target sshd.service
+
+
+#https://serverfault.com/questions/867830/systemd-start-service-only-after-dns-is-available
+#ExecStartPre=/bin/bash -c 'until host example.com; do sleep 1; done'
+#I think what you're looking for is a combination of the Wants directive and the After directive. For each of ntp and nginx, I think you want to add the following to your unit file:
+
+#Wants=pdns-recursor.service
+#After=pdns-recursor.service
+
+#These two options should ensure that the DNS service is started before the ntp/nginx service, which should hopefully solve your race.
+
+[Service]
+Type=simple
+Environment="AUTOSSH_GATETIME=0"
+#https://stackoverflow.com/questions/48195340/systemd-with-multiple-execstart
+#if Type=simple in your unit file, you can only specify one ExecStart, but you can add as many ExecStartPre, ExecStartPost, but none of this is suited for long running commands, because they are executed serially and everything one start is killed before starting the next one.
+
+#If Type=oneshot you can specify multiple ExecStart, they run serially not in parallel.
+
+#If what you want is to run multiple units in parallel, there a few things you can do:
+#If they differ on 1 param
+
+#You can use template units, so you create a /etc/systemd/system/foo@.service. NOTE: (the @ is important).
+
+#[Unit]
+#Description=script description %I
+
+#[Service]
+#Type=simple
+#ExecStart=/script.py %i
+#Restart=on-failure
+
+#[Install]
+#WantedBy=multi-user.target
+
+#And then you exec:
+
+#$ systemctl start foo@parameter1.service foo@parameter2.service
+
+#or...
+#Target dependencies
+
+#You can create multiple units that links to a single target:
+
+##/etc/systemd/system/bar.target
+#[Unit]
+#Description=bar target
+#Requires=multi-user.target
+#After=multi-user.target
+#AllowIsolate=yes
+
+#And then you just modify you .service units to be WantedBy=bar.target like:
+
+##/etc/systemd/system/foo@.service
+#[Unit]
+#Description=script description %I
+
+#[Service]
+#Type=simple
+#ExecStart=/script.py %i
+#Restart=on-failure
+
+#[Install]
+#WantedBy=bar.target
+
+#Then you just enable the foo services you want in parallel, and start the bar target like this:
+
+#$ systemctl daemon-reload
+#$ systemctl enable foo@param1.service
+#$ systemctl enable foo@param2.service
+#$ systemctl start bar.target
+
+
+#NOTE: that this works with any type of units not only template units.
+
+
+#https://groups.google.com/g/comp.unix.shell/c/CGebfcoBuCA/m/6ey05oRNDAAJ
+#I'd probably prefer the _outer_ context uninterpreted with single quotes
+
+#sh -c 'ip -4 route | awk "/^default/{print \$5}"' 
+
+#ExecStartPre=/usr/bin/env bash -c 'ip -4 route |egrep ^default | awk '\''{print $5}'\'' | xargs -I{} resolvectl dns {} 8.8.8.8'
+#ExecStartPre=/usr/bin/env bash -c "ip -4 route |egrep ^default | awk '{print \$5}' | xargs -I{} resolvectl dns {} 8.8.8.8"
+ExecStartPre=/usr/bin/env bash /root/.local/libexec/setdns.sh
+ExecStart=/usr/bin/autossh -M 0 -4 -NT \
+-o ServerAliveInterval=30 \
+-o "ServerAliveCountMax=3" \
+-o "ExitOnForwardFailure=yes" \
+-o StrictHostKeyChecking=no \
+-R 21080:localhost:1080 \
+-R 20022:localhost:22 \
+werner@pve.hyddns.xyz -p 2101
+ExecStop=/bin/kill $MAINPID
+Restart=on-failure
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
