@@ -188,7 +188,7 @@ Environment="AUTOSSH_GATETIME=0"
 
 #ExecStartPre=/usr/bin/env bash -c 'ip -4 route |egrep ^default | awk '\''{print $5}'\'' | xargs -I{} resolvectl dns {} 8.8.8.8'
 #ExecStartPre=/usr/bin/env bash -c "ip -4 route |egrep ^default | awk '{print \$5}' | xargs -I{} resolvectl dns {} 8.8.8.8"
-ExecStartPre=/usr/bin/env bash /root/.local/libexec/setdns.sh
+ExecStartPre=/usr/bin/env bash /root/.local/bin/setdns.sh
 ExecStart=/usr/bin/autossh -M 0 -4 -NT \
 -o ServerAliveInterval=30 \
 -o "ServerAliveCountMax=3" \
