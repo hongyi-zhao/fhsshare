@@ -1,0 +1,27 @@
+#sudo systemctl restart autossh.service
+#For use with the autossh.service file, should do the following first:
+#$ sudo -i
+#$ printf 'y\n' | ssh-keygen -t rsa -b 4096 -N '' -C "hongyi.zhao@gmail.com" -f ~/.ssh/id_rsa 
+#$ eval "$(ssh-agent -s)"
+#$ ssh-add .ssh/id_rsa
+#$ ssh-copy-id -i .ssh/id_rsa.pub werner@pve.hyddns.xyz -p 2101
+#$ ssh -p '2101' 'werner@pve.hyddns.xyz'
+[Unit]
+Description=microsocks
+After=network-online.target
+
+#https://stackoverflow.com/questions/48195340/systemd-with-multiple-execstart
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/microsocks >/de/null 2>&1
+ExecStop=/bin/kill $MAINPID
+Restart=on-failure
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+#https://www.freedesktop.org/software/systemd/man/systemd.service.html
+#NonBlocking=
+#    Set the O_NONBLOCK flag for all file descriptors passed via socket-based activation. If true, all file descriptors >= 3 (i.e. all except stdin, stdout, stderr), excluding those passed in via the file descriptor storage logic (see FileDescriptorStoreMax= for details), will have the O_NONBLOCK flag set and hence are in non-blocking mode. This option is only useful in conjunction with a socket unit, as described in systemd.socket(5) and has no effect on file descriptors which were previously saved in the file-descriptor store for example. Defaults to false.
+NonBlocking=True
+
+[Install]
+WantedBy=multi-user.target
