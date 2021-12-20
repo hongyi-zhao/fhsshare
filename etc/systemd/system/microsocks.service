@@ -1,5 +1,5 @@
 #sudo systemctl restart autossh.service
-#For use with the autossh.service file, should do the following first:
+#For using with the autossh.service file, should do the following first:
 #$ sudo -i
 #$ printf 'y\n' | ssh-keygen -t rsa -b 4096 -N '' -C "hongyi.zhao@gmail.com" -f ~/.ssh/id_rsa 
 #$ eval "$(ssh-agent -s)"

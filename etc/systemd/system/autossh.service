@@ -1,3 +1,25 @@
+#https://groups.google.com/g/comp.unix.shell/c/7Y6_ISexpzU/m/dcjHvL4rCAAJ
+#SSH local port forwarding ... Anycast Style
+#https://dotfiles.tnetconsulting.net/articles/2014/0303/ssh-local-port-forwarding-anycast-style.html 
+
+#https://groups.google.com/g/comp.unix.shell/c/7Y6_ISexpzU/m/YUlA0elPCAAJ
+#It's non-trivial and was written for accessing things like remote iLO /
+#RSA / IMM / DRACs buried deep in networks that had no normal routing to
+#them.
+
+#Bind the target IP locally, use SSH remote port forwarding to bind the
+#port(s) in question, connect to the web interface via forwarded port,
+#let the (at the time) Java / ActiveX code connect to what it thought was
+#the remote IP / ports locally, ssh forward things, and profit. It is a
+#non-trivial solution to a complex problem. I found that many such
+#clients weren't conducive to changing IPs (to use localhost with
+#traditional port forwarding) / hostname(s) / ports. There were LOTS of
+#hard coded assumptions. This usually involved at least two discrete
+#technologies; HTTP and Java or ActiveX, and frequently involved SSL
+#certificates. So, making the expected IP & port available locally was
+#by far the easiest solution. 
+
+
 #https://stackoverflow.com/questions/23935637/systemd-string-escaping
 #ExecStart=/bin/bash -c '\
 #  while :; do \
