@@ -1,0 +1,34 @@
+$ grep 'Failed to fetch' /var/log/syslog*| egrep -o 'https?://[^/]+' |sort -u
+http://dl.google.com
+http://packages.microsoft.com
+http://ppa.launchpad.net
+https://deb.nodesource.com
+https://dl.yarnpkg.com
+https://download.zulip.com
+https://packages.microsoft.com
+https://screenrec.com
+
+werner@X10DAi-00:/etc/apt$ ug -o '^[^#]*https?://[^/]+' |awk '!a[$NF]++'
+sources.list.d/microsoft-prod.list:deb [arch=amd64] https://packages.microsoft.com
+sources.list:deb https://mirrors.tuna.tsinghua.edu.cn
+sources.list.d/google-chrome.list.save:deb [arch=amd64] http://dl.google.com
+sources.list.d/shutter-ubuntu-ppa-focal.list.save:deb http://ppa.launchpad.net
+sources.list.save:deb https://screenrec.com
+sources.list.d/vscode.list.save:deb [arch=amd64,arm64,armhf] http://packages.microsoft.com
+sources.list.d/zulip-desktop.list:deb https://download.zulip.com
+sources.list.d/yarn.list:deb [signed-by=/usr/share/keyrings/yarnkey.gpg] https://dl.yarnpkg.com
+sources.list.d/nodesource.list:deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com
+apt.conf.d/50unattended-upgrades:    // https://docs.python.org
+
+$ grep 'Failed to fetch' /var/log/syslog*
+/var/log/syslog:Sep 20 07:50:25 X10DAi-00 /usr/lib/gdm3/gdm-x-session[156726]: W: Failed to fetch https://screenrec.com/download/ubuntu/dists/stable/InRelease  Could not connect to 127.0.0.1:18888 (127.0.0.1). - connect (111: Connection refused)
+/var/log/syslog:Sep 20 07:50:25 X10DAi-00 /usr/lib/gdm3/gdm-x-session[156726]: W: Failed to fetch http://ppa.launchpad.net/andreasbutti/xournalpp-master/ubuntu/dists/focal/InRelease  Could not connect to 127.0.0.1:18888 (127.0.0.1). - connect (111: Connection refused)
+/var/log/syslog:Sep 20 07:50:25 X10DAi-00 /usr/lib/gdm3/gdm-x-session[156726]: W: Failed to fetch http://dl.google.com/linux/chrome/deb/dists/stable/InRelease  Could not connect to 127.0.0.1:18888 (127.0.0.1). - connect (111: Connection refused)
+/var/log/syslog:Sep 20 07:50:25 X10DAi-00 /usr/lib/gdm3/gdm-x-session[156726]: W: Failed to fetch http://ppa.launchpad.net/lyx-devel/release/ubuntu/dists/focal/InRelease  Unable to connect to 127.0.0.1:18888:
+/var/log/syslog:Sep 20 07:50:25 X10DAi-00 /usr/lib/gdm3/gdm-x-session[156726]: W: Failed to fetch https://packages.microsoft.com/ubuntu/20.04/prod/dists/focal/InRelease  Could not connect to 127.0.0.1:18888 (127.0.0.1). - connect (111: Connection refused)
+/var/log/syslog:Sep 20 07:50:25 X10DAi-00 /usr/lib/gdm3/gdm-x-session[156726]: W: Failed to fetch https://deb.nodesource.com/node_16.x/dists/focal/InRelease  Could not connect to 127.0.0.1:18888 (127.0.0.1). - connect (111: Connection refused)
+/var/log/syslog:Sep 20 07:50:25 X10DAi-00 /usr/lib/gdm3/gdm-x-session[156726]: W: Failed to fetch http://ppa.launchpad.net/shutter/ppa/ubuntu/dists/focal/InRelease  Unable to connect to 127.0.0.1:18888:
+/var/log/syslog:Sep 20 07:50:25 X10DAi-00 /usr/lib/gdm3/gdm-x-session[156726]: W: Failed to fetch http://packages.microsoft.com/repos/code/dists/stable/InRelease  Could not connect to 127.0.0.1:18888 (127.0.0.1). - connect (111: Connection refused)
+/var/log/syslog:Sep 20 07:50:25 X10DAi-00 /usr/lib/gdm3/gdm-x-session[156726]: W: Failed to fetch https://dl.yarnpkg.com/debian/dists/stable/InRelease  Could not connect to 127.0.0.1:18888 (127.0.0.1). - connect (111: Connection refused)
+/var/log/syslog:Sep 20 07:50:25 X10DAi-00 /usr/lib/gdm3/gdm-x-session[156726]: W: Failed to fetch https://download.zulip.com/desktop/apt/dists/stable/InRelease  Could not connect to 127.0.0.1:18888 (127.0.0.1). - connect (111: Connection refused)
+
