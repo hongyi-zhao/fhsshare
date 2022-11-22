@@ -31,31 +31,35 @@
 # Method 2:
 #$ apt-cache policy | egrep '^[ ]*origin ' | awk '!a[$0]++ { print $2 }' | grep -v 'mirrors.tuna.tsinghua.edu.cn' | awk '{print $0";"}'
 
-# The proxy string must be double quoted:
-Acquire::http::proxy "socks5h://127.0.0.1:18888" {
-  apt.postgresql.org;
-  dl.google.com;
-  nvidia.github.io;
-  download.docker.com;
-  ppa.launchpad.net;
-  developer.download.nvidia.com;
-};
-Acquire::https::proxy "socks5h://127.0.0.1:18888" {
-  apt.postgresql.org;
-  dl.google.com;
-  nvidia.github.io;
-  download.docker.com;
-  ppa.launchpad.net;
-  developer.download.nvidia.com;
-};
+# It seems that this method will cause desktop login problem, so I disabled the following settings: 
+#Completely disables periodic automatic apt updates.
+#https://ubuntuforums.org/showthread.php?t=2480190
 
-Acquire::http::Proxy {
-    mirrors.tuna.tsinghua.edu.cn DIRECT; 
-    mirrors.ustc.edu.cn DIRECT;
-};
-Acquire::https::Proxy {
-    mirrors.tuna.tsinghua.edu.cn DIRECT;  
-    mirrors.ustc.edu.cn DIRECT;
-};
+# The proxy string must be double quoted:
+#Acquire::http::proxy "socks5h://127.0.0.1:18888" {
+#  apt.postgresql.org;
+#  dl.google.com;
+#  nvidia.github.io;
+#  download.docker.com;
+#  ppa.launchpad.net;
+#  developer.download.nvidia.com;
+#};
+#Acquire::https::proxy "socks5h://127.0.0.1:18888" {
+#  apt.postgresql.org;
+#  dl.google.com;
+#  nvidia.github.io;
+#  download.docker.com;
+#  ppa.launchpad.net;
+#  developer.download.nvidia.com;
+#};
+
+#Acquire::http::Proxy {
+#    mirrors.tuna.tsinghua.edu.cn DIRECT; 
+#    mirrors.ustc.edu.cn DIRECT;
+#};
+#Acquire::https::Proxy {
+#    mirrors.tuna.tsinghua.edu.cn DIRECT;  
+#    mirrors.ustc.edu.cn DIRECT;
+#};
 
 
