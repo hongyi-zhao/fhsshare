@@ -1,0 +1,13 @@
+werner@X10DAi:/etc$ sudo ug -Ii 'welcome to.*uname'
+update-motd.d/00-header:printf "Welcome to %s (%s %s %s)\n" "$DISTRIB_DESCRIPTION" "$(uname -o)" "$(uname -r)" "$(uname -m)"
+werner@X10DAi:/etc$ sudo ug -i 'DISTRIB_DESCRIPTION'
+lsb-release:DISTRIB_DESCRIPTION="Kylin V10 SP1"
+lsb-release-test:DISTRIB_DESCRIPTION="Ubuntu 22.10"
+update-motd.d/00-header:if [ -z "$DISTRIB_DESCRIPTION" ] && [ -x /usr/bin/lsb_release ]; then
+update-motd.d/00-header:	DISTRIB_DESCRIPTION=$(lsb_release -s -d)
+update-motd.d/00-header:printf "Welcome to %s (%s %s %s)\n" "$DISTRIB_DESCRIPTION" "$(uname -o)" "$(uname -r)" "$(uname -m)"
+update-motd.d/50-motd-news:lsb=$(echo "$DISTRIB_DESCRIPTION" | sed -e "s/ /\//g")
+update-motd.d/91-release-upgrade:if [ -z "$DISTRIB_DESCRIPTION" ] && command -v lsb_release > /dev/null; then
+update-motd.d/91-release-upgrade:    DISTRIB_DESCRIPTION=$(lsb_release -s -d)
+update-motd.d/91-release-upgrade:if [ "$(echo "$DISTRIB_DESCRIPTION" | cut -d' ' -f4)" = "(development" ]; then
+
