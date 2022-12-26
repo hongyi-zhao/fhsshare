@@ -1,0 +1,26 @@
+werner@X10DAi:/var/log$ journalctl -u gdm --since today
+Dec 26 08:50:28 X10DAi systemd[1]: Starting GNOME Display Manager...
+Dec 26 08:50:28 X10DAi systemd[1]: Started GNOME Display Manager.
+Dec 26 08:50:28 X10DAi gdm-launch-environment][2275]: pam_env(gdm-launch-environment:session): deprecated reading of user environment enabled
+Dec 26 08:50:28 X10DAi gdm-launch-environment][2275]: pam_unix(gdm-launch-environment:session): session opened for user gdm(uid=125) by (uid=0)
+Dec 26 08:50:54 X10DAi gdm-password][2703]: gkr-pam: unable to locate daemon control file
+Dec 26 08:50:54 X10DAi gdm-password][2703]: gkr-pam: stashed password to try later in open session
+Dec 26 08:50:54 X10DAi gdm-password][2703]: pam_env(gdm-password:session): deprecated reading of user environment enabled
+Dec 26 08:50:54 X10DAi gdm-password][2703]: pam_unix(gdm-password:session): session opened for user werner(uid=1000) by (uid=0)
+Dec 26 08:50:54 X10DAi gdm-password][2703]: gkr-pam: unlocked login keyring
+Dec 26 08:51:47 X10DAi gdm3[2270]: Gdm: Child process -2302 was already dead.
+
+
+https://askubuntu.com/questions/1144153/how-to-solve-gkr-pam-unable-to-locate-daemon-control-file
+To avoid this message you can do this:
+
+/etc/pam.d/gdm-password
+
+auth optional pam_gnome_keyring.so only_if=gdm
+
+only_if=gdm should do the trick ...
+
+Whithout only_if=gdm i got this "issue" and fake unlocked keyring from systemctlt status gdm3.service
+
+I dont know why ...
+

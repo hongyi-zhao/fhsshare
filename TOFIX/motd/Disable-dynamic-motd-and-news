@@ -1,0 +1,7 @@
+
+https://raymii.org/s/tutorials/Disable_dynamic_motd_and_motd_news_spam_on_Ubuntu_18.04.html
+https://linuxconfig.org/disable-dynamic-motd-and-news-on-ubuntu-20-04-focal-fossa-linux
+
+sudo chmod -x /etc/update-motd.d/*    
+touch $HOME/.hushlogin
+
