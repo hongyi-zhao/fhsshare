@@ -1,9 +1,0 @@
-
-https://raymii.org/s/tutorials/Disable_dynamic_motd_and_motd_news_spam_on_Ubuntu_18.04.html
-https://linuxconfig.org/disable-dynamic-motd-and-news-on-ubuntu-20-04-focal-fossa-linux
-
-经过测试，下面的设置并没有解决are-you-sure-you-want-to-proceed-message-on-login问题：
-$ sudo chmod -x /etc/update-motd.d/*    
-$ touch $HOME/.hushlogin
-
-故没有必要进行相关设置。
