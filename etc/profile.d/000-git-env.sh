@@ -9,6 +9,9 @@
 #           GIT_DIR or on the command line.
 
 
+#The incorrect calling to zenity via /etc/gdm3/config_error_dialog.patch which should use the --no-markup option for cases when the error messages contain <.
+#https://bugs.launchpad.net/ubuntu/+source/gdm3/+bug/2005135
+
 #https://discourse.gnome.org/t/are-you-sure-you-want-to-proceed-message-on-login/13758/8?u=hongyi-zhao
 #$ sudo gedit /etc/gdm3/config-error-dialog.sh
 
