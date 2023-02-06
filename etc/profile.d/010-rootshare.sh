@@ -44,7 +44,7 @@ unset script_realextname script_extname
 
 #But now that I glanced at the screenshot a second time, the error warning appears after the “Last login” message. That means it’s not the motd, but from some login scripts (like /etc/profile, ~/.bash_profile)
 
-scriptdir_realpath=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]})" && pwd -P)
+scriptdir_realpath=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 
 script_realdirname=$(dirname "$(realpath -e "${BASH_SOURCE[0]}")")
 script_dirname=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
@@ -187,9 +187,9 @@ if [ "$( id -u )" -ne 0 ]; then
 
   # ref: ubuntu:
   # /etc/profile.d/xdg_dirs_desktop_session.sh
-  #if ! grep -Eq "$HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
-  #  export XDG_DATA_DIRS=$HOME/.local/share:$XDG_DATA_DIRS
-  #fi
+  if ! grep -Eq "$HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
+    export XDG_DATA_DIRS=$HOME/.local/share:$XDG_DATA_DIRS
+  fi
 
   #if ! grep -Eq '/usr/local/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
   #  export XDG_DATA_DIRS=/usr/local/share:$XDG_DATA_DIRS
