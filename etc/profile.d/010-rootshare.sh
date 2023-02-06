@@ -187,9 +187,9 @@ if [ "$( id -u )" -ne 0 ]; then
 
   # ref: ubuntu:
   # /etc/profile.d/xdg_dirs_desktop_session.sh
-  if ! grep -Eq "$HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
-    export XDG_DATA_DIRS=$HOME/.local/share:$XDG_DATA_DIRS
-  fi
+  #if ! grep -Eq "$HOME/[.]local/share[/]?(:|$)" <<< $XDG_DATA_DIRS; then
+  #  export XDG_DATA_DIRS=$HOME/.local/share:$XDG_DATA_DIRS
+  #fi
 
   #if ! grep -Eq '/usr/local/share[/]?(:|$)' <<< $XDG_DATA_DIRS; then
   #  export XDG_DATA_DIRS=/usr/local/share:$XDG_DATA_DIRS
