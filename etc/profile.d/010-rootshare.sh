@@ -38,20 +38,26 @@ unset script_realbasename script_basename
 unset script_realextname script_extname
 
 
-scriptdir_realpath=$(cd -P -- "$(dirname -- "${1:-${BASH_SOURCE[0]}}")" && pwd -P)
+#Dirname: invalid option – ‘b’
+#https://discourse.gnome.org/t/dirname-invalid-option-b/13851/4
+#“MOTD” is short for “message of the day”, and is the traditional method for displaying a message to users on login.
 
-script_realdirname=$(dirname "$(realpath -e "${1:-${BASH_SOURCE[0]}}")")
-script_dirname=$(cd -- "$(dirname -- "${1:-${BASH_SOURCE[0]}}")" && pwd)
+#But now that I glanced at the screenshot a second time, the error warning appears after the “Last login” message. That means it’s not the motd, but from some login scripts (like /etc/profile, ~/.bash_profile)
 
-script_realname=$(basename "$(realpath -e "${1:-${BASH_SOURCE[0]}}")")
-script_name=$(basename "${1:-${BASH_SOURCE[0]}}")
+scriptdir_realpath=$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]})" && pwd -P)
+
+script_realdirname=$(dirname "$(realpath -e "${BASH_SOURCE[0]}")")
+script_dirname=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+
+script_realname=$(basename "$(realpath -e "${BASH_SOURCE[0]}")")
+script_name=$(basename "${BASH_SOURCE[0]}")
 
 #https://groups.google.com/g/comp.unix.shell/c/tof4eopmdU8/m/_p9kLoBgCwAJ
 #Unfortunately, the #, ##, %% and % operators can't be used with
 #general expressions.  They only can be applied to variable names. 
 #But you can achieve the wanted result in two steps: 
 
-#script_name="${1:-${BASH_SOURCE[0]}}" && script_name="${script_name2##*/}" 
+#script_name="${BASH_SOURCE[0]}" && script_name="${script_name2##*/}" 
 
 script_realpath=$script_realdirname/$script_realname
 script_path=$script_dirname/$script_name
