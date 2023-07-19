@@ -55,10 +55,12 @@ Acquire::https::proxy "socks5h://127.0.0.1:18888" {
 Acquire::http::Proxy {
     mirrors.tuna.tsinghua.edu.cn DIRECT; 
     mirrors.ustc.edu.cn DIRECT;
+    repo.huaweicloud.com DIRECT;
 };
 Acquire::https::Proxy {
     mirrors.tuna.tsinghua.edu.cn DIRECT;  
     mirrors.ustc.edu.cn DIRECT;
+    repo.huaweicloud.com DIRECT;
 };
 
 
