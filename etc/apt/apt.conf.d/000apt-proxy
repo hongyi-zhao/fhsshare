@@ -29,11 +29,11 @@
 
 
 # Method 2:
-#$ apt-cache policy | egrep '^[ ]*origin ' | awk '!a[$0]++ { print $2 }' | grep -v 'mirrors.tuna.tsinghua.edu.cn' | awk '{print $0";"}'
-
 #Completely disables periodic automatic apt updates.
 #https://ubuntuforums.org/showthread.php?t=2480190
 
+# Put the ones which use proxy here:
+#$ apt-cache policy | egrep '^[ ]*origin ' | awk '!a[$0]++ { print $2 }' | egrep -v '.*\.cn$|repo.huaweicloud.com' | awk '{print $0";"}'
 # The proxy string must be double quoted:
 Acquire::http::proxy "socks5h://127.0.0.1:18888" {
   apt.postgresql.org;
@@ -52,6 +52,8 @@ Acquire::https::proxy "socks5h://127.0.0.1:18888" {
   developer.download.nvidia.com;
 };
 
+# Put the ones which don't use proxy here:
+#$ apt-cache policy | egrep '^[ ]*origin ' | awk '!a[$0]++ { print $2 }' | egrep '.*\.cn$|repo.huaweicloud.com' | awk '{print $0";"}'
 Acquire::http::Proxy {
     mirrors.tuna.tsinghua.edu.cn DIRECT; 
     mirrors.ustc.edu.cn DIRECT;
