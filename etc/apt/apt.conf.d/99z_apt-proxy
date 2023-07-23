@@ -1,75 +1,43 @@
-#https://askubuntu.com/questions/35223/syntax-for-socks-proxy-in-apt-conf
-#https://www.jianshu.com/p/bc4d7b758503
-
 # For temperary use:
 #sudo apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:18888/" update
 
 #https://serverfault.com/questions/482318/apt-get-proxy-for-specific-repos
 #Acquire::http::Proxy::external.repo.host "http://your.proxy.host/";
 
-#https://askubuntu.com/questions/92764/disable-proxy-server-for-one-apt-repository
-#This is just @Cédric Julien's answer with (thanks and) the additional syntax for defaulting to an external proxy:
+# The URLs which should bypass the proxy:
+#$ apt-cache policy | egrep '^[ ]*origin ' | awk '!a[$0]++ { print $2 }' | egrep '.*\.cn$|repo.huaweicloud.com' | awk '{print $0";"}'
 
-#Acquire::http::Proxy "http://proxy:8080";
-#Acquire::http::Proxy {
-#    in-house.debian.example.com DIRECT;
-#    no-protocol-colon-or-slashes.example.com DIRECT;
-#};
+#werner@X10DAi:~$ man apt-transport-http apt-transport-https |ug -A3 -i examples
+#EXAMPLES
+#           Acquire::http {
+#                Proxy::example.org "DIRECT";
+#                Proxy "socks5h://apt:pass@127.0.0.1:9050";
+#--
+#EXAMPLES
+#           Acquire::https {
+#                Proxy::example.org "DIRECT";
+#                Proxy "socks5h://apt:pass@127.0.0.1:9050";
 
-# Check it with the following.
+# check the configuration:
 #$ apt-config dump |grep -i proxy
 
-#Use the following commands to check the configuration when the socks5 proxy is running and not running respectively.
-#$ sudo apt-get update 
+# debug the configuration:
+#$ man apt.conf | grep -A1 -i 'debug.*http'
 
-# Method 1:
-#Acquire::http::proxy::deepin-wine.i-m.dev "socks5h://127.0.0.1:18888";
-#Acquire::http::proxy::dl.google.com "socks5h://127.0.0.1:18888";
+#https://unix.stackexchange.com/questions/49781/how-to-check-if-apt-proxy-configuration-is-correct
+#$ sudo apt clean; sudo apt -d -o Debug::Acquire::http=true reinstall code
+#$ sudo tcpdump -i lo port 18888 -w - |pv >/dev/null
 
-#Acquire::https::proxy::deepin-wine.i-m.dev "socks5h://127.0.0.1:18888";
-#Acquire::https::proxy::dl.google.com "socks5h://127.0.0.1:18888";
-
-
-# Method 2:
-#Completely disables periodic automatic apt updates.
-#https://ubuntuforums.org/showthread.php?t=2480190
-
-# Put the ones which use proxy here:
-#$ apt-cache policy | egrep '^[ ]*origin ' | awk '!a[$0]++ { print $2 }' | egrep -v '.*\.cn$|repo.huaweicloud.com' | awk '{print $0";"}'
-# The proxy string must be double quoted:
-#Acquire::http::proxy "socks5h://127.0.0.1:18888" {
-#  apt.postgresql.org;
-#  dl.google.com;
-#  nvidia.github.io;
-#  download.docker.com;
-#  ppa.launchpad.net;
-#  developer.download.nvidia.com;
-#};
-#Acquire::https::proxy "socks5h://127.0.0.1:18888" {
-#  apt.postgresql.org;
-#  dl.google.com;
-#  nvidia.github.io;
-#  download.docker.com;
-#  ppa.launchpad.net;
-#  developer.download.nvidia.com;
-#};
-
-# The default proxy settings:
-Acquire::http::proxy "socks5h://127.0.0.1:18888";
-Acquire::https::proxy "socks5h://127.0.0.1:18888";
-
-# And the ones without using the proxy go here:
-# Put the ones which don't use proxy here:
-#$ apt-cache policy | egrep '^[ ]*origin ' | awk '!a[$0]++ { print $2 }' | egrep '.*\.cn$|repo.huaweicloud.com' | awk '{print $0";"}'
-Acquire::http::Proxy {
-    mirrors.tuna.tsinghua.edu.cn DIRECT; 
-    mirrors.ustc.edu.cn DIRECT;
-    repo.huaweicloud.com DIRECT;
-};
-Acquire::https::Proxy {
-    mirrors.tuna.tsinghua.edu.cn DIRECT;  
-    mirrors.ustc.edu.cn DIRECT;
-    repo.huaweicloud.com DIRECT;
+Acquire::http {
+    Proxy::mirrors.tuna.tsinghua.edu.cn DIRECT; 
+    Proxy::mirrors.ustc.edu.cn DIRECT;
+    Proxy::repo.huaweicloud.com DIRECT;
+    Proxy "socks5h://127.0.0.1:18888";
 };
 
-
+Acquire::https {
+    Proxy::mirrors.tuna.tsinghua.edu.cn DIRECT; 
+    Proxy::mirrors.ustc.edu.cn DIRECT;
+    Proxy::repo.huaweicloud.com DIRECT;
+    Proxy "socks5h://127.0.0.1:18888";
+};
