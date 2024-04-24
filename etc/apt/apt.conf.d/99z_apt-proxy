@@ -25,7 +25,7 @@
 #$ man apt.conf | grep -A1 -i 'debug.*http'
 
 #https://unix.stackexchange.com/questions/49781/how-to-check-if-apt-proxy-configuration-is-correct
-#$ sudo apt clean; sudo apt -d -o Debug::Acquire::http=true reinstall code
+#$ sudo apt clean; sudo apt -d -o Debug::Acquire::http=true reinstall curl
 #$ sudo tcpdump -i lo port 18888 -w - |pv >/dev/null
 
 Acquire::http {
