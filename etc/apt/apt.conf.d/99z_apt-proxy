@@ -1,5 +1,5 @@
 # For temperary use:
-#sudo apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:18888/" update
+#sudo apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:16667/" update
 
 #https://serverfault.com/questions/482318/apt-get-proxy-for-specific-repos
 #Acquire::http::Proxy::external.repo.host "http://your.proxy.host/";
@@ -26,18 +26,18 @@
 
 #https://unix.stackexchange.com/questions/49781/how-to-check-if-apt-proxy-configuration-is-correct
 #$ sudo apt clean; sudo apt -d -o Debug::Acquire::http=true reinstall curl
-#$ sudo tcpdump -i lo port 18888 -w - |pv >/dev/null
+#$ sudo tcpdump -i lo port 16667 -w - |pv >/dev/null
 
 Acquire::http {
     Proxy::mirrors.tuna.tsinghua.edu.cn DIRECT; 
     Proxy::mirrors.ustc.edu.cn DIRECT;
     Proxy::repo.huaweicloud.com DIRECT;
-    Proxy "socks5h://127.0.0.1:18888";
+    Proxy "socks5h://127.0.0.1:16667";
 };
 
 Acquire::https {
     Proxy::mirrors.tuna.tsinghua.edu.cn DIRECT; 
     Proxy::mirrors.ustc.edu.cn DIRECT;
     Proxy::repo.huaweicloud.com DIRECT;
-    Proxy "socks5h://127.0.0.1:18888";
+    Proxy "socks5h://127.0.0.1:16667";
 };
