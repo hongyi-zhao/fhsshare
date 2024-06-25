@@ -159,10 +159,10 @@ if [ "$( id -u )" -ne 0 ]; then
 #      https://discourse.gnome.org/t/are-you-sure-you-want-to-proceed-message-on-login/13758/7?u=hongyi-zhao
 #      That means that there is a erroneous git diff command in /etc/profile or (more likely) one the files sourced by it. Start at /etc/profile and check for git diff and if that does not contain it, check all the files sourced by it (and the files sourced by those, etc.). Those are lines either starting with a . or with source. It’s probably going to be in something like ~/.profile or ~/.bashrc. Once you found the git diff line, try commenting it out.
 
-      if ! git -C / diff --quiet; then 
-        git -C / diff | sudo tee /$(git -C $ROOTSHARE_REPO rev-parse HEAD).diff > /dev/null
-        sudo git -C / reset --hard
-      fi
+#      if ! git -C / diff --quiet; then 
+#        git -C / diff | sudo tee /$(git -C $ROOTSHARE_REPO rev-parse HEAD).diff > /dev/null
+#        sudo git -C / reset --hard
+#      fi
 
       break
     else
