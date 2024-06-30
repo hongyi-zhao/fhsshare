@@ -258,18 +258,35 @@ if [ "$( id -u )" -ne 0 ]; then
     fi
   done
 
+
+  # 获取第一个目录的 inode 和 device 号
+  stat1=$(stat -c '%D %i' "$(realpath -e $HOME/.git 2>/dev/null)")
+
+  # 获取第二个目录的 inode 和 device 号
+  stat2=$(stat -c '%D %i' "$(realpath -e $HOMESHARE_REPO_GIT_DIR)")
+
+  # 比较 inode 和 device 号
+  if [[ "$stat1" == "$stat2" ]]; then
+    # "两个目录是同一个目录"
+    return
+  else
+    rm -fr $HOME/.git
+    ln -snf $HOMESHARE_REPO_GIT_DIR $HOME/
+    git -C $HOME reset --hard
+  fi
+
   # 此部分代码已经处理了 ~/.profile.d/900-homeshare.git.bash 中的下面代码的工作：
   #if ! git -C $HOME diff --quiet; then
   #  git -C $HOME diff > $HOME/$(git -C $HOMESHARE_REPO rev-parse HEAD).diff
   #  git -C $HOME reset --hard
   #fi
 
-  if [[ -d $HOMESHARE_REPO_GIT_DIR ]]; then
-    if ! git --work-tree=$HOME --git-dir=$HOMESHARE_REPO_GIT_DIR diff --quiet; then 
-      git --work-tree=$HOME --git-dir=$HOMESHARE_REPO_GIT_DIR diff > $HOME/$(git -C $HOMESHARE_REPO rev-parse HEAD).diff
-      git --work-tree=$HOME --git-dir=$HOMESHARE_REPO_GIT_DIR reset --hard
-    fi      
-  fi   
+  #if [[ -d $HOMESHARE_REPO_GIT_DIR ]]; then
+  #  if ! git --work-tree=$HOME --git-dir=$HOMESHARE_REPO_GIT_DIR diff --quiet; then 
+  #    git --work-tree=$HOME --git-dir=$HOMESHARE_REPO_GIT_DIR diff > $HOME/$(git -C $HOMESHARE_REPO rev-parse HEAD).diff
+  #    git --work-tree=$HOME --git-dir=$HOMESHARE_REPO_GIT_DIR reset --hard
+  #  fi      
+  #fi
 fi
 
 
