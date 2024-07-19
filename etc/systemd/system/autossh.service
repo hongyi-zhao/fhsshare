@@ -118,8 +118,8 @@
 
 # Further test with the following:
 #$ microsocks
-#$ sudo autossh -M 0 -4 -NT -o ServerAliveInterval=30 -o "ServerAliveCountMax=3" -o "ExitOnForwardFailure=yes" -o StrictHostKeyChecking=no -R 21081:localhost:1080 -R 20023:localhost:22 -i /root/.ssh/id_rsa werner@pve.hyddns.xyz -p 2101
-#$ curl -x socks5://192.168.10.101:21081 www.baidu.com
+#$ sudo autossh -M 0 -4 -NT -o ServerAliveInterval=30 -o "ServerAliveCountMax=3" -o "ExitOnForwardFailure=yes" -o StrictHostKeyChecking=no -R 21080:localhost:1080 -R 20022:localhost:22 -i /root/.ssh/id_rsa werner@pve.hyddns.xyz -p 2101
+#$ curl -x socks5://192.168.10.101:21080 www.baidu.com
 
 # 基于下面的进一步讨论，实际上 microsocks 在这里是没有必要的： -R 21081:localhost:1080 写成 -R 21081:localhost 即可。
 #Establishing a Secure Reverse Proxy with Bridge for Accessing Internal Networks from the Public Internet.
