@@ -1,5 +1,5 @@
 # For temperary use:
-#sudo apt-get -o Acquire::http::proxy="socks5h://127.0.0.1:16667/" update
+#sudo apt-get -o Acquire::http::proxy="http://127.0.0.1:8080/" update
 
 #https://serverfault.com/questions/482318/apt-get-proxy-for-specific-repos
 #Acquire::http::Proxy::external.repo.host "http://your.proxy.host/";
@@ -32,12 +32,12 @@ Acquire::http {
     Proxy::mirrors.tuna.tsinghua.edu.cn DIRECT; 
     Proxy::mirrors.ustc.edu.cn DIRECT;
     Proxy::repo.huaweicloud.com DIRECT;
-    Proxy "socks5h://127.0.0.1:16667";
+    Proxy "http://127.0.0.1:8080";
 };
 
 Acquire::https {
     Proxy::mirrors.tuna.tsinghua.edu.cn DIRECT; 
     Proxy::mirrors.ustc.edu.cn DIRECT;
     Proxy::repo.huaweicloud.com DIRECT;
-    Proxy "socks5h://127.0.0.1:16667";
+    Proxy "http://127.0.0.1:8080";
 };
