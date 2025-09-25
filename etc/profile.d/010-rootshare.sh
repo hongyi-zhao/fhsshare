@@ -72,7 +72,7 @@ script_extname=${script_name##*.}
 
 # The idea
 
-# Use a separate local disk/partition/remote filesystem, say, nfs, as the $ROOTSHARE partition,
+# Use a separate local disk/partition/remote filesystem, say, nfs, as the $FHSSHARE partition,
 # to populate the corresponding stuff which its directories conform to the
 # Filesystem Hierarchy Standard，FHS:
 # https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard
@@ -102,12 +102,12 @@ script_extname=${script_name##*.}
 #Neousys Technology Inc.
 
 # This directory holds the share data for all users under / hierarchy:
-ROOTSHARE=/rootshare
+FHSSHARE=/fhsshare
 # This directory holds the share data for all non-root users under $HOME hierarchy:
-HOMESHARE=$ROOTSHARE/homeshare
+HOMESHARE=$FHSSHARE/home/USER
 
-ROOTSHARE_REPO=$HOMESHARE/Public/repo/github.com/hongyi-zhao/rootshare.git
-ROOTSHARE_REPO_GIT_DIR=$ROOTSHARE_REPO/.git
+FHSSHARE_REPO=$HOMESHARE/Public/repo/github.com/hongyi-zhao/fhsshare.git
+FHSSHARE_REPO_GIT_DIR=$FHSSHARE_REPO/.git
 
 HOMESHARE_REPO=$HOMESHARE/Public/repo/github.com/hongyi-zhao/homeshare.git
 HOMESHARE_REPO_GIT_DIR=$HOMESHARE_REPO/.git
@@ -120,28 +120,28 @@ HOMESHARE_REPO_GIT_DIR=$HOMESHARE_REPO/.git
 #              (\x<code>).
 
 # Don't run this script repeatedly:
-if findmnt -l -o TARGET | grep -qE "^$ROOTSHARE$"; then
+if findmnt -l -o TARGET | grep -qE "^$FHSSHARE$"; then
   return
 fi
 
 # Only do the settings for non-root users:
 if [ "$( id -u )" -ne 0 ]; then
-  if [ ! -d $ROOTSHARE ]; then
-    sudo mkdir -p $ROOTSHARE
-    #sudo chown -hR root:root $ROOTSHARE
+  if [ ! -d $FHSSHARE ]; then
+    sudo mkdir -p $FHSSHARE
+    #sudo chown -hR root:root $FHSSHARE
   fi
 
   # https://unix.stackexchange.com/questions/68694/when-is-double-quoting-necessary
   # https://stackoverflow.com/questions/10067266/when-to-wrap-quotes-around-a-shell-variable
 
   while IFS= read -r uuid; do
-    if ! findmnt -l -o TARGET | grep -qE "^$ROOTSHARE$"; then
-      sudo mount -U $uuid $ROOTSHARE
+    if ! findmnt -l -o TARGET | grep -qE "^$FHSSHARE$"; then
+      sudo mount -U $uuid $FHSSHARE
     fi
   
-    if [[ -d "$ROOTSHARE_REPO" && -d "$HOMESHARE_REPO" ]]; then
+    if [[ -d "$FHSSHARE_REPO" && -d "$HOMESHARE_REPO" ]]; then
       # Third party applications, say, intel's tools, are intalled under this directory:
-      OPTSHARE=$ROOTSHARE/opt
+      OPTSHARE=$FHSSHARE/opt
       if [ ! -d $OPTSHARE ]; then
         sudo mkdir $OPTSHARE
       fi
@@ -150,9 +150,9 @@ if [ "$( id -u )" -ne 0 ]; then
         sudo mount -o rw,rbind $OPTSHARE /opt
       fi
 
-      if [[ "$(realpath -e /.git 2>/dev/null)" != "$(realpath -e $ROOTSHARE_REPO_GIT_DIR)" ]]; then
+      if [[ "$(realpath -e /.git 2>/dev/null)" != "$(realpath -e $FHSSHARE_REPO_GIT_DIR)" ]]; then
         sudo rm -fr /.git
-        sudo ln -sfr $ROOTSHARE_REPO_GIT_DIR /
+        sudo ln -sfr $FHSSHARE_REPO_GIT_DIR /
         sudo git -C / reset --hard
       fi
 
@@ -160,20 +160,20 @@ if [ "$( id -u )" -ne 0 ]; then
 #      That means that there is a erroneous git diff command in /etc/profile or (more likely) one the files sourced by it. Start at /etc/profile and check for git diff and if that does not contain it, check all the files sourced by it (and the files sourced by those, etc.). Those are lines either starting with a . or with source. It’s probably going to be in something like ~/.profile or ~/.bashrc. Once you found the git diff line, try commenting it out.
 
 #      if ! git -C / diff --quiet; then 
-#        git -C / diff | sudo tee /$(git -C $ROOTSHARE_REPO rev-parse HEAD).diff > /dev/null
+#        git -C / diff | sudo tee /$(git -C $FHSSHARE_REPO rev-parse HEAD).diff > /dev/null
 #        sudo git -C / reset --hard
 #      fi
 
       break
     else
-      sudo umount $ROOTSHARE
+      sudo umount $FHSSHARE
     fi
   done < <( lsblk -n -o type,uuid,mountpoint | awk 'NF >= 2 && $1 ~ /^part$/ && $2 ~/[0-9a-f-]{36}/ && $NF != "/" { print $2 }' )
 
 
   # For debug the errors occurred in the variables assignment operation.
   #echo user_id="$( id -u )" 
-  #echo ROOTSHARE_REPO="$ROOTSHARE_REPO"
+  #echo FHSSHARE_REPO="$FHSSHARE_REPO"
   #echo HOMESHARE_REPO="$HOMESHARE_REPO"
 
 
