@@ -78,14 +78,14 @@ script_extname=${script_name##*.}
 # https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard
 
 # Based on the xdg base directory specifications, find out which directories can be completely/partially shared.
-# For the former, put it into the public $HOMESHARE/ directory, for the latter, only put the corresponding partially shared
-# subdirectories into the corresponding location in the $HOMESHARE/ directory.
+# For the former, put it into the public $USERSHARE/ directory, for the latter, only put the corresponding partially shared
+# subdirectories into the corresponding location in the $USERSHARE/ directory.
 
 # For the corresponding (system|user)-wide settings, restore them by git repos as following:
 # system-wide:
-# https://github.com/hongyi-zhao/rootshare.git
+# https://github.com/hongyi-zhao/fhsshare.git
 # user-wide:
-# https://github.com/hongyi-zhao/homeshare.git
+# https://github.com/hongyi-zhao/usershare.git
 
 
 # Finally, use the xdg autostart script and shell profile to automate the settings.
@@ -103,14 +103,15 @@ script_extname=${script_name##*.}
 
 # This directory holds the share data for all users under / hierarchy:
 FHSSHARE=/fhsshare
+HOMESHARE=$FHSSHARE/home
 # This directory holds the share data for all non-root users under $HOME hierarchy:
-HOMESHARE=$FHSSHARE/home/USER
+USERSHARE=$HOMESHARE/USER
 
-FHSSHARE_REPO=$HOMESHARE/Public/repo/github.com/hongyi-zhao/fhsshare.git
+FHSSHARE_REPO=$USERSHARE/Public/repo/github.com/hongyi-zhao/fhsshare.git
 FHSSHARE_REPO_GIT_DIR=$FHSSHARE_REPO/.git
 
-HOMESHARE_REPO=$HOMESHARE/Public/repo/github.com/hongyi-zhao/homeshare.git
-HOMESHARE_REPO_GIT_DIR=$HOMESHARE_REPO/.git
+USERSHARE_REPO=$USERSHARE/Public/repo/github.com/hongyi-zhao/usershare.git
+USERSHARE_REPO_GIT_DIR=$USERSHARE_REPO/.git
 
     
 # Don't use `findmnt -r`, this use the following rule which makes the regex match impossiable for
@@ -139,7 +140,7 @@ if [ "$( id -u )" -ne 0 ]; then
       sudo mount -U $uuid $FHSSHARE
     fi
   
-    if [[ -d "$FHSSHARE_REPO" && -d "$HOMESHARE_REPO" ]]; then
+    if [[ -d "$FHSSHARE_REPO" && -d "$USERSHARE_REPO" ]]; then
       # Third party applications, say, intel's tools, are intalled under this directory:
       OPTSHARE=$FHSSHARE/opt
       if [ ! -d $OPTSHARE ]; then
@@ -174,7 +175,7 @@ if [ "$( id -u )" -ne 0 ]; then
   # For debug the errors occurred in the variables assignment operation.
   #echo user_id="$( id -u )" 
   #echo FHSSHARE_REPO="$FHSSHARE_REPO"
-  #echo HOMESHARE_REPO="$HOMESHARE_REPO"
+  #echo USERSHARE_REPO="$USERSHARE_REPO"
 
 
   #https://specifications.freedesktop.org/menu-spec/latest/
@@ -199,7 +200,7 @@ if [ "$( id -u )" -ne 0 ]; then
   #  export XDG_DATA_DIRS=/usr/share:$XDG_DATA_DIRS
   #fi
 
-  # attach the stuff found on $HOMESHARE/ at $HOME/:
+  # attach the stuff found on $USERSHARE/ at $HOME/:
 
   #https://unix.stackexchange.com/questions/18886/why-is-while-ifs-read-used-so-often-instead-of-ifs-while-read
 
@@ -213,48 +214,30 @@ if [ "$( id -u )" -ne 0 ]; then
   # %H     Starting-point under which file was found.
   # %p     File's name.
   # %P     File's name with the name of the starting-point under which it was found removed.
-
-  # Attach all top-level subdirectories found on $HOMESHARE/ at $HOME/:
-  #$ find /rootshare/homeshare -maxdepth 1 -mindepth 1 -type d -printf "\"%P\"\n" | sed -re 's|$| \\|' 
-  #"Pictures" \
-  #"Templates" \
-  #"News" \
-  #"Videos" \
-  #"Music" \
-  #"docker" \
-  #"Downloads" \
-  #".profile.d" \
-  #"Documents" \
-  #".emacs.d" \
-  #".gnus.d" \
-  #".vim" \
-  #"VirtualBox VMs" \
-  #".pan2" \
-  #".ssh" \
-  #".cache" \
-  #"Desktop" \
-  #".aiida" \
-  #"Mail" \
-  #"snap" \
-  #"delegate" \
-  #".gnupg" \
-  #"go" \
-  #"Public" \
-  #".brew" \
-  #".conda" \
-  #".wine" \
-  #".pki" \
-
   
-  #find -L $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
-  find $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d -printf '%f\n' |
+  #For all top-level subdirectories except $USERSHARE, found under $HOMESHARE, say, /home/linuxbrew/, which will 
+  #be attached at /home accordingly:
+  find $HOMESHARE/ -mindepth 1 -maxdepth 1 -type d ! -name USER -printf '%f\n' |
+  while IFS= read -r line; do
+    if [ ! -d "/home/$line" ]; then
+      sudo mkdir "/home/$line"
+    fi
+
+    if ! findmnt -l -o TARGET | grep -qE "^/home/$line$"; then
+      sudo mount -o rw,rbind "$HOMESHARE/$line" "/home/$line"
+    fi
+  done
+
+  # Attach all top-level subdirectories found under $USERSHARE/ at $HOME/:
+  #find -L $USERSHARE/ -mindepth 1 -maxdepth 1 -type d -regextype posix-extended -regex ".*/[^.][^/]*$" -printf '%P\n' |
+  find $USERSHARE/ -mindepth 1 -maxdepth 1 -type d -printf '%f\n' |
   while IFS= read -r line; do
     if [ ! -d "$HOME/$line" ]; then
       mkdir "$HOME/$line"
     fi
 
     if ! findmnt -l -o TARGET | grep -qE "^$HOME/$line$"; then
-      sudo mount -o rw,rbind "$HOMESHARE/$line" "$HOME/$line"
+      sudo mount -o rw,rbind "$USERSHARE/$line" "$HOME/$line"
     fi
   done
 
@@ -263,7 +246,7 @@ if [ "$( id -u )" -ne 0 ]; then
   stat1=$(stat -c '%D %i' "$(realpath -e $HOME/.git 2>/dev/null)")
 
   # 获取第二个目录的 inode 和 device 号
-  stat2=$(stat -c '%D %i' "$(realpath -e $HOMESHARE_REPO_GIT_DIR)")
+  stat2=$(stat -c '%D %i' "$(realpath -e $USERSHARE_REPO_GIT_DIR)")
 
   # 比较 inode 和 device 号
   if [[ "$stat1" == "$stat2" ]]; then
@@ -271,27 +254,10 @@ if [ "$( id -u )" -ne 0 ]; then
     return
   else
     rm -fr $HOME/.git
-    ln -snf $HOMESHARE_REPO_GIT_DIR $HOME/
+    ln -sfr $USERSHARE_REPO_GIT_DIR $HOME/
     git -C $HOME reset --hard
   fi
-
-  # 此部分代码已经处理了 ~/.profile.d/900-homeshare.git.bash 中的下面代码的工作：
-  #if ! git -C $HOME diff --quiet; then
-  #  git -C $HOME diff > $HOME/$(git -C $HOMESHARE_REPO rev-parse HEAD).diff
-  #  git -C $HOME reset --hard
-  #fi
-
-  #if [[ -d $HOMESHARE_REPO_GIT_DIR ]]; then
-  #  if ! git --work-tree=$HOME --git-dir=$HOMESHARE_REPO_GIT_DIR diff --quiet; then 
-  #    git --work-tree=$HOME --git-dir=$HOMESHARE_REPO_GIT_DIR diff > $HOME/$(git -C $HOMESHARE_REPO rev-parse HEAD).diff
-  #    git --work-tree=$HOME --git-dir=$HOMESHARE_REPO_GIT_DIR reset --hard
-  #  fi      
-  #fi
 fi
-
-
-
-
 
 
 #https://bytefreaks.net/gnulinux/bash/how-to-execute-find-that-ignores-git-directories
@@ -334,16 +300,16 @@ fi
 
 
   # Dealing with hidden directories via one find command:
-  #find -L $HOMESHARE/ $HOMESHARE/.local $HOMESHARE/.local/share \
-  #     -mindepth 1  -maxdepth 1 -type d ! -path "$HOMESHARE/.local" ! -path "$HOMESHARE/.local/share" -path "$HOMESHARE/.*" 2>/dev/null |
-  #sed -E "s|^$HOMESHARE/||" |
+  #find -L $USERSHARE/ $USERSHARE/.local $USERSHARE/.local/share \
+  #     -mindepth 1  -maxdepth 1 -type d ! -path "$USERSHARE/.local" ! -path "$USERSHARE/.local/share" -path "$USERSHARE/.*" 2>/dev/null |
+  #sed -E "s|^$USERSHARE/||" |
   #while IFS= read -r line; do
   #  if [ ! -d $HOME/"$line" ]; then
   #    mkdir -p $HOME/"$line"
   #  fi
 
   #  if ! findmnt -l -o TARGET | grep -qE "^$HOME/$line$"; then
-  #    sudo mount -o rw,rbind $HOMESHARE/"$line" $HOME/"$line"
+  #    sudo mount -o rw,rbind $USERSHARE/"$line" $HOME/"$line"
   #  fi
   #done
   
@@ -376,12 +342,3 @@ fi
 #         Where user-specific data files should be written (analogous to /usr/share).
 #
 #         Should default to $HOME/.local/share.
-
-
-
-
-
-
-
-
-
