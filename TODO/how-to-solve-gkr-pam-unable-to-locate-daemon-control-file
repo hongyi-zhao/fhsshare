@@ -24,3 +24,70 @@ Whithout only_if=gdm i got this "issue" and fake unlocked keyring from systemctl
 
 I dont know why ...
 
+
+好的，现在我看到了你的配置文件。需要修改两行，都添加 `only_if=gdm` 参数：
+
+```bash
+# 1. 先备份
+sudo cp /etc/pam.d/gdm-password /etc/pam.d/gdm-password.backup
+
+# 2. 编辑文件
+sudo nano /etc/pam.d/gdm-password
+```
+
+**修改这两行：**
+
+**修改前：**
+
+```
+auth    optional        pam_gnome_keyring.so
+```
+
+**修改后：**
+
+```
+auth    optional        pam_gnome_keyring.so only_if=gdm
+```
+
+**修改前：**
+
+```
+session optional        pam_gnome_keyring.so auto_start
+```
+
+**修改后：**
+
+```
+session optional        pam_gnome_keyring.so auto_start only_if=gdm
+```
+
+## 保存并验证：
+
+```bash
+# 保存文件后，验证修改
+cat /etc/pam.d/gdm-password | grep pam_gnome_keyring.so
+
+# 应该看到：
+# auth    optional        pam_gnome_keyring.so only_if=gdm
+# session optional        pam_gnome_keyring.so auto_start only_if=gdm
+```
+
+## 应用更改：
+
+```bash
+# 重启 GDM
+sudo systemctl restart gdm3
+
+# 或者注销后重新登录测试
+```
+
+## 验证问题是否解决：
+
+```bash
+# 下次登录后检查日志
+journalctl -u gdm --since "5 minutes ago" | grep gkr-pam
+```
+
+如果不再看到 "unable to locate daemon control file" 的警告，说明问题已解决。
+
+
